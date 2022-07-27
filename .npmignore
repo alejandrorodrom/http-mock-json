@@ -1,2 +1,6 @@
 /src
 index.ts
+.gitignore
+node_module
+tsconfig.json
+package-lock.json

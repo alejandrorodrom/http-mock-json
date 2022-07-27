@@ -11,6 +11,8 @@
     "dev": "npm run build && npm start",
     "prepublish": "npm run build"
   },
+  "type": "commonjs",
+  "module": "dist/index.js",
   "bin": {
     "mock-server": "dist/index.js"
   },
