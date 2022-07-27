@@ -195,5 +195,3 @@ Allows to create a mock server and test the frontend without depending on the ba
 ## Author ✒️
 
 [Alejandro Rodriguez Romero](https://www.linkedin.com/in/alejandro-rodriguez-romero/)
-
-## Keywords
