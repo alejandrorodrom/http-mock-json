@@ -1,9 +1,6 @@
 
 # HTTP MOCK JSON
 
-
-## Description 📄
-
 Allows to create a mock server and test the frontend without depending on the backend.
 
 
