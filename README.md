@@ -14,7 +14,7 @@ Allows to create a mock server and test the frontend without depending on the ba
 
 2. Create a folder or directory called "mocks" at the "node_modules" level.
 
-3. Add the json files with the mocks as in this example
+3. Copy this example to a json file by deleting the comments.
 
    ```JSON
    {
@@ -24,7 +24,7 @@ Allows to create a mock server and test the frontend without depending on the ba
             "responses": [ // A mock can have several responses identifying each one by a "name"
                {
                   "name": "AnimalsList", // Response name
-                  "status": "200", // HTTP Status Codes
+                  "statusCode": "200", // HTTP Status Codes
                   "body": { // Response in json format
                     "example": "data get"
                   }
@@ -36,7 +36,7 @@ Allows to create a mock server and test the frontend without depending on the ba
             "responses": [
                {
                   "name": "AnimalsSave", // Response name
-                  "status": "201", // HTTP Status Codes
+                  "statusCode": "201", // HTTP Status Codes
                   "body": { // Response in json format
                     "example": "data post"
                   }
@@ -55,7 +55,7 @@ Allows to create a mock server and test the frontend without depending on the ba
    
 ## Recommendations 📋
 
-* Copy and paste the example deleting the comments to test the operation.
+* Copy and paste the advanced examples.
 * A single json file can contain many mocks.
 * There can be many json files each with their respective mocks.
 * You can change the default port (3000) with the following command.
@@ -73,14 +73,14 @@ Allows to create a mock server and test the frontend without depending on the ba
             "responses": [
                {
                   "name": "AnimalsList",
-                  "status": "200",
+                  "statusCode": "200",
                   "body": {
                     "example": "data"
                   }
                },
                {
                   "name": "AnimalsError",
-                  "status": "404",
+                  "statusCode": "404",
                   "body": {
                     "example-error": "error"
                   }
@@ -92,14 +92,14 @@ Allows to create a mock server and test the frontend without depending on the ba
             "responses": [
                {
                   "name": "AnimalsSave",
-                  "status": "201",
+                  "statusCode": "201",
                   "body": {
                     "example": "data"
                   }
                },
                {
                   "name": "AnimalsError",
-                  "status": "404",
+                  "statusCode": "404",
                   "body": {
                     "example-error": "error"
                   }
@@ -118,14 +118,14 @@ Allows to create a mock server and test the frontend without depending on the ba
             "responses": [
                {
                   "name": "AnimalsList",
-                  "status": "200",
+                  "statusCode": "200",
                   "body": {
                     "example": "data"
                   }
                },
                {
                   "name": "AnimalsError",
-                  "status": "404",
+                  "statusCode": "404",
                   "body": {
                     "example-error": "error"
                   }
@@ -137,14 +137,14 @@ Allows to create a mock server and test the frontend without depending on the ba
             "responses": [
                {
                   "name": "AnimalsSave",
-                  "status": "201",
+                  "statusCode": "201",
                   "body": {
                     "example": "data"
                   }
                },
                {
                   "name": "AnimalsError",
-                  "status": "404",
+                  "statusCode": "404",
                   "body": {
                     "example-error": "error"
                   }
@@ -158,21 +158,21 @@ Allows to create a mock server and test the frontend without depending on the ba
             "responses": [
                {
                   "name": "BrandsList",
-                  "status": "200",
+                  "statusCode": "200",
                   "body": {
                     "example": "data1"
                   }
                },
                {
                   "name": "BrandsList2",
-                  "status": "200",
+                  "statusCode": "200",
                   "body": {
                     "example": "data2"
                   }
                },
                {
                   "name": "BrandsList3",
-                  "status": "200",
+                  "statusCode": "200",
                   "body": {
                     "example": "data3"
                   }
