@@ -7,7 +7,7 @@ export const command = () => {
 
   mock
     .name('mock-server')
-    .version('0.0.1', '-v, --version', 'Output the version number')
+    .version('0.1.5', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.')
 
