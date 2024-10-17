@@ -7,7 +7,7 @@ export const command = () => {
 
   mock
     .name('mock-server')
-    .version('0.1.5', '-v, --version', 'Output the version number')
+    .version('1.0.0', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.')
 
@@ -18,10 +18,15 @@ export const command = () => {
       'Indicates the port where the mock will be executed',
       '3000'
     )
+    .option(
+      '-f --path <path>',
+      'Indicates the location of the mocks in a specific folder.',
+      ''
+    )
     .description('Start mocked server.')
     .action((options) => {
       try {
-        executeMock(Number(options.port))
+        executeMock(Number(options.port), options.path)
       } catch (e) {
         logError(e);
       }

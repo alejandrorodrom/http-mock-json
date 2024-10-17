@@ -2,14 +2,14 @@ import express, { Express, Request, Response } from 'express';
 import { getMocksData } from '../core/files';
 import { logApi } from '../scripts/log';
 
-export const executeMock = (port: number) => {
+export const executeMock = (port: number, folderPath: string) => {
   const app: Express = express();
 
   if (isNaN(port)) {
     throw Error('Invalid port assigned');
   }
 
-  const data = getMocksData();
+  const data = getMocksData(folderPath);
 
   app.get('/', (req: Request, res: Response) => {
     res.send(`

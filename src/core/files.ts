@@ -3,8 +3,8 @@ import * as fs from 'fs';
 import { Api } from '../models/api';
 import { ResponseHttp } from '../interfaces/data';
 
-export const getMocksData = (): Api[] => {
-  const mocks = join(process.cwd(), 'mocks');
+export const getMocksData = (folderPath: string): Api[] => {
+  const mocks = join(process.cwd(), folderPath, 'mocks');
   const mockData: Api[] = [];
 
   if (!fs.existsSync(mocks)) {
