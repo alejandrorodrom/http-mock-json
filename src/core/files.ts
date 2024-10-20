@@ -4,17 +4,16 @@ import { Api } from '../models/api';
 import { ResponseHttp } from '../interfaces/data';
 
 export const getMocksData = (folderPath: string): Api[] => {
-  const mocks = join(process.cwd(), folderPath, 'mocks');
   const mockData: Api[] = [];
 
-  if (!fs.existsSync(mocks)) {
+  if (!fs.existsSync(folderPath)) {
     throw Error('The directory named mocks does not exist');
   }
 
-  const files = fs.readdirSync(mocks).filter(file => path.extname(file) === '.json');
+  const files = fs.readdirSync(folderPath).filter(file => path.extname(file) === '.json');
 
   files.forEach(file => {
-    const data = JSON.parse(fs.readFileSync(join(mocks, file), 'utf-8'));
+    const data = JSON.parse(fs.readFileSync(join(folderPath, file), 'utf-8'));
     const routes = Object.keys(data);
     routes.forEach(route => {
       const methods = Object.keys(data[route]);

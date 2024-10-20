@@ -12,7 +12,7 @@ Allows to create a mock server and test the frontend without depending on the ba
    npm install http-mock-json --save-dev
    ```
 
-2. Create a folder or directory called "mocks" at the "node_modules" level.
+2. Create a folder or directory called "mocks", if it is located in a path other than the root of the project, the path where the folder is located must be defined with the flag "--path" or "-f".
 
 3. Copy this example to a json file by deleting the comments.
 
@@ -61,6 +61,10 @@ Allows to create a mock server and test the frontend without depending on the ba
 * You can change the default port (3000) with the following command.
    ```
    mock-server start -p 3500
+   ```
+* You can change the location path of the mocks folder.
+   ```
+   mock-server start -f folder1/folder2
    ```
 
 ## Advanced examples

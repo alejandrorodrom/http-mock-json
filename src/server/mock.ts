@@ -1,13 +1,25 @@
 import express, { Express, Request, Response } from 'express';
 import { getMocksData } from '../core/files';
 import { logApi } from '../scripts/log';
+import { join } from "path";
+import * as fs from 'fs';
+import { Server } from "node:net";
+import { Connection } from "../types/connection";
 
 export const executeMock = (port: number, folderPath: string) => {
-  const app: Express = express();
-
   if (isNaN(port)) {
     throw Error('Invalid port assigned');
   }
+
+  const mocks = join(process.cwd(), folderPath, 'mocks');
+
+  const server = startMock(port, mocks);
+
+  watchMock(server, port, folderPath, mocks);
+};
+
+const startMock = (port: number, folderPath: string) => {
+  const app: Express = express();
 
   const data = getMocksData(folderPath);
 
@@ -40,9 +52,43 @@ export const executeMock = (port: number, folderPath: string) => {
     });
   });
 
-
-  app.listen(port, () => {
-    console.log(`Mock server is running in http://localhost:${port} 🚀`);
+  return app.listen(port, () => {
+    console.log(`Mock server is running in http://localhost:${ port } 🚀`);
   });
-};
+}
 
+const watchMock = (
+  server: Server,
+  port: number,
+  folderPath: string,
+  mocks: string
+) => {
+  const connections: Connection = new Map();
+
+  server.on('connection', (connection) => {
+    const key = `${ connection.remoteAddress }:${ connection.remotePort }`;
+    connections.set(key, connection);
+
+    server.on('close', () => {
+      connections.delete(key);
+    })
+  });
+
+
+  let itChanged = false;
+  const watcher = fs.watch(mocks, () => {
+    if (!itChanged) {
+      connections.forEach(connection => {
+        connection.destroy();
+      })
+
+      server.close(() => {
+        console.log('Mock server is restarting ⏳')
+        executeMock(port, folderPath);
+        itChanged = true;
+
+      })
+    }
+    watcher.close();
+  });
+}
