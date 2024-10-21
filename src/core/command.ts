@@ -7,7 +7,7 @@ export const command = () => {
 
   mock
     .name('mock-server')
-    .version('1.0.0', '-v, --version', 'Output the version number')
+    .version('1.1.1', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.')
 
@@ -19,7 +19,7 @@ export const command = () => {
       '3000'
     )
     .option(
-      '-f --path <path>',
+      '-f, --path <path>',
       'Indicates the location of the mocks in a specific folder.',
       ''
     )
