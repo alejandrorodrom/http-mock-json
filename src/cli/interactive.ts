@@ -10,7 +10,7 @@ export const interactive = () => {
 
   mock
     .name('mock-server')
-    .version('1.2.5', '-v, --version', 'Output the version number')
+    .version('1.2.6', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.')
 
