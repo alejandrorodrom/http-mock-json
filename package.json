@@ -1,6 +1,6 @@
 {
   "name": "http-mock-json",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Allows to create a mock server and test the frontend without depending on the backend.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -13,8 +13,7 @@
     "dev:init": "npm run build && npm run init",
     "dev:start": "npm run build && npm run start",
     "dev:add": "npm run build && npm run add",
-    "prepublish": "npm run build",
-    "mock:start": "mock-server start -p 3001"
+    "prepublish": "npm run build"
   },
   "type": "commonjs",
   "module": "dist/index.js",
