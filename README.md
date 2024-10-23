@@ -7,65 +7,101 @@ Allows to create a mock server and test the frontend without depending on the ba
 ## Installation and use 🔧
 
 1. Install library.
-
    ```
    npm install http-mock-json --save-dev
    ```
 
-2. Create a folder or directory called "mocks", if it is located in a path other than the root of the project, the path where the folder is located must be defined with the flag "--path" or "-f".
-
-3. Copy this example to a json file by deleting the comments.
-
-   ```JSON
-   {
-      "data/animals": { // API route
-         "GET": { // GET, POST, PUT, PATCH, DELETE
-            "nameResponse": "AnimalsList", // Response name to be used
-            "responses": [ // A mock can have several responses identifying each one by a "name"
-               {
-                  "name": "AnimalsList", // Response name
-                  "statusCode": "200", // HTTP Status Codes
-                  "body": { // Response in json format
-                    "example": "data get"
-                  }
-               }
-            ]
-         },
-         "POST": { // GET, POST, PUT, PATCH, DELETE
-            "nameResponse": "AnimalsSave", // Response name to be used
-            "responses": [
-               {
-                  "name": "AnimalsSave", // Response name
-                  "statusCode": "201", // HTTP Status Codes
-                  "body": { // Response in json format
-                    "example": "data post"
-                  }
-               }
-            ]
-         }
-      }      
-   }
+2. Run the command.
    ```
-   
-4. Execute command
+   mock-server init
+   ```
 
+3. Follow the instructions as in the example image.
+   <img src="https://raw.githubusercontent.com/alejandrorodrom/http-mock-json/main/docs/add-mock.png" alt="add mock">
+
+4. A mocks folder will be created that will contain a first endpoint.
+   <img src="https://raw.githubusercontent.com/alejandrorodrom/http-mock-json/main/docs/mock.png" alt="mock">
+
+    ### Mock structure
+    | Key          | Example                                  | Description                                                                |
+    |--------------|------------------------------------------|----------------------------------------------------------------------------|
+    | endpoint     | `data/animals`, `data/animal/:parameter` | API route                                                                  |
+    | httpVerb     | `GET`, `POST`                            | `GET`, `POST`, `PUT`, `PATCH`, `DELETE`                                    |
+    | nameResponse | `success`, `error`, `error-401`          | Response name that the mock will use                                       |
+    | responses    |                                          | A mock can have multiple responses (array), each identified with a `name`. |
+    | name         |                                          | Response name (unique)                                                     |
+    | statusCode   |                                          | HTTP Status Codes                                                          |
+    | body         |                                          | Response in json format                                                    |
+
+5. Add the responses you want to simulate in the body. (You can change the mock response by changing the `nameResponse`).
+   <img src="https://raw.githubusercontent.com/alejandrorodrom/http-mock-json/main/docs/mock-body-example.png" alt="mock body example">
+
+6. Execute command
    ```
    mock-server start
    ```
+
+## Commands ⚙️
+
+1. `init`
+
+   Create the folder that will contain the mocks.
+
+    ```
+    mock-server init
+    ```
+
+    | Flag        | Default | Description                                               |
+    |-------------|---------|-----------------------------------------------------------|
+    | -p --path   | `root`  | Indicates the location of the mocks in a specific folder. |
+    | -m --mock   | `true`  | Create a first mock.                                      |
+    | -s --script | `true`  | Add script to start the mock in the package.json file.    |
+
+   **Example:**
+     ```
+     mock-server init --path apps/folder1 --mock false --script false
+     ```
+
+2. `start`
+
+   Start mock server.
+
+    ```
+    mock-server start
+    ```
+
+    | Flag      | Default | Description                                               |
+    |-----------|---------|-----------------------------------------------------------|
+    | -p --port | `3500`  | Indicates the port where the mock will be executed        |
+    | -f --path | `root`  | Indicates the location of the mocks in a specific folder. |
+
+   **Example:**
+    ```
+    mock-server start --port 3001 --path apps/folder1
+    ```
+
+3. `add`
+
+   Create a mock.
+
+    ```
+    mock-server add
+    ```
+
+    | Flag      | Default | Description                                               |
+    |-----------|---------|-----------------------------------------------------------|
+    | -p --path | `root`  | Indicates the location of the mocks in a specific folder. |
+
+    **Example:**
+    ```
+    mock-server add --path apps/folder1
+    ```
    
 ## Recommendations 📋
 
-* Copy and paste the advanced examples.
+* Review the advanced examples.
 * A single json file can contain many mocks.
 * There can be many json files each with their respective mocks.
-* You can change the default port (3000) with the following command.
-   ```
-   mock-server start -p 3500
-   ```
-* You can change the location path of the mocks folder.
-   ```
-   mock-server start -f folder1/folder2
-   ```
 
 ## Advanced examples
 
@@ -116,7 +152,7 @@ Allows to create a mock server and test the frontend without depending on the ba
 
    ```JSON
    {
-      "data/animals": {
+      "data/animals/:id": {
          "GET": {
             "nameResponse": "AnimalsList",
             "responses": [

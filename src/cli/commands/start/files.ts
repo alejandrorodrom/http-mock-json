@@ -1,7 +1,7 @@
 import path, { join } from 'path';
 import * as fs from 'fs';
-import { Api } from '../models/api';
-import { ResponseHttp } from '../interfaces/data';
+import { Api } from '../../../models/api';
+import { ResponseHttp } from '../../../interfaces/data';
 
 export const getMocksData = (folderPath: string): Api[] => {
   const mockData: Api[] = [];

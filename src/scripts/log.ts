@@ -1,11 +1,18 @@
 import { Api } from '../models/api';
-import { green, red, yellow } from 'colorette';
+import { blue, bold, green, red, yellow } from 'colorette';
 
-export const logApi = (api: Api) => {
-  console.log(`${yellow(`[${api.method.toUpperCase()}]`)} ${green(`${api.route}`)}`);
+export const logMessage = (message: string, lineBreak = false) => {
+  console.log(`${ lineBreak ? '\n' : '' }${ blue(`● ${ bold(`${ message }`) }`) }`);
 }
 
+export const logSuccess = (message: string) => {
+  console.log(`${ green(`✔ ${ bold(`${ message }`) }`) }`);
+}
+
+export const logApi = (api: Api) => {
+  console.log(`${ yellow(`[${ api.method.toUpperCase() }]`) } ${ green(`${ api.route }`) }`);
+}
 
 export const logError = (e: unknown) => {
-  console.log(red(String(e)));
+  console.log(`${ red(`✖ ${ bold(String(e)) }`) }`);
 }
