@@ -10,33 +10,9 @@ export const interactive = () => {
 
   mock
     .name('mock-server')
-    .version('1.2.6', '-v, --version', 'Output the version number')
+    .version('1.2.8', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
-    .helpOption('-h, --help', 'Lists available commands and their short descriptions.')
-
-  mock
-    .command('start')
-    .option(
-      '-p, --port <port>',
-      'Indicates the port where the mock will be executed',
-      '3000'
-    )
-    .option(
-      '-f, --path <path>',
-      'Indicates the location of the mocks in a specific folder.',
-      ''
-    )
-    .description('Start mock server.')
-    .action((options: StartOptions) => {
-      try {
-        executeMock({
-          port: Number(options.port),
-          folderPath: options.path
-        });
-      } catch (e) {
-        logError(e);
-      }
-    });
+    .helpOption('-h, --help', 'Lists available commands and their short descriptions.');
 
   mock
     .command('init')
@@ -59,6 +35,30 @@ export const interactive = () => {
     .action((options: InitOptions) => {
       try {
         initialize(options);
+      } catch (e) {
+        logError(e);
+      }
+    });
+
+  mock
+    .command('start')
+    .option(
+      '-p, --port <port>',
+      'Indicates the port where the mock will be executed',
+      '3000'
+    )
+    .option(
+      '-f, --path <path>',
+      'Indicates the location of the mocks in a specific folder.',
+      ''
+    )
+    .description('Start mock server.')
+    .action((options: StartOptions) => {
+      try {
+        executeMock({
+          port: Number(options.port),
+          folderPath: options.path
+        });
       } catch (e) {
         logError(e);
       }

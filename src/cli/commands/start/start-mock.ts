@@ -3,11 +3,14 @@ import express, { Express, Request, Response } from 'express';
 import { getMocksData } from './files';
 import { logApi } from '../../../scripts/log';
 import { Server } from 'node:net';
+import cors from 'cors';
 
 export const startMock = (
   { port, folderPath }: StartMock
 ): Server => {
   const app: Express = express();
+
+  app.use(cors());
 
   const data = getMocksData(folderPath);
 
