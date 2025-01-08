@@ -10,7 +10,9 @@ export const startMock = (
 ): Server => {
   const app: Express = express();
 
-  app.use(cors());
+  app.use(cors({
+    exposedHeaders: '*'
+  }));
 
   const data = getMocksData(folderPath);
 
