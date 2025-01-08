@@ -7,12 +7,14 @@ export class Api {
   route: string;
   method: httpVerbs;
   status: number;
+  headers: object;
   response: object;
 
   constructor(data: MockHttp) {
     this.route = `/${data.route}`;
     this.method = this.getMethod(data.method);
     this.status = Number(data.status);
+    this.headers = data.headers ?? {};
     this.response = data.response;
   }
 

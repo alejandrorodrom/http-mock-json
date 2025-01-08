@@ -31,6 +31,7 @@ Allows to create a mock server and test the frontend without depending on the ba
     | responses    |                                          | A mock can have multiple responses (array), each identified with a `name`. |
     | name         |                                          | Response name (unique)                                                     |
     | statusCode   |                                          | HTTP Status Codes                                                          |
+    | headers      |                                          | Headers in json format                                                     |
     | body         |                                          | Response in json format                                                    |
 
 5. Add the responses you want to simulate in the body. (You can change the mock response by changing the `nameResponse`).

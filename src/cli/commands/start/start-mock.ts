@@ -39,7 +39,7 @@ export const startMock = (
   data.forEach(value => {
     logApi(value);
     app[value.method](value.route, (req: Request, res: Response) => {
-      res.status(value.status).json(value.response);
+      res.set(value.headers).status(value.status).json(value.response);
     });
   });
 

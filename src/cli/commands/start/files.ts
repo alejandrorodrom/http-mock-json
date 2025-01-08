@@ -27,6 +27,7 @@ export const getMocksData = (folderPath: string): Api[] => {
             route: route,
             method: method,
             status: response.statusCode,
+            headers: response.headers,
             response: response.body
           });
 
