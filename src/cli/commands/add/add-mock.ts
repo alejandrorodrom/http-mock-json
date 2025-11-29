@@ -1,14 +1,14 @@
-import { logError, logMessage } from "../../../scripts/log";
+import { logError, logMessage } from "../../../scripts/log.script";
 import { prompt } from "prompts";
 import fs from "fs";
 import { join } from "path";
-import { printDuration } from "../../../scripts/duration";
+import { printDuration } from "../../../scripts/duration.script";
 import { bold, dim, green } from "colorette";
-import { terminalPrompt } from "../../../scripts/unix";
-import { AddOptions } from "../../../types/options";
-import { HttpVerbs } from "../../../constants/http-verbs";
+import { terminalPrompt } from "../../../scripts/unix.script";
+import { AddOptions } from "../../../types/options.type";
+import { HttpVerbs } from "../../../constants/http-verbs.constant";
 import { structureMock } from "./structure-mock";
-import { PromptAddMock } from "../../../interfaces/mock";
+import { PromptAddMock } from "../../../interfaces/mock.interface";
 
 export const addMock = async (
   { path }: AddOptions

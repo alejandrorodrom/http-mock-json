@@ -1,4 +1,4 @@
-import { HttpVerbs } from "../../../constants/http-verbs";
+import { HttpVerbs } from "../../../constants/http-verbs.constant";
 
 interface StructureMock {
   nameResponse: string;

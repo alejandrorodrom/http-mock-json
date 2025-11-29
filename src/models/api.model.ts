@@ -1,5 +1,5 @@
-import { MockHttp } from '../interfaces/data';
-import { HttpVerbs } from '../constants/http-verbs';
+import { MockHttp } from '../interfaces/data.interface';
+import { HttpVerbs } from '../constants/http-verbs.constant';
 
 type httpVerbs = HttpVerbs.get | HttpVerbs.post | HttpVerbs.put | HttpVerbs.patch | HttpVerbs.delete;
 

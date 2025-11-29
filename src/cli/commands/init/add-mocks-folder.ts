@@ -1,5 +1,5 @@
 import fs from "fs";
-import { logError, logSuccess } from "../../../scripts/log";
+import { logError, logSuccess } from "../../../scripts/log.script";
 
 export const addMocksFolder = (mocks: string) => {
   if (fs.existsSync(mocks)) {

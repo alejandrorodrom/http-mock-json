@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { ExecuteMock } from '../../../interfaces/mock';
+import { ExecuteMock } from '../../../interfaces/mock.interface';
 import { startMock } from './start-mock';
 import { watchMock } from './watch-mock';
 

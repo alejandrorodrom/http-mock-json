@@ -1,6 +1,6 @@
 import { join } from 'path';
 import fs from 'fs';
-import { logError, logSuccess } from '../../../scripts/log';
+import { logError, logSuccess } from '../../../scripts/log.script';
 
 export const addScriptToPackageJson = () => {
   const packageJson = join(process.cwd(), 'package.json');

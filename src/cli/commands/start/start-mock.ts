@@ -1,7 +1,7 @@
-import { StartMock } from '../../../interfaces/mock';
+import { StartMock } from '../../../interfaces/mock.interface';
 import express, { Express, Request, Response } from 'express';
 import { getMocksData } from './files';
-import { logApi } from '../../../scripts/log';
+import { logApi } from '../../../scripts/log.script';
 import { Server } from 'node:net';
 import cors from 'cors';
 

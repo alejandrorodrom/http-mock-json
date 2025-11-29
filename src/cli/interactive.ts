@@ -1,8 +1,8 @@
 import { Command } from 'commander';
 import { executeMock } from './commands/start/execute-mock';
-import { logError } from '../scripts/log';
+import { logError } from '../scripts/log.script';
 import { initialize } from "./commands/init/initialize";
-import { AddOptions, InitOptions, StartOptions } from "../types/options";
+import { AddOptions, InitOptions, StartOptions } from "../types/options.type";
 import { addMock } from "./commands/add/add-mock";
 
 export const interactive = () => {
@@ -10,7 +10,7 @@ export const interactive = () => {
 
   mock
     .name('mock-server')
-    .version('1.4.0', '-v, --version', 'Output the version number')
+    .version('1.5.0', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.');
 

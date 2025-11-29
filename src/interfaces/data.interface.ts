@@ -6,9 +6,14 @@ export interface MockHttp {
   response: object;
 }
 
-export interface ResponseHttp {
+export interface RawMockResponse {
   name: string;
   statusCode: string;
-  headers: object;
-  body: object;
+  headers?: object;
+  body: any;
+}
+
+export interface RawMockMethod {
+  nameResponse: string;
+  responses: RawMockResponse[];
 }

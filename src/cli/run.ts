@@ -1,4 +1,4 @@
-import { clear } from '../scripts/clear';
+import { clear } from '../scripts/clear.script';
 import { blue } from 'colorette';
 import figlet from 'figlet';
 import { interactive } from './interactive';

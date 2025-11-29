@@ -1,5 +1,5 @@
 import { Server } from "node:net";
-import { HttpVerbs } from "../constants/http-verbs";
+import { HttpVerbs } from "../constants/http-verbs.constant";
 
 export interface ExecuteMock {
   port: number,

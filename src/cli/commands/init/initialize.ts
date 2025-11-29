@@ -1,4 +1,4 @@
-import { InitOptions } from '../../../types/options';
+import { InitOptions } from '../../../types/options.type';
 import { join } from 'path';
 import { addScriptToPackageJson } from './add-script';
 import { addMocksFolder } from './add-mocks-folder';
