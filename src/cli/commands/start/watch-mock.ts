@@ -51,10 +51,10 @@ export const watchMock = (
 
       watcher.close().catch(() => undefined);
 
-      server.close(() => {
+      server.close(async () => {
         console.log('Mock server is restarting ⏳');
         try {
-          executeMock({
+          await executeMock({
             port: port,
             folderPath: folderPath
           });

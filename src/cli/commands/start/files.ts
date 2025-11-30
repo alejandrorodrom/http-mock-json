@@ -9,13 +9,13 @@ import { formatIssues, getAllIssues } from '../../../scripts/issues.script';
 
 export const getMocksData = (folderPath: string): Api[] => {
   if (!fs.existsSync(folderPath)) {
-    throw Error('The directory named mocks does not exist');
+    throw new Error('The directory named mocks does not exist');
   }
 
   const files = fs.readdirSync(folderPath).filter(file => path.extname(file) === '.json');
 
   if (!files.length) {
-    throw Error('No files found');
+    throw new Error('No files found');
   }
 
   const errorsByFile: Record<string, ValidationIssue[]> = {};

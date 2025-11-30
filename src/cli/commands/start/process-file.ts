@@ -9,6 +9,7 @@ import { getKeys, iterateEntries } from '../../../scripts/objects.script';
 import { validateEndpoint } from '../../../validators/endpoint.validator';
 import { validateMethod } from '../../../validators/method.validator';
 import { validateResponse } from '../../../validators/response.validator';
+import { JsonValue } from '../../../types/json.type';
 
 export const processFile = (
   file: string,
@@ -70,7 +71,7 @@ export const processFile = (
                     method: method,
                     status: selectedResponse.statusCode,
                     headers: selectedResponse.headers ?? {},
-                    response: selectedResponse.body
+                    response: selectedResponse.body as JsonValue
                   })
                 );
               }

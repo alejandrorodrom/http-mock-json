@@ -115,7 +115,7 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | name         | ✅       | string         |                                          | Response name (unique within the responses array)                          |
    | statusCode   | ✅       | string/number  | `200`, `"200"`, `404`, `"404"`          | HTTP Status Codes (validated, warnings for non-standard codes)            |
    | headers      | ❌       | object         | `{ "Content-Type": "application/json" }`  | Headers in json format (optional)                                          |
-   | body         | ✅       | any            |                                          | Response in json format                                                    |
+   | body         | ✅       | any            |                                          | Response in json format. Can be `null`, object, array, string, number, or boolean |
 
 5. Edit the mock file to add your response data.
 
@@ -158,9 +158,11 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    mock-server start
    ```
 
-   The server will automatically validate all mock files before starting. If there are validation errors, the server
-   will not start and will display detailed error messages. If there are warnings (like non-standard status codes), they
-   will be shown but won't prevent the server from starting.
+   The server will automatically validate:
+   1. **Port availability first** - Checks if the port is available before processing any files
+   2. **All mock files** - Validates all mock files for errors
+   
+   If there are validation errors, the server will not start and will display detailed error messages. If there are warnings (like non-standard status codes), they will be shown but won't prevent the server from starting.
 
    **Watch Mode**: The server automatically watches for changes in your mock files and restarts when you save changes.
    If errors are introduced during watch mode, the server will display the errors and wait for you to fix them.
@@ -231,13 +233,15 @@ The server includes a comprehensive validation system that checks your mock file
 
 ### Automatic Validation
 
-When you run `mock-server start`, the system automatically validates:
+When you run `mock-server start`, the system automatically validates in this order:
 
-- **Endpoint format**: Ensures endpoints use valid characters and proper structure
-- **HTTP methods**: Validates that only valid HTTP methods are used (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`)
-- **Response structure**: Checks that all required fields are present (`name`, `statusCode`, `body`)
-- **Response matching**: Verifies that `nameResponse` references exist in the responses array
-- **JSON structure**: Ensures files contain valid JSON objects
+1. **Port availability** (validated first, before loading mocks): Checks if the specified port is available using an efficient socket connection method. If the port is in use, the server fails immediately without loading or validating mocks, saving time and resources.
+
+2. **Endpoint format**: Ensures endpoints use valid characters and proper structure
+3. **HTTP methods**: Validates that only valid HTTP methods are used (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`)
+4. **Response structure**: Checks that all required fields are present (`name`, `statusCode`, `body`)
+5. **Response matching**: Verifies that `nameResponse` references exist in the responses array
+6. **JSON structure**: Ensures files contain valid JSON objects
 
 ### Error Handling
 
@@ -273,6 +277,8 @@ When files change during watch mode:
 ## Advanced examples
 
 ### Example 1: Basic mock with multiple responses
+
+This example shows how to create multiple responses for the same endpoint, allowing you to simulate different scenarios.
 
 ```json
 {
@@ -353,7 +359,33 @@ When files change during watch mode:
 }
    ```
 
-### Example 3: Endpoint with parameters and multiple methods
+### Example 3: Response with null body (204 No Content)
+
+```json
+{
+  "api/users/:id": {
+    "DELETE": {
+      "nameResponse": "deleted",
+      "responses": [
+        {
+          "name": "deleted",
+          "statusCode": "204",
+          "body": null
+        },
+        {
+          "name": "not-found",
+          "statusCode": "404",
+          "body": {
+            "message": "User not found"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+### Example 4: Endpoint with parameters and multiple methods
 
 ```json
 {
@@ -547,7 +579,7 @@ These errors occur when individual response objects are invalid:
 | `Missing property "name"`                    | Response is missing the `name` property | Add `"name": "your-response-name"` to each response           |
 | `Missing property "statusCode"`              | Response is missing `statusCode`        | Add `"statusCode": "200"` (or any valid status code)          |
 | `The "statusCode" "X" is not a valid number` | `statusCode` is not a valid number      | Use a number or string number: `200`, `"200"`, `404`, `"404"` |
-| `Missing property "body"`                    | Response is missing `body`              | Add `"body": {}` (can be empty object)                        |
+| `Missing property "body"`                    | Response is missing `body` property     | Add `"body": {}`, `"body": null`, or any valid JSON value     |
 | `The "headers" property must be an object`   | `headers` is not an object              | If provided, `headers` must be an object: `"headers": {}`     |
 
 **Example:**
@@ -571,6 +603,15 @@ These errors occur when individual response objects are invalid:
 }
 ```
 
+✅ **Valid** - `body` can be `null` (useful for 204 No Content responses):
+```json
+{
+  "name": "deleted",
+  "statusCode": "204",
+  "body": null
+}
+```
+
 ### Warnings
 
 Warnings don't prevent the server from starting but indicate potential issues:
@@ -591,10 +632,13 @@ Warnings don't prevent the server from starting but indicate potential issues:
 
 These errors occur when there are issues with the server or system:
 
-| Error Message           | Description                       | Solution                                                                        |
-|-------------------------|-----------------------------------|---------------------------------------------------------------------------------|
-| `Invalid port assigned` | Port value is not a valid number  | Use a valid port number: `mock-server start --port 3000`                        |
-| `Port already in use`   | Another service is using the port | Use a different port: `mock-server start --port 3001` or stop the other service |
+| Error Message                      | Description                       | Solution                                                                        |
+|------------------------------------|-----------------------------------|---------------------------------------------------------------------------------|
+| `Port must be a valid number`      | Port value is not a valid number  | Use a valid port number: `mock-server start --port 3000`                        |
+| `Port must be between 1 and 65535` | Port is outside valid range       | Use a port number between 1 and 65535: `mock-server start --port 3000`          |
+| `Port X is already in use. Please use a different port.` | Port is already in use | The server validates port availability **before** loading mocks. If the port is occupied, it fails immediately without processing mock files. Use a different port: `mock-server start --port 3001` or stop the service using that port. |
+
+**Note:** Port validation happens first, before loading or validating any mock files. This ensures faster feedback when a port is unavailable and prevents unnecessary file processing.
 
 ### Watch Mode Issues
 
@@ -623,19 +667,33 @@ File: my-mock.json
   [GET] data/users: The "statusCode" 299 is not a standard HTTP status code
 ```
 
+**Command-line error example:**
+
+```
+✖ Port must be a valid number
+```
+
+or
+
+```
+✖ Port must be between 1 and 65535
+```
+
 ### Quick Validation Checklist
 
 Before starting the server, verify:
 
+- **Port availability** - The port is validated first, before loading any mocks. Ensure the port number is valid (between 1 and 65535) and not in use by another service
 - All JSON files have valid syntax
 - All endpoints use valid characters
 - All HTTP methods are uppercase: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`
 - All methods have `nameResponse` and `responses` properties
-- All responses have `name`, `statusCode`, and `body` properties
+- All responses have `name`, `statusCode`, and `body` properties (body can be `null`)
 - `nameResponse` matches a `name` in the responses array
 - `statusCode` is a valid number
 - `headers` (if provided) is an object
-- Port number is valid and available
+
+**Note:** Port validation happens automatically when you start the server. If the port is unavailable, you'll get an immediate error before any mock files are processed.
 
 ---
 

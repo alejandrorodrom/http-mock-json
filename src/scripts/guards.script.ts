@@ -6,6 +6,10 @@ export const isExisting = (value: unknown): boolean => {
   return value !== undefined && value !== null;
 };
 
+export const hasProperty = <T extends object>(obj: T, key: keyof T | string): boolean => {
+  return key in obj;
+};
+
 export const isEmpty = (value: unknown): boolean => {
   if (Array.isArray(value)) {
     return value.length === 0;

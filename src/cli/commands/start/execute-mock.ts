@@ -3,16 +3,12 @@ import { ExecuteMock } from '../../../interfaces/mock.interface';
 import { startMock } from './start-mock';
 import { watchMock } from './watch-mock';
 
-export const executeMock = (
+export const executeMock = async (
   { port, folderPath }: ExecuteMock
-) => {
-  if (isNaN(port)) {
-    throw Error('Invalid port assigned');
-  }
-
+): Promise<void> => {
   const mocks = join(process.cwd(), folderPath, 'mocks');
 
-  const server = startMock({
+  const server = await startMock({
     port: port,
     folderPath: mocks,
   });

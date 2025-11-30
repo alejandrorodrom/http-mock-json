@@ -1,4 +1,5 @@
 import { MockHttp } from '../interfaces/data.interface';
+import { JsonValue } from '../types/json.type';
 import { HttpVerbs } from '../constants/http-verbs.constant';
 
 type httpVerbs = HttpVerbs.get | HttpVerbs.post | HttpVerbs.put | HttpVerbs.patch | HttpVerbs.delete;
@@ -7,8 +8,8 @@ export class Api {
   route: string;
   method: httpVerbs;
   status: number;
-  headers: object;
-  response: object;
+  headers: Record<string, string>;
+  response: JsonValue;
 
   constructor(data: MockHttp) {
     this.route = `/${data.route}`;

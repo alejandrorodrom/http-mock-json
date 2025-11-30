@@ -1,5 +1,5 @@
 import { RawMockResponse } from '../interfaces/data.interface';
-import { isExisting, isObject, isValidNumber } from '../scripts/guards.script';
+import { hasProperty, isExisting, isObject, isValidNumber } from '../scripts/guards.script';
 import { VALID_STATUS_CODES } from '../constants/validation.constant';
 import { LocalIssue, ResponseValidationResult } from '../types/validation.type';
 
@@ -59,7 +59,7 @@ export const validateResponse = (
     });
   }
 
-  if (!isExisting(response.body)) {
+  if (!hasProperty(response, 'body')) {
     errors.push({
       endpoint,
       method,

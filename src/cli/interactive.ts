@@ -10,7 +10,7 @@ export const interactive = () => {
 
   mock
     .name('mock-server')
-    .version('1.5.2', '-v, --version', 'Output the version number')
+    .version('1.6.0', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.');
 
@@ -45,7 +45,17 @@ export const interactive = () => {
     .option(
       '-p, --port <port>',
       'Indicates the port where the mock will be executed',
-      '3000'
+      (value: string): number => {
+        const port = parseInt(value, 10);
+        if (isNaN(port)) {
+          throw new Error('Port must be a valid number');
+        }
+        if (port < 1 || port > 65535) {
+          throw new Error('Port must be between 1 and 65535');
+        }
+        return port;
+      },
+      3000
     )
     .option(
       '-f, --path <path>',
@@ -53,14 +63,15 @@ export const interactive = () => {
       ''
     )
     .description('Start mock server.')
-    .action((options: StartOptions) => {
+    .action(async (options: StartOptions) => {
       try {
-        executeMock({
-          port: Number(options.port),
+        await executeMock({
+          port: options.port,
           folderPath: options.path
         });
       } catch (e) {
         logError(e);
+        process.exit(1);
       }
     });
 
@@ -76,5 +87,10 @@ export const interactive = () => {
       addMock(options)
     });
 
-  mock.parse(process.argv)
+  try {
+    mock.parse(process.argv);
+  } catch (e) {
+    logError(e);
+    process.exit(1);
+  }
 }
