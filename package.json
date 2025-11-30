@@ -1,13 +1,13 @@
 {
   "name": "http-mock-json",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Allows to create a mock server and test the frontend without depending on the backend.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "start": "node dist/index.js start -p 3500",
     "init": "node dist/index.js init --script --mock",
-    "add": "node dist/index.js add --path",
+    "add": "node dist/index.js add",
     "build.tsc": "tsc",
     "build": "npm run build.tsc",
     "dev:init": "npm run build && npm run init",
@@ -37,6 +37,9 @@
     "url": "https://github.com/alejandrorodrom/http-mock-json/issues"
   },
   "homepage": "https://github.com/alejandrorodrom/http-mock-json#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "chokidar": "^5.0.0",
     "colorette": "^2.0.20",
