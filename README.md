@@ -105,8 +105,9 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
     - Empty body objects ready to be filled
 
    ### Mock structure
+
    | Key          | Required | Type           | Example                                  | Description                                                                |
-       |--------------|----------|----------------|------------------------------------------|----------------------------------------------------------------------------|
+   |--------------|----------|----------------|------------------------------------------|----------------------------------------------------------------------------|
    | endpoint     | ✅       | string         | `data/animals`, `data/animal/:parameter` | API route. Allowed characters: letters, numbers, "-", "_", ".", "~", "/", and parameters like ":id" |
    | HTTP Method  | ✅       | string         | `GET`, `POST`, `PUT`, `PATCH`, `DELETE`  | HTTP verb (must be uppercase)                                              |
    | nameResponse | ✅       | string         | `success`, `error`, `error-401`          | Response name that the mock will use (must exist in responses array)      |
@@ -177,7 +178,7 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
     ```
 
    | Flag        | Default | Description                                               |
-       |-------------|---------|-----------------------------------------------------------|
+   |-------------|---------|-----------------------------------------------------------|
    | -p --path   | `root`  | Indicates the location of the mocks in a specific folder. |
    | -m --mock   | `true`  | Create a first mock.                                      |
    | -s --script | `true`  | Add script to start the mock in the package.json file.    |
@@ -196,7 +197,7 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
     ```
 
    | Flag      | Default | Description                                               |
-       |-----------|---------|-----------------------------------------------------------|
+   |-----------|---------|-----------------------------------------------------------|
    | -p --port | `3000`  | Indicates the port where the mock will be executed        |
    | -f --path | `root`  | Indicates the location of the mocks in a specific folder. |
 
@@ -214,7 +215,7 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
     ```
 
    | Flag      | Default | Description                                               |
-       |-----------|---------|-----------------------------------------------------------|
+   |-----------|---------|-----------------------------------------------------------|
    | -p --path | `root`  | Indicates the location of the mocks in a specific folder. |
 
    **Example:**
@@ -274,7 +275,7 @@ When files change during watch mode:
 ### Example 1: Basic mock with multiple responses
 
 ```json
-   {
+{
   "data/animals": {
     "GET": {
       "nameResponse": "AnimalsError",
@@ -321,7 +322,7 @@ When files change during watch mode:
 ### Example 2: Mock with custom headers
 
 ```json
-   {
+{
   "api/users": {
     "GET": {
       "nameResponse": "UsersList",
@@ -355,7 +356,7 @@ When files change during watch mode:
 ### Example 3: Endpoint with parameters and multiple methods
 
 ```json
-   {
+{
   "data/animals/:id": {
     "GET": {
       "nameResponse": "AnimalsList",
@@ -466,21 +467,27 @@ These errors occur when endpoint definitions are invalid:
 
 **Example:**
 
+❌ **Invalid** - Invalid character `#` in endpoint:
 ```json
-// ❌ Invalid
 {
   "data/users#id": {
-    ...
+    "GET": {
+      "nameResponse": "success",
+      "responses": []
+    }
   }
-  // Invalid character '#'
 }
+```
 
-// ✅ Valid
+✅ **Valid** - Correct parameter syntax:
+```json
 {
   "data/users/:id": {
-    ...
+    "GET": {
+      "nameResponse": "success",
+      "responses": []
+    }
   }
-  // Valid parameter syntax
 }
 ```
 
@@ -500,24 +507,30 @@ These errors occur when HTTP method definitions are invalid:
 
 **Example:**
 
+❌ **Invalid** - Lowercase method, should be uppercase:
 ```json
-// ❌ Invalid
 {
   "data/users": {
     "get": {
-      ...
+      "nameResponse": "success",
+      "responses": []
     }
-    // Lowercase, should be "GET"
   }
 }
+```
 
-// ✅ Valid
+✅ **Valid** - Uppercase method:
+```json
 {
   "data/users": {
     "GET": {
       "nameResponse": "success",
       "responses": [
-        ...
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {}
+        }
       ]
     }
   }
@@ -539,16 +552,16 @@ These errors occur when individual response objects are invalid:
 
 **Example:**
 
+❌ **Invalid** - Invalid statusCode and missing body:
 ```json
-// ❌ Invalid
 {
   "name": "success",
   "statusCode": "not-a-number"
-  // Invalid
-  // Missing "body"
 }
+```
 
-// ✅ Valid
+✅ **Valid** - Valid statusCode and body included:
+```json
 {
   "name": "success",
   "statusCode": "200",
