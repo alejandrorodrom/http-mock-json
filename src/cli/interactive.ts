@@ -10,7 +10,7 @@ export const interactive = () => {
 
   mock
     .name('mock-server')
-    .version('1.6.0', '-v, --version', 'Output the version number')
+    .version('1.6.1', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.');
 
@@ -22,13 +22,21 @@ export const interactive = () => {
       ''
     )
     .option(
-      '-m, --mock',
+      '-m, --mock [value]',
       'Create a first mock.',
+      (value) => {
+        if (value === undefined || value === null) return true;
+        return value === 'true' || value === '1';
+      },
       true
     )
     .option(
-      '-s, --script',
+      '-s, --script [value]',
       'Add script to start the mock in the package.json file',
+      (value) => {
+        if (value === undefined || value === null) return true;
+        return value === 'true' || value === '1';
+      },
       true
     )
     .description('Create the folder that will contain the mocks.')
