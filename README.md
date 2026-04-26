@@ -1,4 +1,6 @@
-# HTTP MOCK JSON
+<p align="center">
+  <img src="assets/title.png" alt="http-mock-json" width="800" />
+</p>
 
 ![npm version](https://img.shields.io/npm/v/http-mock-json?style=flat-square)
 ![npm downloads](https://img.shields.io/npm/dm/http-mock-json?style=flat-square)
