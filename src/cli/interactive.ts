@@ -85,7 +85,7 @@ export const interactive = () => {
 
   mock
     .command('add')
-    .requiredOption(
+    .option(
       '-p, --path <path>',
       'Indicates where the mocks folder is located',
       ''
