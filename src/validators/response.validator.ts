@@ -1,7 +1,58 @@
 import { RawMockResponse } from '../interfaces/data.interface';
-import { hasProperty, isExisting, isObject, isValidNumber } from '../scripts/guards.script';
+import { hasProperty, isEmpty, isExisting, isObject, isValidNumber } from '../scripts/guards.script';
 import { VALID_STATUS_CODES } from '../constants/validation.constant';
 import { LocalIssue, ResponseValidationResult } from '../types/validation.type';
+import { validateDelay } from './delay.validator';
+
+const validateMatch = (
+  endpoint: string,
+  method: string,
+  match: unknown
+): LocalIssue[] => {
+  const errors: LocalIssue[] = [];
+
+  if (!isObject(match)) {
+    errors.push({
+      endpoint,
+      method,
+      message: 'The "match" property must be an object'
+    });
+
+    return errors;
+  }
+
+  const matchObject = match as Record<string, unknown>;
+  const hasQuery = hasProperty(matchObject, 'query');
+  const hasBody = hasProperty(matchObject, 'body');
+
+  if (!hasQuery && !hasBody) {
+    errors.push({
+      endpoint,
+      method,
+      message: 'The "match" property must include "query" and/or "body"'
+    });
+
+    return errors;
+  }
+
+  if (hasQuery) {
+    if (!isObject(matchObject.query)) {
+      errors.push({
+        endpoint,
+        method,
+        message: 'The "match.query" property must be an object'
+      });
+    } else if (isEmpty(matchObject.query)) {
+      errors.push({
+        endpoint,
+        method,
+        message: 'The "match.query" property must not be empty'
+      });
+    }
+  }
+
+  return errors;
+};
 
 export const validateResponse = (
   endpoint: string,
@@ -67,6 +118,14 @@ export const validateResponse = (
     });
   }
 
+  if (isExisting(response.delay)) {
+    errors.push(...validateDelay(endpoint, method, response.delay, 'delay'));
+  }
+
+  if (isExisting(response.match)) {
+    errors.push(...validateMatch(endpoint, method, response.match));
+  }
+
   if (!isExisting(response.headers)) {
     return { errors, warnings };
   }
@@ -81,6 +140,3 @@ export const validateResponse = (
 
   return { errors, warnings };
 };
-
-
-

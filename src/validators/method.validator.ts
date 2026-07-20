@@ -2,6 +2,7 @@ import { RawMockMethod, RawMockResponse } from '../interfaces/data.interface';
 import { isArray, isEmpty, isExisting, isObject } from '../scripts/guards.script';
 import { VALID_HTTP_METHODS } from '../constants/validation.constant';
 import { LocalIssue, MethodValidationResult } from '../types/validation.type';
+import { validateDelay } from './delay.validator';
 
 export const validateMethod = (
   endpoint: string,
@@ -35,6 +36,10 @@ export const validateMethod = (
       method,
       message: 'Missing property "nameResponse"'
     });
+  }
+
+  if (isExisting(methodData.delay)) {
+    errors.push(...validateDelay(endpoint, method, methodData.delay));
   }
 
   if (!isExisting(methodData.responses)) {

@@ -30,6 +30,8 @@
 - **Automatic Validation** - Comprehensive validation system prevents errors before they happen
 - **Hot Reload** - Watch mode automatically restarts server on file changes
 - **Multiple Responses** - Simulate different scenarios (success, error, etc.) for the same endpoint
+- **Request Matching** - Select responses by query params and/or request body
+- **Response Delay** - Simulate latency per method or per response
 - **Type Safe** - Built with TypeScript for better developer experience
 - **RESTful Support** - Full support for GET, POST, PUT, PATCH, DELETE methods
 - **JSON Based** - Simple JSON files, no complex configuration needed
@@ -112,12 +114,17 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    |--------------|----------|----------------|------------------------------------------|----------------------------------------------------------------------------|
    | endpoint     | ✅       | string         | `data/animals`, `data/animal/:parameter` | API route. Allowed characters: letters, numbers, "-", "_", ".", "~", "/", and parameters like ":id" |
    | HTTP Method  | ✅       | string         | `GET`, `POST`, `PUT`, `PATCH`, `DELETE`  | HTTP verb (must be uppercase)                                              |
-   | nameResponse | ✅       | string         | `success`, `error`, `error-401`          | Response name that the mock will use (must exist in responses array)      |
+   | nameResponse | ✅       | string         | `success`, `error`, `error-401`          | Fallback response when no `match` applies (must exist in responses array) |
+   | delay        | ❌       | number         | `300`                                    | Default latency in ms for all responses of this method (overridable per response) |
    | responses    | ✅       | array          |                                          | A mock can have multiple responses (array), each identified with a `name`. |
    | name         | ✅       | string         |                                          | Response name (unique within the responses array)                          |
    | statusCode   | ✅       | string/number  | `200`, `"200"`, `404`, `"404"`          | HTTP Status Codes (validated, warnings for non-standard codes)            |
    | headers      | ❌       | object         | `{ "Content-Type": "application/json" }`  | Headers in json format (optional)                                          |
-   | body         | ✅       | any            |                                          | Response in json format. Can be `null`, object, array, string, number, or boolean |
+   | body         | ✅       | any            |                                          | Response payload. Can be `null`, object, array, string, number, or boolean |
+   | match        | ❌       | object         | `{ "query": { "status": "active" } }`    | Request matching rules (`query` and/or `body`). First match wins           |
+   | match.query  | ❌       | object         | `{ "page": "1" }`                        | Partial match against request query params                                 |
+   | match.body   | ❌       | any            | `{ "email": "a@b.com" }`                 | Partial match against request body                                         |
+   | delay        | ❌       | number         | `500`                                    | Latency in ms for this response (overrides method-level `delay`)           |
 
 5. Edit the mock file to add your response data.
 
@@ -243,7 +250,8 @@ When you run `mock-server start`, the system automatically validates in this ord
 3. **HTTP methods**: Validates that only valid HTTP methods are used (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`)
 4. **Response structure**: Checks that all required fields are present (`name`, `statusCode`, `body`)
 5. **Response matching**: Verifies that `nameResponse` references exist in the responses array
-6. **JSON structure**: Ensures files contain valid JSON objects
+6. **Optional match/delay**: Validates `match.query` / `match.body` and non-negative `delay` values
+7. **JSON structure**: Ensures files contain valid JSON objects
 
 ### Error Handling
 
@@ -462,6 +470,102 @@ This example shows how to create multiple responses for the same endpoint, allow
 }
    ```
 
+### Example 5: Match by query params and delay
+
+When a request arrives, responses with `match` are evaluated in order. The first match wins.
+If nothing matches, the server falls back to `nameResponse`.
+
+- Method-level `delay` applies to every response unless a response defines its own `delay`.
+- `match.query` is a partial match: all listed keys must be present with the same value.
+
+```json
+{
+  "api/search": {
+    "GET": {
+      "nameResponse": "default",
+      "delay": 100,
+      "responses": [
+        {
+          "name": "active",
+          "statusCode": 200,
+          "delay": 300,
+          "match": {
+            "query": {
+              "status": "active"
+            }
+          },
+          "body": {
+            "results": [{ "id": 1, "status": "active" }]
+          }
+        },
+        {
+          "name": "default",
+          "statusCode": 200,
+          "body": {
+            "results": []
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+- `GET /api/search?status=active` → `active` (after 300ms)
+- `GET /api/search` → `default` (after 100ms)
+
+### Example 6: Match by request body
+
+`match.body` does a partial deep match against the JSON request body.
+
+```json
+{
+  "api/login": {
+    "POST": {
+      "nameResponse": "invalid",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "email": "admin@example.com",
+              "password": "secret"
+            }
+          },
+          "body": {
+            "token": "mock-jwt-token"
+          }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 401,
+          "body": {
+            "message": "Invalid credentials"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+- `POST /api/login` with `{ "email": "admin@example.com", "password": "secret" }` → `success`
+- Any other body → `invalid` (fallback via `nameResponse`)
+
+You can combine both in the same response:
+
+```json
+{
+  "match": {
+    "query": { "source": "web" },
+    "body": { "role": "admin" }
+  }
+}
+```
+
+Both conditions must match.
+
 ---
 
 ## Troubleshooting 🔧
@@ -538,6 +642,8 @@ These errors occur when HTTP method definitions are invalid:
 | `The "responses" property must be an array`                         | `responses` is not an array                          | Change `responses` to an array format `[]`                               |
 | `The responses array is empty`                                      | `responses` array has no items                       | Add at least one response object to the array                            |
 | `The "nameResponse" "X" does not exist in responses`                | `nameResponse` value doesn't match any response name | Ensure `nameResponse` matches a `name` in the responses array            |
+| `The "delay" "X" is not a valid number`                             | Method-level `delay` is not a number                 | Use a number of milliseconds: `"delay": 300`                             |
+| `The "delay" must be greater than or equal to 0`                    | Method-level `delay` is negative                     | Use `0` or a positive number                                             |
 
 **Example:**
 
@@ -583,6 +689,12 @@ These errors occur when individual response objects are invalid:
 | `The "statusCode" "X" is not a valid number` | `statusCode` is not a valid number      | Use a number or string number: `200`, `"200"`, `404`, `"404"` |
 | `Missing property "body"`                    | Response is missing `body` property     | Add `"body": {}`, `"body": null`, or any valid JSON value     |
 | `The "headers" property must be an object`   | `headers` is not an object              | If provided, `headers` must be an object: `"headers": {}`     |
+| `The "delay" "X" is not a valid number`      | Response-level `delay` is not a number  | Use a number of milliseconds: `"delay": 500`                  |
+| `The "delay" must be greater than or equal to 0` | Response-level `delay` is negative  | Use `0` or a positive number                                  |
+| `The "match" property must be an object`     | `match` is not an object                | Use `"match": { "query": {...} }` and/or `"body": {...}`      |
+| `The "match" property must include "query" and/or "body"` | `match` is empty             | Add at least `"query"` or `"body"` inside `match`             |
+| `The "match.query" property must be an object` | `match.query` is not an object        | Use an object of query keys/values: `"query": { "page": "1" }` |
+| `The "match.query" property must not be empty` | `match.query` is `{}`                 | Add at least one query key/value to match                      |
 
 **Example:**
 

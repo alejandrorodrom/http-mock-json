@@ -1,21 +1,38 @@
 import { JsonValue } from '../types/json.type';
 
+export interface MockMatch {
+  query?: Record<string, JsonValue>;
+  body?: JsonValue;
+}
+
+export interface MockResponseConfig {
+  name: string;
+  status: number;
+  headers: Record<string, string>;
+  body: JsonValue;
+  delay?: number;
+  match?: MockMatch;
+}
+
 export interface MockHttp {
   route: string;
   method: string;
-  status: string;
-  headers: Record<string, string>;
-  response: JsonValue;
+  nameResponse: string;
+  delay?: number;
+  responses: MockResponseConfig[];
 }
 
 export interface RawMockResponse {
   name: string;
-  statusCode: string;
+  statusCode: string | number;
   headers?: Record<string, string>;
   body: unknown;
+  delay?: number;
+  match?: MockMatch;
 }
 
 export interface RawMockMethod {
   nameResponse: string;
+  delay?: number;
   responses: RawMockResponse[];
 }

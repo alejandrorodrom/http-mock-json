@@ -10,6 +10,7 @@ import { validateEndpoint } from '../../../validators/endpoint.validator';
 import { validateMethod } from '../../../validators/method.validator';
 import { validateResponse } from '../../../validators/response.validator';
 import { JsonValue } from '../../../types/json.type';
+import { MockResponseConfig } from '../../../interfaces/data.interface';
 
 export const processFile = (
   file: string,
@@ -52,29 +53,38 @@ export const processFile = (
           addIssues(warningsByFile, file, methodResult.warnings);
 
           if (isObject(methodData) && methodData.responses) {
+            let hasResponseErrors = false;
+
             for (const response of methodData.responses) {
               const responseResult = validateResponse(route, method, response);
 
               addIssues(errorsByFile, file, responseResult.errors);
               addIssues(warningsByFile, file, responseResult.warnings);
+
+              if (!isEmpty(responseResult.errors)) {
+                hasResponseErrors = true;
+              }
             }
 
-            if (isEmpty(methodResult.errors)) {
-              const selectedResponse = methodData.responses.find(
-                response => response.name === methodData.nameResponse
-              );
+            if (isEmpty(methodResult.errors) && !hasResponseErrors) {
+              const responses: MockResponseConfig[] = methodData.responses.map(response => ({
+                name: response.name,
+                status: Number(response.statusCode),
+                headers: response.headers ?? {},
+                body: response.body as JsonValue,
+                delay: response.delay !== undefined ? Number(response.delay) : undefined,
+                match: response.match
+              }));
 
-              if (selectedResponse) {
-                apis.push(
-                  new Api({
-                    route: route,
-                    method: method,
-                    status: selectedResponse.statusCode,
-                    headers: selectedResponse.headers ?? {},
-                    response: selectedResponse.body as JsonValue
-                  })
-                );
-              }
+              apis.push(
+                new Api({
+                  route: route,
+                  method: method,
+                  nameResponse: methodData.nameResponse,
+                  delay: methodData.delay !== undefined ? Number(methodData.delay) : undefined,
+                  responses
+                })
+              );
             }
           }
         }

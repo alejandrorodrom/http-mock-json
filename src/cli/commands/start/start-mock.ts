@@ -5,6 +5,8 @@ import { logApi, logError } from '../../../scripts/log.script';
 import { Server } from 'node:net';
 import cors from 'cors';
 import { validatePortAvailable } from './check-port';
+import { selectResponse } from '../../../scripts/match.script';
+import { resolveDelay, sleep } from '../../../scripts/delay.script';
 
 export const startMock = async (
   { port, folderPath }: StartMock
@@ -17,6 +19,8 @@ export const startMock = async (
   app.use(cors({
     exposedHeaders: '*'
   }));
+  app.use(express.json({ strict: false }));
+  app.use(express.urlencoded({ extended: true }));
 
   const data = getMocksData(folderPath);
 
@@ -44,8 +48,15 @@ export const startMock = async (
 
   data.forEach(value => {
     logApi(value);
-    app[value.method](value.route, (_req: Request, res: Response) => {
-      res.set(value.headers).status(value.status).json(value.response);
+    app[value.method](value.route, async (req: Request, res: Response) => {
+      const selectedResponse = selectResponse(value.responses, value.nameResponse, req);
+      const delay = resolveDelay(selectedResponse.delay, value.delay);
+
+      if (delay > 0) {
+        await sleep(delay);
+      }
+
+      res.set(selectedResponse.headers).status(selectedResponse.status).json(selectedResponse.body);
     });
   });
 

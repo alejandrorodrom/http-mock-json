@@ -1,5 +1,4 @@
-import { MockHttp } from '../interfaces/data.interface';
-import { JsonValue } from '../types/json.type';
+import { MockHttp, MockResponseConfig } from '../interfaces/data.interface';
 import { HttpVerbs } from '../constants/http-verbs.constant';
 
 type httpVerbs = HttpVerbs.get | HttpVerbs.post | HttpVerbs.put | HttpVerbs.patch | HttpVerbs.delete;
@@ -7,16 +6,16 @@ type httpVerbs = HttpVerbs.get | HttpVerbs.post | HttpVerbs.put | HttpVerbs.patc
 export class Api {
   route: string;
   method: httpVerbs;
-  status: number;
-  headers: Record<string, string>;
-  response: JsonValue;
+  nameResponse: string;
+  delay?: number;
+  responses: MockResponseConfig[];
 
   constructor(data: MockHttp) {
     this.route = `/${data.route}`;
     this.method = this.getMethod(data.method.toUpperCase());
-    this.status = Number(data.status);
-    this.headers = data.headers ?? {};
-    this.response = data.response;
+    this.nameResponse = data.nameResponse;
+    this.delay = data.delay;
+    this.responses = data.responses;
   }
 
   private getMethod = (method: string): httpVerbs => {
