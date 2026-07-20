@@ -13,7 +13,7 @@ export class Api {
 
   constructor(data: MockHttp) {
     this.route = `/${data.route}`;
-    this.method = this.getMethod(data.method);
+    this.method = this.getMethod(data.method.toUpperCase());
     this.status = Number(data.status);
     this.headers = data.headers ?? {};
     this.response = data.response;
@@ -37,7 +37,7 @@ export class Api {
         return HttpVerbs.delete;
       }
       default: {
-        return HttpVerbs.get;
+        throw new Error(`Unsupported HTTP method: "${method}"`);
       }
     }
   }
