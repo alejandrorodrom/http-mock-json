@@ -49,5 +49,5 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 
-# Directorys
-/mocks
+# Local ad-hoc mocks (optional). E2E fixtures under /mocks are committed.
+# /mocks

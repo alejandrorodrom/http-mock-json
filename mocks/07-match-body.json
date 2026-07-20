@@ -1,0 +1,63 @@
+{
+  "api/login": {
+    "POST": {
+      "nameResponse": "invalid",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "email": "admin@example.com",
+              "password": "secret"
+            }
+          },
+          "body": {
+            "token": "mock-jwt-token"
+          }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 401,
+          "body": {
+            "message": "Invalid credentials"
+          }
+        }
+      ]
+    }
+  },
+  "api/orders": {
+    "POST": {
+      "nameResponse": "validation-error",
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": 201,
+          "match": {
+            "body": {
+              "customerId": 1,
+              "items": [{ "sku": "SKU-100", "qty": 2 }]
+            }
+          },
+          "headers": {
+            "Location": "/api/orders/20"
+          },
+          "body": {
+            "id": 20,
+            "status": "created"
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "message": "Validation failed",
+            "errors": [
+              { "field": "customerId", "message": "Required" }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "data/animals": {
+    "GET": {
+      "nameResponse": "AnimalsError",
+      "responses": [
+        {
+          "name": "AnimalsList",
+          "statusCode": "200",
+          "body": {
+            "animals": [
+              { "id": 1, "name": "Lion" },
+              { "id": 2, "name": "Tiger" }
+            ]
+          }
+        },
+        {
+          "name": "AnimalsError",
+          "statusCode": "404",
+          "body": {
+            "message": "No animals found"
+          }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "AnimalsError",
+      "responses": [
+        {
+          "name": "AnimalsSave",
+          "statusCode": "201",
+          "body": {
+            "id": 3,
+            "name": "Eagle",
+            "created": true
+          }
+        },
+        {
+          "name": "AnimalsError",
+          "statusCode": "404",
+          "body": {
+            "message": "Could not save animal"
+          }
+        }
+      ]
+    }
+  }
+}

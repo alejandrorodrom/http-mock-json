@@ -1,0 +1,60 @@
+{
+  "data/users#id": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {
+            "message": "Invalid path character #"
+          }
+        }
+      ]
+    }
+  },
+  "data/users?id=1": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {
+            "message": "Invalid path character ?"
+          }
+        }
+      ]
+    }
+  },
+  "/api/leading-slash": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {
+            "message": "Leading slash is invalid"
+          }
+        }
+      ]
+    }
+  },
+  "api/users/:user-id": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {
+            "message": "Hyphen is not allowed inside :param names"
+          }
+        }
+      ]
+    }
+  },
+  "not-an-object-endpoint": "this-must-be-an-object",
+  "empty-methods-endpoint": {}
+}

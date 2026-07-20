@@ -1,0 +1,162 @@
+{
+  "api/auth/login": {
+    "POST": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "body": {
+              "email": "user@example.com",
+              "password": "password123"
+            }
+          },
+          "headers": {
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock",
+            "Set-Cookie": "session=abc123; HttpOnly; Secure"
+          },
+          "body": {
+            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock",
+            "user": {
+              "id": 1,
+              "email": "user@example.com",
+              "name": "Test User",
+              "role": "admin"
+            },
+            "expiresIn": 3600
+          }
+        },
+        {
+          "name": "invalid-credentials",
+          "statusCode": "401",
+          "headers": {
+            "WWW-Authenticate": "Bearer"
+          },
+          "body": {
+            "message": "Invalid email or password",
+            "code": "INVALID_CREDENTIALS"
+          }
+        }
+      ]
+    }
+  },
+  "api/auth/register": {
+    "POST": {
+      "nameResponse": "created",
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": "201",
+          "body": {
+            "id": 5,
+            "email": "newuser@example.com",
+            "name": "New User",
+            "createdAt": "2024-01-15T12:00:00Z"
+          }
+        },
+        {
+          "name": "email-exists",
+          "statusCode": "409",
+          "body": {
+            "message": "Email already registered",
+            "code": "EMAIL_EXISTS"
+          }
+        },
+        {
+          "name": "weak-password",
+          "statusCode": "400",
+          "body": {
+            "message": "Password does not meet requirements",
+            "code": "WEAK_PASSWORD"
+          }
+        }
+      ]
+    }
+  },
+  "api/auth/logout": {
+    "POST": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "headers": {
+            "Set-Cookie": "session=; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
+          },
+          "body": {
+            "message": "Logged out successfully"
+          }
+        },
+        {
+          "name": "unauthorized",
+          "statusCode": "401",
+          "body": {
+            "message": "Invalid or expired token",
+            "code": "UNAUTHORIZED"
+          }
+        }
+      ]
+    }
+  },
+  "api/auth/me": {
+    "GET": {
+      "nameResponse": "authenticated",
+      "responses": [
+        {
+          "name": "authenticated",
+          "statusCode": "200",
+          "body": {
+            "id": 1,
+            "email": "user@example.com",
+            "name": "Test User",
+            "role": "admin",
+            "permissions": ["read", "write", "delete"]
+          }
+        },
+        {
+          "name": "unauthorized",
+          "statusCode": "401",
+          "body": {
+            "message": "Authentication required",
+            "code": "UNAUTHORIZED"
+          }
+        },
+        {
+          "name": "forbidden",
+          "statusCode": "403",
+          "body": {
+            "message": "Access denied",
+            "code": "FORBIDDEN"
+          }
+        }
+      ]
+    }
+  },
+  "api/auth/refresh": {
+    "POST": {
+      "nameResponse": "refreshed",
+      "responses": [
+        {
+          "name": "refreshed",
+          "statusCode": "200",
+          "headers": {
+            "Authorization": "Bearer new_token_here"
+          },
+          "body": {
+            "token": "new_token_here",
+            "expiresIn": 3600
+          }
+        },
+        {
+          "name": "invalid-refresh-token",
+          "statusCode": "401",
+          "body": {
+            "message": "Invalid refresh token",
+            "code": "INVALID_REFRESH_TOKEN"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "api/case/lowercase": {
+    "get": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {
+            "message": "Lowercase method key is accepted (normalized to GET)",
+            "method": "get"
+          }
+        }
+      ]
+    },
+    "post": {
+      "nameResponse": "created",
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": "201",
+          "body": {
+            "message": "Lowercase method key is accepted (normalized to POST)",
+            "method": "post"
+          }
+        }
+      ]
+    },
+    "put": {
+      "nameResponse": "updated",
+      "responses": [
+        {
+          "name": "updated",
+          "statusCode": "200",
+          "body": {
+            "message": "Lowercase method key is accepted (normalized to PUT)",
+            "method": "put"
+          }
+        }
+      ]
+    },
+    "patch": {
+      "nameResponse": "patched",
+      "responses": [
+        {
+          "name": "patched",
+          "statusCode": "200",
+          "body": {
+            "message": "Lowercase method key is accepted (normalized to PATCH)",
+            "method": "patch"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "nameResponse": "deleted",
+      "responses": [
+        {
+          "name": "deleted",
+          "statusCode": "204",
+          "body": null
+        }
+      ]
+    }
+  },
+  "api/case/mixed": {
+    "Get": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {
+            "message": "Mixed-case method key is accepted (normalized to GET)",
+            "method": "Get"
+          }
+        }
+      ]
+    },
+    "PoSt": {
+      "nameResponse": "created",
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": 201,
+          "body": {
+            "message": "Mixed-case method key is accepted (normalized to POST)",
+            "method": "PoSt"
+          }
+        }
+      ]
+    }
+  }
+}

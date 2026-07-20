@@ -1,0 +1,73 @@
+{
+  "api/v1/users-list": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "note": "Hyphen allowed in path segments",
+            "items": []
+          }
+        }
+      ]
+    }
+  },
+  "api/v1/user_profile": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": "200",
+          "body": {
+            "note": "Underscore allowed in path segments"
+          }
+        }
+      ]
+    }
+  },
+  "api/v1/file.name": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "note": "Dot allowed in path segments"
+          }
+        }
+      ]
+    }
+  },
+  "api/v1/cache~key": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": "200",
+          "body": {
+            "note": "Tilde allowed in path segments"
+          }
+        }
+      ]
+    }
+  },
+  "api/v1/items/:item_id": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "note": "Parameter names allow letters, numbers and underscore"
+          }
+        }
+      ]
+    }
+  }
+}

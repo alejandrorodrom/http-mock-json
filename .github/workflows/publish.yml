@@ -19,7 +19,17 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  e2e:
+    name: E2E
+    uses: ./.github/workflows/e2e.yml
+
   publish:
+    name: Publish
+    needs: [ci, e2e]
     runs-on: ubuntu-latest
     environment: production
     steps:

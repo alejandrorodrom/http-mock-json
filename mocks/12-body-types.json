@@ -1,0 +1,152 @@
+{
+  "api/types/string": {
+    "GET": {
+      "nameResponse": "string",
+      "responses": [
+        {
+          "name": "string",
+          "statusCode": "200",
+          "body": "This is a plain string response"
+        }
+      ]
+    }
+  },
+  "api/types/number": {
+    "GET": {
+      "nameResponse": "number",
+      "responses": [
+        {
+          "name": "number",
+          "statusCode": 200,
+          "body": 42
+        },
+        {
+          "name": "decimal",
+          "statusCode": 200,
+          "body": 3.14159
+        },
+        {
+          "name": "zero",
+          "statusCode": 200,
+          "body": 0
+        },
+        {
+          "name": "negative",
+          "statusCode": 200,
+          "body": -100
+        }
+      ]
+    }
+  },
+  "api/types/boolean": {
+    "GET": {
+      "nameResponse": "true",
+      "responses": [
+        {
+          "name": "true",
+          "statusCode": "200",
+          "body": true
+        },
+        {
+          "name": "false",
+          "statusCode": "200",
+          "body": false
+        }
+      ]
+    }
+  },
+  "api/types/null": {
+    "GET": {
+      "nameResponse": "null",
+      "responses": [
+        {
+          "name": "null",
+          "statusCode": 200,
+          "body": null
+        }
+      ]
+    }
+  },
+  "api/types/array": {
+    "GET": {
+      "nameResponse": "numbers",
+      "responses": [
+        {
+          "name": "numbers",
+          "statusCode": "200",
+          "body": [1, 2, 3, 4, 5]
+        },
+        {
+          "name": "strings",
+          "statusCode": "200",
+          "body": ["apple", "banana", "cherry"]
+        },
+        {
+          "name": "mixed",
+          "statusCode": "200",
+          "body": [1, "two", true, null, { "nested": "object" }]
+        },
+        {
+          "name": "empty",
+          "statusCode": "200",
+          "body": []
+        },
+        {
+          "name": "objects",
+          "statusCode": "200",
+          "body": [
+            { "id": 1, "name": "Item 1" },
+            { "id": 2, "name": "Item 2" }
+          ]
+        }
+      ]
+    }
+  },
+  "api/types/nested": {
+    "GET": {
+      "nameResponse": "deep",
+      "responses": [
+        {
+          "name": "deep",
+          "statusCode": 200,
+          "body": {
+            "level1": {
+              "level2": {
+                "level3": {
+                  "value": "Deep nested object",
+                  "items": [
+                    { "a": 1, "b": 2 },
+                    { "c": 3, "d": 4 }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "api/types/complex": {
+    "GET": {
+      "nameResponse": "complex",
+      "responses": [
+        {
+          "name": "complex",
+          "statusCode": "200",
+          "body": {
+            "string": "text",
+            "number": 123,
+            "boolean": true,
+            "null": null,
+            "array": [1, "two", null],
+            "object": {
+              "nested": {
+                "deep": "value"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

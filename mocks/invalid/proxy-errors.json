@@ -1,0 +1,94 @@
+{
+  "api/invalid/proxy-url": {
+    "GET": {
+      "nameResponse": "live",
+      "responses": [
+        {
+          "name": "live",
+          "proxy": "not-a-url"
+        }
+      ]
+    }
+  },
+  "api/invalid/proxy-ftp": {
+    "GET": {
+      "nameResponse": "live",
+      "responses": [
+        {
+          "name": "live",
+          "proxy": "ftp://files.example.com"
+        }
+      ]
+    }
+  },
+  "api/invalid/proxy-shape": {
+    "GET": {
+      "nameResponse": "live",
+      "responses": [
+        {
+          "name": "live",
+          "proxy": 42
+        }
+      ]
+    }
+  },
+  "api/invalid/proxy-missing-target": {
+    "GET": {
+      "nameResponse": "live",
+      "responses": [
+        {
+          "name": "live",
+          "proxy": {
+            "path": "/v2/users"
+          }
+        }
+      ]
+    }
+  },
+  "api/invalid/proxy-invalid-target": {
+    "GET": {
+      "nameResponse": "live",
+      "responses": [
+        {
+          "name": "live",
+          "proxy": {
+            "target": "ws://socket.example.com"
+          }
+        }
+      ]
+    }
+  },
+  "api/invalid/proxy-path-not-string": {
+    "GET": {
+      "nameResponse": "live",
+      "responses": [
+        {
+          "name": "live",
+          "proxy": {
+            "target": "https://api.example.com",
+            "path": 123
+          }
+        }
+      ]
+    }
+  },
+  "api/invalid/proxy-true-missing-status-ok": {
+    "GET": {
+      "nameResponse": "live",
+      "proxy": "https://jsonplaceholder.typicode.com",
+      "responses": [
+        {
+          "name": "live",
+          "proxy": true
+        },
+        {
+          "name": "broken-sibling",
+          "proxy": {
+            "target": "http://",
+            "path": false
+          }
+        }
+      ]
+    }
+  }
+}

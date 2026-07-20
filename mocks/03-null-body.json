@@ -1,0 +1,63 @@
+{
+  "api/users/:id": {
+    "DELETE": {
+      "nameResponse": "deleted",
+      "responses": [
+        {
+          "name": "deleted",
+          "statusCode": "204",
+          "body": null
+        },
+        {
+          "name": "not-found",
+          "statusCode": "404",
+          "body": {
+            "message": "User not found"
+          }
+        }
+      ]
+    }
+  },
+  "api/no-content": {
+    "POST": {
+      "nameResponse": "accepted",
+      "responses": [
+        {
+          "name": "accepted",
+          "statusCode": "204",
+          "body": null
+        }
+      ]
+    },
+    "PUT": {
+      "nameResponse": "updated",
+      "responses": [
+        {
+          "name": "updated",
+          "statusCode": "204",
+          "body": null
+        }
+      ]
+    },
+    "GET": {
+      "nameResponse": "null-200",
+      "responses": [
+        {
+          "name": "null-200",
+          "statusCode": 200,
+          "body": null
+        },
+        {
+          "name": "empty-object",
+          "statusCode": 200,
+          "body": {}
+        },
+        {
+          "name": "empty-array",
+          "statusCode": 200,
+          "body": []
+        }
+      ]
+    }
+  }
+}

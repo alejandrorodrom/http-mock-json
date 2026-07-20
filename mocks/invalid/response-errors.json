@@ -1,0 +1,94 @@
+{
+  "api/invalid/response-not-object": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        "not-an-object"
+      ]
+    }
+  },
+  "api/invalid/missing-name": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "statusCode": "200",
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/missing-statusCode": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/statusCode-not-number": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "not-a-number",
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/missing-body": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200"
+        }
+      ]
+    }
+  },
+  "api/invalid/headers-not-object": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "headers": "Content-Type: application/json",
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/response-delay": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "delay": "fast",
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/response-delay-negative": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "delay": -5,
+          "body": {}
+        }
+      ]
+    }
+  }
+}

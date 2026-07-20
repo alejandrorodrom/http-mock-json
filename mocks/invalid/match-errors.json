@@ -1,0 +1,101 @@
+{
+  "api/invalid/match-not-object": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": "params=id:1",
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-empty": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {},
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-params-not-object": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "params": "id=1"
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-params-empty": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "params": {}
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-query-not-object": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "query": ["page=1"]
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-query-empty": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "query": {}
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-array": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": [],
+          "body": {}
+        }
+      ]
+    }
+  }
+}

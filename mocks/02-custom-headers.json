@@ -1,0 +1,54 @@
+{
+  "api/users": {
+    "GET": {
+      "nameResponse": "UsersList",
+      "responses": [
+        {
+          "name": "UsersList",
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "application/json",
+            "X-Custom-Header": "custom-value",
+            "X-Total-Count": "2",
+            "Cache-Control": "no-cache"
+          },
+          "body": {
+            "users": [
+              { "id": 1, "name": "John" },
+              { "id": 2, "name": "Jane" }
+            ]
+          }
+        },
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "headers": {
+            "WWW-Authenticate": "Bearer realm=\"API\""
+          },
+          "body": {
+            "message": "Authentication required"
+          }
+        }
+      ]
+    }
+  },
+  "api/cors-demo": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": "200",
+          "headers": {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization"
+          },
+          "body": {
+            "message": "CORS headers example"
+          }
+        }
+      ]
+    }
+  }
+}

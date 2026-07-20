@@ -1,0 +1,273 @@
+{
+  "api/status/100": {
+    "GET": {
+      "nameResponse": "continue",
+      "responses": [
+        {
+          "name": "continue",
+          "statusCode": 100,
+          "body": { "message": "Continue" }
+        }
+      ]
+    }
+  },
+  "api/status/101": {
+    "GET": {
+      "nameResponse": "switching",
+      "responses": [
+        {
+          "name": "switching",
+          "statusCode": "101",
+          "body": { "message": "Switching Protocols" }
+        }
+      ]
+    }
+  },
+  "api/status/200": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": { "message": "OK" }
+        }
+      ]
+    }
+  },
+  "api/status/201": {
+    "POST": {
+      "nameResponse": "created",
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": "201",
+          "body": { "message": "Created", "id": 1 }
+        }
+      ]
+    }
+  },
+  "api/status/202": {
+    "POST": {
+      "nameResponse": "accepted",
+      "responses": [
+        {
+          "name": "accepted",
+          "statusCode": 202,
+          "body": { "message": "Accepted", "jobId": "job-1" }
+        }
+      ]
+    }
+  },
+  "api/status/204": {
+    "DELETE": {
+      "nameResponse": "no-content",
+      "responses": [
+        {
+          "name": "no-content",
+          "statusCode": "204",
+          "body": null
+        }
+      ]
+    }
+  },
+  "api/status/300": {
+    "GET": {
+      "nameResponse": "multiple",
+      "responses": [
+        {
+          "name": "multiple",
+          "statusCode": 300,
+          "body": { "message": "Multiple Choices" }
+        }
+      ]
+    }
+  },
+  "api/status/301": {
+    "GET": {
+      "nameResponse": "moved",
+      "responses": [
+        {
+          "name": "moved",
+          "statusCode": "301",
+          "headers": {
+            "Location": "/api/status/200"
+          },
+          "body": { "message": "Moved Permanently" }
+        }
+      ]
+    }
+  },
+  "api/status/302": {
+    "GET": {
+      "nameResponse": "found",
+      "responses": [
+        {
+          "name": "found",
+          "statusCode": 302,
+          "headers": {
+            "Location": "/api/status/200"
+          },
+          "body": { "message": "Found" }
+        }
+      ]
+    }
+  },
+  "api/status/304": {
+    "GET": {
+      "nameResponse": "not-modified",
+      "responses": [
+        {
+          "name": "not-modified",
+          "statusCode": "304",
+          "body": null
+        }
+      ]
+    }
+  },
+  "api/status/400": {
+    "GET": {
+      "nameResponse": "bad-request",
+      "responses": [
+        {
+          "name": "bad-request",
+          "statusCode": 400,
+          "body": { "message": "Bad Request", "code": "BAD_REQUEST" }
+        }
+      ]
+    }
+  },
+  "api/status/401": {
+    "GET": {
+      "nameResponse": "unauthorized",
+      "responses": [
+        {
+          "name": "unauthorized",
+          "statusCode": "401",
+          "headers": {
+            "WWW-Authenticate": "Bearer"
+          },
+          "body": { "message": "Unauthorized", "code": "UNAUTHORIZED" }
+        }
+      ]
+    }
+  },
+  "api/status/403": {
+    "GET": {
+      "nameResponse": "forbidden",
+      "responses": [
+        {
+          "name": "forbidden",
+          "statusCode": 403,
+          "body": { "message": "Forbidden", "code": "FORBIDDEN" }
+        }
+      ]
+    }
+  },
+  "api/status/404": {
+    "GET": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "not-found",
+          "statusCode": "404",
+          "body": { "message": "Not Found", "code": "NOT_FOUND" }
+        }
+      ]
+    }
+  },
+  "api/status/405": {
+    "GET": {
+      "nameResponse": "method-not-allowed",
+      "responses": [
+        {
+          "name": "method-not-allowed",
+          "statusCode": 405,
+          "headers": {
+            "Allow": "POST, PUT"
+          },
+          "body": { "message": "Method Not Allowed", "code": "METHOD_NOT_ALLOWED" }
+        }
+      ]
+    }
+  },
+  "api/status/409": {
+    "GET": {
+      "nameResponse": "conflict",
+      "responses": [
+        {
+          "name": "conflict",
+          "statusCode": "409",
+          "body": { "message": "Conflict", "code": "CONFLICT" }
+        }
+      ]
+    }
+  },
+  "api/status/422": {
+    "GET": {
+      "nameResponse": "unprocessable",
+      "responses": [
+        {
+          "name": "unprocessable",
+          "statusCode": 422,
+          "body": {
+            "message": "Unprocessable Entity",
+            "code": "UNPROCESSABLE_ENTITY",
+            "errors": [{ "field": "email", "message": "Invalid" }]
+          }
+        }
+      ]
+    }
+  },
+  "api/status/500": {
+    "GET": {
+      "nameResponse": "server-error",
+      "responses": [
+        {
+          "name": "server-error",
+          "statusCode": "500",
+          "body": { "message": "Internal Server Error", "code": "INTERNAL_ERROR" }
+        }
+      ]
+    }
+  },
+  "api/status/501": {
+    "GET": {
+      "nameResponse": "not-implemented",
+      "responses": [
+        {
+          "name": "not-implemented",
+          "statusCode": 501,
+          "body": { "message": "Not Implemented", "code": "NOT_IMPLEMENTED" }
+        }
+      ]
+    }
+  },
+  "api/status/502": {
+    "GET": {
+      "nameResponse": "bad-gateway",
+      "responses": [
+        {
+          "name": "bad-gateway",
+          "statusCode": "502",
+          "body": { "message": "Bad Gateway", "code": "BAD_GATEWAY" }
+        }
+      ]
+    }
+  },
+  "api/status/503": {
+    "GET": {
+      "nameResponse": "unavailable",
+      "responses": [
+        {
+          "name": "unavailable",
+          "statusCode": 503,
+          "headers": {
+            "Retry-After": "300"
+          },
+          "body": { "message": "Service Unavailable", "code": "SERVICE_UNAVAILABLE" }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "data/animals/:id": {
+    "GET": {
+      "nameResponse": "AnimalsList",
+      "responses": [
+        {
+          "name": "AnimalsList",
+          "statusCode": "200",
+          "body": {
+            "id": 1,
+            "name": "Lion",
+            "habitat": "Savanna"
+          }
+        },
+        {
+          "name": "AnimalsError",
+          "statusCode": "404",
+          "body": {
+            "message": "Animal not found"
+          }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "AnimalsSave",
+      "responses": [
+        {
+          "name": "AnimalsSave",
+          "statusCode": "201",
+          "body": {
+            "id": 1,
+            "saved": true
+          }
+        },
+        {
+          "name": "AnimalsError",
+          "statusCode": "404",
+          "body": {
+            "message": "Could not save"
+          }
+        }
+      ]
+    },
+    "PUT": {
+      "nameResponse": "updated",
+      "responses": [
+        {
+          "name": "updated",
+          "statusCode": "200",
+          "body": {
+            "id": 1,
+            "name": "Lion Updated"
+          }
+        }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "patched",
+      "responses": [
+        {
+          "name": "patched",
+          "statusCode": "200",
+          "body": {
+            "id": 1,
+            "habitat": "Zoo"
+          }
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "deleted",
+      "responses": [
+        {
+          "name": "deleted",
+          "statusCode": "204",
+          "body": null
+        }
+      ]
+    }
+  },
+  "data/brands": {
+    "GET": {
+      "nameResponse": "BrandsList3",
+      "responses": [
+        {
+          "name": "BrandsList",
+          "statusCode": "200",
+          "body": {
+            "example": "data1"
+          }
+        },
+        {
+          "name": "BrandsList2",
+          "statusCode": "200",
+          "body": {
+            "example": "data2"
+          }
+        },
+        {
+          "name": "BrandsList3",
+          "statusCode": "200",
+          "body": {
+            "example": "data3"
+          }
+        }
+      ]
+    }
+  },
+  "api/products/:productId/reviews/:reviewId": {
+    "GET": {
+      "nameResponse": "found",
+      "responses": [
+        {
+          "name": "found",
+          "statusCode": 200,
+          "body": {
+            "productId": 10,
+            "reviewId": 3,
+            "rating": 5,
+            "comment": "Excellent"
+          }
+        }
+      ]
+    }
+  }
+}

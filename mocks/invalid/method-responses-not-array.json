@@ -1,0 +1,12 @@
+{
+  "api/invalid/responses-not-array": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": {
+        "name": "success",
+        "statusCode": "200",
+        "body": {}
+      }
+    }
+  }
+}

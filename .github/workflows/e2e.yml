@@ -1,21 +1,22 @@
-name: CI
+name: E2E
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
   workflow_call:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: e2e-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  e2e:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -27,4 +28,4 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run build
+      - run: npm run test:e2e

@@ -1,0 +1,59 @@
+{
+  "api/search": {
+    "GET": {
+      "nameResponse": "default",
+      "delay": 100,
+      "responses": [
+        {
+          "name": "active",
+          "statusCode": 200,
+          "delay": 300,
+          "match": {
+            "query": {
+              "status": "active"
+            }
+          },
+          "body": {
+            "results": [{ "id": 1, "status": "active" }]
+          }
+        },
+        {
+          "name": "paginated",
+          "statusCode": 200,
+          "match": {
+            "query": {
+              "page": "2",
+              "limit": "10"
+            }
+          },
+          "body": {
+            "results": [{ "id": 11 }, { "id": 12 }],
+            "page": 2,
+            "limit": 10
+          }
+        },
+        {
+          "name": "instant",
+          "statusCode": 200,
+          "delay": 0,
+          "match": {
+            "query": {
+              "fast": "true"
+            }
+          },
+          "body": {
+            "results": [],
+            "cached": true
+          }
+        },
+        {
+          "name": "default",
+          "statusCode": 200,
+          "body": {
+            "results": []
+          }
+        }
+      ]
+    }
+  }
+}

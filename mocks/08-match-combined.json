@@ -1,0 +1,81 @@
+{
+  "api/accounts/:id": {
+    "PUT": {
+      "nameResponse": "forbidden",
+      "responses": [
+        {
+          "name": "admin-web",
+          "statusCode": 200,
+          "match": {
+            "params": { "id": "1" },
+            "query": { "source": "web" },
+            "body": { "role": "admin" }
+          },
+          "body": {
+            "id": 1,
+            "role": "admin",
+            "source": "web",
+            "updated": true
+          }
+        },
+        {
+          "name": "member-app",
+          "statusCode": 200,
+          "match": {
+            "params": { "id": "2" },
+            "query": { "source": "app" },
+            "body": { "role": "member" }
+          },
+          "body": {
+            "id": 2,
+            "role": "member",
+            "source": "app",
+            "updated": true
+          }
+        },
+        {
+          "name": "forbidden",
+          "statusCode": 403,
+          "body": {
+            "message": "All match conditions required: params.id, query.source, body.role"
+          }
+        }
+      ]
+    }
+  },
+  "api/checkout": {
+    "POST": {
+      "nameResponse": "rejected",
+      "responses": [
+        {
+          "name": "premium-web",
+          "statusCode": 200,
+          "delay": 500,
+          "match": {
+            "query": {
+              "source": "web"
+            },
+            "body": {
+              "plan": "premium",
+              "coupon": "SAVE10"
+            }
+          },
+          "body": {
+            "ok": true,
+            "discount": 10,
+            "plan": "premium",
+            "source": "web"
+          }
+        },
+        {
+          "name": "rejected",
+          "statusCode": 400,
+          "body": {
+            "ok": false,
+            "message": "Checkout rejected"
+          }
+        }
+      ]
+    }
+  }
+}

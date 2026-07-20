@@ -1,0 +1,13 @@
+{
+  "api/proxy-fail": {
+    "GET": {
+      "nameResponse": "fail",
+      "responses": [
+        {
+          "name": "fail",
+          "proxy": "http://127.0.0.1:1"
+        }
+      ]
+    }
+  }
+}

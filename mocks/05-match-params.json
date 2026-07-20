@@ -1,0 +1,43 @@
+{
+  "api/profiles/:id": {
+    "GET": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "found",
+          "statusCode": 200,
+          "match": {
+            "params": {
+              "id": "1"
+            }
+          },
+          "body": {
+            "id": 1,
+            "name": "Juan Pérez"
+          }
+        },
+        {
+          "name": "admin",
+          "statusCode": 200,
+          "match": {
+            "params": {
+              "id": "99"
+            }
+          },
+          "body": {
+            "id": 99,
+            "name": "Admin User",
+            "role": "admin"
+          }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "body": {
+            "message": "User not found"
+          }
+        }
+      ]
+    }
+  }
+}

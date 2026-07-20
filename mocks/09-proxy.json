@@ -1,0 +1,86 @@
+{
+  "users": {
+    "GET": {
+      "nameResponse": "mock",
+      "proxy": "https://jsonplaceholder.typicode.com",
+      "responses": [
+        {
+          "name": "live",
+          "proxy": true,
+          "match": {
+            "query": {
+              "role": "admin"
+            }
+          }
+        },
+        {
+          "name": "rewrite",
+          "proxy": {
+            "target": "https://jsonplaceholder.typicode.com",
+            "path": "/users/1"
+          },
+          "match": {
+            "query": {
+              "source": "billing"
+            }
+          }
+        },
+        {
+          "name": "target-only",
+          "proxy": {
+            "target": "https://jsonplaceholder.typicode.com"
+          },
+          "match": {
+            "query": {
+              "source": "direct"
+            }
+          }
+        },
+        {
+          "name": "url-string",
+          "proxy": "https://jsonplaceholder.typicode.com",
+          "match": {
+            "query": {
+              "source": "string"
+            }
+          }
+        },
+        {
+          "name": "mock",
+          "statusCode": 200,
+          "body": {
+            "users": [
+              { "id": 1, "name": "Mock User" }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "api/orders": {
+    "GET": {
+      "nameResponse": "local",
+      "proxy": {
+        "target": "https://jsonplaceholder.typicode.com"
+      },
+      "responses": [
+        {
+          "name": "upstream",
+          "proxy": true,
+          "match": {
+            "query": {
+              "live": "true"
+            }
+          }
+        },
+        {
+          "name": "local",
+          "statusCode": 200,
+          "body": {
+            "orders": []
+          }
+        }
+      ]
+    }
+  }
+}

@@ -13,6 +13,8 @@
     "dev:init": "npm run build && npm run init",
     "dev:start": "npm run build && npm run start",
     "dev:add": "npm run build && npm run add",
+    "test": "npm run test:e2e",
+    "test:e2e": "node tests/run-e2e.js",
     "prepublish": "npm run build"
   },
   "type": "commonjs",

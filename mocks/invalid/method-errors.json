@@ -1,0 +1,178 @@
+{
+  "api/invalid/method-name": {
+    "OPTIONS": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {
+            "message": "OPTIONS is not a valid mock method"
+          }
+        }
+      ]
+    },
+    "HEAD": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {
+            "message": "HEAD is not a valid mock method"
+          }
+        }
+      ]
+    }
+  },
+  "api/invalid/method-not-object": {
+    "GET": "must-be-object"
+  },
+  "api/invalid/missing-nameResponse": {
+    "GET": {
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/missing-responses": {
+    "GET": {
+      "nameResponse": "success"
+    }
+  },
+  "api/invalid/responses-empty": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": []
+    }
+  },
+  "api/invalid/nameResponse-not-found": {
+    "GET": {
+      "nameResponse": "NotFound",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/method-delay": {
+    "GET": {
+      "nameResponse": "success",
+      "delay": "slow",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/method-delay-negative": {
+    "GET": {
+      "nameResponse": "success",
+      "delay": -10,
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/method-proxy-true": {
+    "GET": {
+      "nameResponse": "success",
+      "proxy": true,
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {
+            "message": "proxy:true is not allowed at method level"
+          }
+        }
+      ]
+    }
+  },
+  "api/invalid/method-proxy-url": {
+    "GET": {
+      "nameResponse": "success",
+      "proxy": "ftp://not-http.example.com",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/method-proxy-shape": {
+    "GET": {
+      "nameResponse": "success",
+      "proxy": 123,
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/method-proxy-missing-target": {
+    "GET": {
+      "nameResponse": "success",
+      "proxy": {
+        "path": "/v2/users"
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/method-proxy-invalid-target": {
+    "GET": {
+      "nameResponse": "success",
+      "proxy": {
+        "target": "ws://socket.example.com"
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/method-proxy-path-not-string": {
+    "GET": {
+      "nameResponse": "success",
+      "proxy": {
+        "target": "https://api.example.com",
+        "path": 123
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "body": {}
+        }
+      ]
+    }
+  }
+}

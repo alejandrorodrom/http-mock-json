@@ -1,0 +1,14 @@
+{
+  "api/broken": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": "200",
+          "body": {
+            "message": "missing closing braces"
+          }
+        }
+      
+}

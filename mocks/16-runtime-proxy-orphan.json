@@ -1,0 +1,25 @@
+{
+  "api/proxy-orphan": {
+    "GET": {
+      "nameResponse": "fallback",
+      "responses": [
+        {
+          "name": "orphan",
+          "proxy": true,
+          "match": {
+            "query": {
+              "live": "true"
+            }
+          }
+        },
+        {
+          "name": "fallback",
+          "statusCode": 200,
+          "body": {
+            "message": "Local fallback. Call with ?live=true (and without --proxy / method proxy) to get runtime 502: proxy true without target"
+          }
+        }
+      ]
+    }
+  }
+}
