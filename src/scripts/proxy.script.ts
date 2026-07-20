@@ -1,15 +1,14 @@
 import { Request, Response } from 'express';
 import { MethodProxyValue, ProxyTarget, ProxyValue } from '../types/proxy.type';
 
-// Must be replaced for the upstream request; everything else is forwarded as-is.
 const REQUEST_HEADERS_TO_REPLACE = new Set(['host', 'content-length']);
 
-// Express sets these when writing the response body; forwarding them breaks the client response.
 const RESPONSE_HEADERS_TO_SKIP = new Set([
   'connection',
   'keep-alive',
   'transfer-encoding',
-  'content-length'
+  'content-length',
+  'content-encoding'
 ]);
 
 export const resolveProxy = (
