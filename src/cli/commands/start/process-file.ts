@@ -73,7 +73,8 @@ export const processFile = (
                 headers: response.headers ?? {},
                 body: response.body as JsonValue,
                 delay: response.delay !== undefined ? Number(response.delay) : undefined,
-                match: response.match
+                match: response.match,
+                proxy: response.proxy
               }));
 
               apis.push(
@@ -82,6 +83,7 @@ export const processFile = (
                   method: method,
                   nameResponse: methodData.nameResponse,
                   delay: methodData.delay !== undefined ? Number(methodData.delay) : undefined,
+                  proxy: methodData.proxy,
                   responses
                 })
               );

@@ -4,13 +4,14 @@ import { logError } from '../scripts/log.script';
 import { initialize } from "./commands/init/initialize";
 import { AddOptions, InitOptions, StartOptions } from "../types/options.type";
 import { addMock } from "./commands/add/add-mock";
+import { isHttpUrl } from "../scripts/http-url.script";
 
 export const interactive = () => {
   const mock = new Command();
 
   mock
     .name('mock-server')
-    .version('1.6.3', '-v, --version', 'Output the version number')
+    .version('1.7.0', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.');
 
@@ -70,12 +71,23 @@ export const interactive = () => {
       'Indicates the location of the mocks in a specific folder.',
       ''
     )
+    .option(
+      '--proxy <url>',
+      'Global proxy target for responses with "proxy": true and unmatched routes',
+      (value: string): string => {
+        if (!isHttpUrl(value)) {
+          throw new Error('Proxy must be a valid http or https URL');
+        }
+        return value;
+      }
+    )
     .description('Start mock server.')
     .action(async (options: StartOptions) => {
       try {
         await executeMock({
           port: options.port,
-          folderPath: options.path
+          folderPath: options.path,
+          proxy: options.proxy
         });
       } catch (e) {
         logError(e);

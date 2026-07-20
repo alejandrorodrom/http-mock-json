@@ -4,11 +4,13 @@ import { HttpVerbs } from "../constants/http-verbs.constant";
 export interface ExecuteMock {
   port: number,
   folderPath: string;
+  proxy?: string;
 }
 
 export interface StartMock {
   port: number,
   folderPath: string;
+  proxy?: string;
 }
 
 export interface WatchMock {
@@ -16,6 +18,7 @@ export interface WatchMock {
   port: number;
   folderPath: string;
   mocks: string;
+  proxy?: string;
 }
 
 export interface PromptAddMock {

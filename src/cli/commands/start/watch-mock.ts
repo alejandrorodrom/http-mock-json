@@ -11,7 +11,7 @@ import { logError } from '../../../scripts/log.script';
 import { executeMock } from './execute-mock';
 
 export const watchMock = (
-  { server, port, folderPath, mocks }: WatchMock
+  { server, port, folderPath, mocks, proxy }: WatchMock
 ) => {
   const connections: Connection = new Map();
   let isRestarting = false;
@@ -56,7 +56,8 @@ export const watchMock = (
         try {
           await executeMock({
             port: port,
-            folderPath: folderPath
+            folderPath: folderPath,
+            proxy
           });
         } catch (error) {
           logError(error);

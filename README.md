@@ -37,6 +37,7 @@
 - **JSON Based** - Simple JSON files, no complex configuration needed
 - **Custom Headers** - Support for custom HTTP headers in responses
 - **Parameter Support** - Dynamic routes with parameters (e.g., `/users/:id`)
+- **Proxy** - Forward selected responses (or unmatched routes) to a real backend
 
 ## Quick Start
 
@@ -116,15 +117,17 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | HTTP Method  | ✅       | string         | `GET`, `POST`, `PUT`, `PATCH`, `DELETE`  | HTTP verb (must be uppercase)                                              |
    | nameResponse | ✅       | string         | `success`, `error`, `error-401`          | Fallback response when no `match` applies (must exist in responses array) |
    | delay        | ❌       | number         | `300`                                    | Default latency in ms for all responses of this method (overridable per response) |
+   | proxy        | ❌       | string/object  | `"https://api.staging.com"`              | Default proxy target for responses with `"proxy": true`                    |
    | responses    | ✅       | array          |                                          | A mock can have multiple responses (array), each identified with a `name`. |
    | name         | ✅       | string         |                                          | Response name (unique within the responses array)                          |
-   | statusCode   | ✅       | string/number  | `200`, `"200"`, `404`, `"404"`          | HTTP Status Codes (validated, warnings for non-standard codes)            |
+   | statusCode   | ✅*      | string/number  | `200`, `"200"`, `404`, `"404"`          | Required unless the response uses `proxy`                                  |
    | headers      | ❌       | object         | `{ "Content-Type": "application/json" }`  | Headers in json format (optional)                                          |
-   | body         | ✅       | any            |                                          | Response payload. Can be `null`, object, array, string, number, or boolean |
+   | body         | ✅*      | any            |                                          | Required unless the response uses `proxy`                                  |
    | match        | ❌       | object         | `{ "query": { "status": "active" } }`    | Request matching rules (`query` and/or `body`). First match wins           |
    | match.query  | ❌       | object         | `{ "page": "1" }`                        | Partial match against request query params                                 |
    | match.body   | ❌       | any            | `{ "email": "a@b.com" }`                 | Partial match against request body                                         |
    | delay        | ❌       | number         | `500`                                    | Latency in ms for this response (overrides method-level `delay`)           |
+   | proxy        | ❌       | string/object/true | `true`, `"https://api.com"`, `{ "target": "...", "path": "/v2/users" }` | Forward the original request to a real backend |
 
 5. Edit the mock file to add your response data.
 
@@ -207,14 +210,15 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
     mock-server start
     ```
 
-   | Flag      | Default | Description                                               |
-   |-----------|---------|-----------------------------------------------------------|
-   | -p --port | `3000`  | Indicates the port where the mock will be executed        |
-   | -f --path | `root`  | Indicates the location of the mocks in a specific folder. |
+   | Flag        | Default | Description                                                                 |
+   |-------------|---------|-----------------------------------------------------------------------------|
+   | -p --port   | `3000`  | Indicates the port where the mock will be executed                          |
+   | -f --path   | `root`  | Indicates the location of the mocks in a specific folder.                   |
+   | --proxy     | -       | Global proxy target (`http`/`https`). Used by `"proxy": true` and unmatched routes |
 
    **Example:**
    ```
-   mock-server start --port 3001 --path apps/folder1
+   mock-server start --port 3001 --path apps/folder1 --proxy https://api.staging.com
    ```
 
 3. `add`
@@ -250,7 +254,7 @@ When you run `mock-server start`, the system automatically validates in this ord
 3. **HTTP methods**: Validates that only valid HTTP methods are used (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`)
 4. **Response structure**: Checks that all required fields are present (`name`, `statusCode`, `body`)
 5. **Response matching**: Verifies that `nameResponse` references exist in the responses array
-6. **Optional match/delay**: Validates `match.query` / `match.body` and non-negative `delay` values
+6. **Optional match/delay/proxy**: Validates `match`, non-negative `delay`, and `proxy` URL shapes
 7. **JSON structure**: Ensures files contain valid JSON objects
 
 ### Error Handling
@@ -566,6 +570,87 @@ You can combine both in the same response:
 
 Both conditions must match.
 
+### Example 7: Proxy to a real backend
+
+Matching rules stay the same. After a response is selected, if it has `proxy`, the mock acts as an intermediary: it forwards the original request to the real backend and returns that response (status, headers, and body) to the frontend.
+
+**Path rules:**
+
+- If you do **not** set `path`, the proxied URL uses the **same path as the mock endpoint** (plus the original query string).
+- If you set `path`, only the path is rewritten; the original query string is still preserved.
+
+```json
+{
+  "users": {
+    "GET": {
+      "nameResponse": "mock",
+      "proxy": "https://api.staging.com",
+      "responses": [
+        {
+          "name": "live",
+          "proxy": true,
+          "match": {
+            "query": {
+              "role": "admin"
+            }
+          }
+        },
+        {
+          "name": "rewrite",
+          "proxy": {
+            "target": "https://billing.internal.com",
+            "path": "/v2/users"
+          },
+          "match": {
+            "query": {
+              "source": "billing"
+            }
+          }
+        },
+        {
+          "name": "mock",
+          "statusCode": 200,
+          "body": {
+            "users": []
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Start with an optional global proxy:
+
+```bash
+mock-server start --proxy https://api.staging.com
+```
+
+Behavior:
+
+- `GET /users?role=admin` → selected `live` → no `path` configured → proxied to `https://api.staging.com/users?role=admin` (same mock path `/users` + query)
+- `GET /users?source=billing` → selected `rewrite` → `path` is `/v2/users` → proxied to `https://billing.internal.com/v2/users?source=billing` (path rewritten, query kept)
+- `GET /users` → fallback `mock` → local JSON response (no proxy)
+- Any route without a mock → if `--proxy` is set, forwarded to the global target with the original path + query
+
+More path examples:
+
+| Mock endpoint | Proxy config | Incoming request | Upstream URL |
+|---------------|--------------|------------------|--------------|
+| `users` | `"https://api.staging.com"` | `GET /users?role=admin` | `https://api.staging.com/users?role=admin` |
+| `api/orders` | `{ "target": "https://api.staging.com" }` | `GET /api/orders?page=2` | `https://api.staging.com/api/orders?page=2` |
+| `users` | `{ "target": "https://billing.internal.com", "path": "/v2/users" }` | `GET /users?source=billing` | `https://billing.internal.com/v2/users?source=billing` |
+| `users/:id` | `{ "target": "https://api.staging.com", "path": "/v1/customers/1" }` | `GET /users/1` | `https://api.staging.com/v1/customers/1` |
+
+Proxy values:
+
+| Value | Meaning |
+|-------|---------|
+| `"https://api.com"` | Proxy to that host using the **mock endpoint path** + original query |
+| `{ "target": "https://api.com" }` | Same as above (no rewrite) |
+| `{ "target": "https://api.com", "path": "/v2/users" }` | Rewrite path to `/v2/users`; keep the original query |
+| `true` | Use method-level `proxy`, or `--proxy` if method has none |
+
 ---
 
 ## Troubleshooting 🔧
@@ -695,6 +780,10 @@ These errors occur when individual response objects are invalid:
 | `The "match" property must include "query" and/or "body"` | `match` is empty             | Add at least `"query"` or `"body"` inside `match`             |
 | `The "match.query" property must be an object` | `match.query` is not an object        | Use an object of query keys/values: `"query": { "page": "1" }` |
 | `The "match.query" property must not be empty` | `match.query` is `{}`                 | Add at least one query key/value to match                      |
+| `The "proxy" must be a valid http or https URL` | Invalid proxy URL                    | Use a full URL like `"https://api.staging.com"`               |
+| `The "proxy" must be a URL string, true, or an object with "target"` | Invalid response proxy shape | Use a string, `true`, or `{ "target": "https://..." }`     |
+| `The "proxy" must be a URL string or an object with "target"` | Invalid method proxy shape (`true` not allowed) | Use a string or `{ "target": "https://..." }` at method level |
+| `The "proxy.target" property is required`      | Proxy object without target           | Add `"target": "https://api.staging.com"`                     |
 
 **Example:**
 

@@ -7,9 +7,10 @@ import cors from 'cors';
 import { validatePortAvailable } from './check-port';
 import { selectResponse } from '../../../scripts/match.script';
 import { resolveDelay, sleep } from '../../../scripts/delay.script';
+import { proxyRequest, resolveProxy } from '../../../scripts/proxy.script';
 
 export const startMock = async (
-  { port, folderPath }: StartMock
+  { port, folderPath, proxy }: StartMock
 ): Promise<Server> => {
   // Validate port availability BEFORE loading mocks (more efficient: uses socket connection)
   await validatePortAvailable(port);
@@ -56,12 +57,35 @@ export const startMock = async (
         await sleep(delay);
       }
 
+      if (selectedResponse.proxy !== undefined) {
+        const resolvedProxy = resolveProxy(selectedResponse.proxy, value.proxy, proxy);
+
+        if (!resolvedProxy) {
+          res.status(502).json({
+            message: 'Proxy is set to true but no method-level proxy or --proxy target is configured'
+          });
+          return;
+        }
+
+        await proxyRequest(resolvedProxy, req, res);
+        return;
+      }
+
       res.set(selectedResponse.headers).status(selectedResponse.status).json(selectedResponse.body);
     });
   });
 
+  if (proxy) {
+    app.use(async (req: Request, res: Response) => {
+      await proxyRequest({ target: proxy }, req, res);
+    });
+  }
+
   const server = app.listen(port, () => {
     console.log(`Mock server is running in http://localhost:${ port } 🚀`);
+    if (proxy) {
+      console.log(`Global proxy target: ${ proxy }`);
+    }
   });
 
   server.on('error', (error: NodeJS.ErrnoException) => {

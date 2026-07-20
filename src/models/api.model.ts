@@ -1,5 +1,6 @@
 import { MockHttp, MockResponseConfig } from '../interfaces/data.interface';
 import { HttpVerbs } from '../constants/http-verbs.constant';
+import { MethodProxyValue } from '../types/proxy.type';
 
 type httpVerbs = HttpVerbs.get | HttpVerbs.post | HttpVerbs.put | HttpVerbs.patch | HttpVerbs.delete;
 
@@ -8,6 +9,7 @@ export class Api {
   method: httpVerbs;
   nameResponse: string;
   delay?: number;
+  proxy?: MethodProxyValue;
   responses: MockResponseConfig[];
 
   constructor(data: MockHttp) {
@@ -15,6 +17,7 @@ export class Api {
     this.method = this.getMethod(data.method.toUpperCase());
     this.nameResponse = data.nameResponse;
     this.delay = data.delay;
+    this.proxy = data.proxy;
     this.responses = data.responses;
   }
 

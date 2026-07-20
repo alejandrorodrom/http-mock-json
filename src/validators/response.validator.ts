@@ -3,6 +3,7 @@ import { hasProperty, isEmpty, isExisting, isObject, isValidNumber } from '../sc
 import { VALID_STATUS_CODES } from '../constants/validation.constant';
 import { LocalIssue, ResponseValidationResult } from '../types/validation.type';
 import { validateDelay } from './delay.validator';
+import { validateProxyValue } from './proxy.validator';
 
 const validateMatch = (
   endpoint: string,
@@ -54,6 +55,37 @@ const validateMatch = (
   return errors;
 };
 
+const validateStatusCode = (
+  endpoint: string,
+  method: string,
+  statusCodeValue: string | number
+): ResponseValidationResult => {
+  const errors: LocalIssue[] = [];
+  const warnings: LocalIssue[] = [];
+
+  if (!isValidNumber(statusCodeValue)) {
+    errors.push({
+      endpoint,
+      method,
+      message: `The "statusCode" "${ statusCodeValue }" is not a valid number`
+    });
+
+    return { errors, warnings };
+  }
+
+  const statusCode = Number(statusCodeValue);
+
+  if (!VALID_STATUS_CODES.includes(statusCode)) {
+    warnings.push({
+      endpoint,
+      method,
+      message: `The "statusCode" ${ statusCode } is not a standard HTTP status code`
+    });
+  }
+
+  return { errors, warnings };
+};
+
 export const validateResponse = (
   endpoint: string,
   method: string,
@@ -80,7 +112,21 @@ export const validateResponse = (
     });
   }
 
-  if (!isExisting(response.statusCode)) {
+  const hasProxy = hasProperty(response, 'proxy');
+
+  if (hasProxy) {
+    errors.push(...validateProxyValue(endpoint, method, response.proxy));
+  }
+
+  if (isExisting(response.statusCode)) {
+    const statusResult = validateStatusCode(endpoint, method, response.statusCode);
+    errors.push(...statusResult.errors);
+    warnings.push(...statusResult.warnings);
+
+    if (!isEmpty(statusResult.errors)) {
+      return { errors, warnings };
+    }
+  } else if (!hasProxy) {
     errors.push({
       endpoint,
       method,
@@ -90,27 +136,7 @@ export const validateResponse = (
     return { errors, warnings };
   }
 
-  if (!isValidNumber(response.statusCode)) {
-    errors.push({
-      endpoint,
-      method,
-      message: `The "statusCode" "${ response.statusCode }" is not a valid number`
-    });
-
-    return { errors, warnings };
-  }
-
-  const statusCode = Number(response.statusCode);
-
-  if (!VALID_STATUS_CODES.includes(statusCode)) {
-    warnings.push({
-      endpoint,
-      method,
-      message: `The "statusCode" ${ statusCode } is not a standard HTTP status code`
-    });
-  }
-
-  if (!hasProperty(response, 'body')) {
+  if (!hasProxy && !hasProperty(response, 'body')) {
     errors.push({
       endpoint,
       method,
