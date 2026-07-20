@@ -2,6 +2,7 @@ import { JsonValue } from '../types/json.type';
 import { MethodProxyValue, ProxyValue } from '../types/proxy.type';
 
 export interface MockMatch {
+  params?: Record<string, JsonValue>;
   query?: Record<string, JsonValue>;
   body?: JsonValue;
 }

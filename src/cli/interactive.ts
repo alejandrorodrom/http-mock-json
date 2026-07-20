@@ -11,7 +11,7 @@ export const interactive = () => {
 
   mock
     .name('mock-server')
-    .version('1.7.0', '-v, --version', 'Output the version number')
+    .version('1.8.0', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.');
 

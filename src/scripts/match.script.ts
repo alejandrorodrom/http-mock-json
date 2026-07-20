@@ -35,6 +35,23 @@ const matchesPartial = (expected: unknown, actual: unknown): boolean => {
   });
 };
 
+const matchesParams = (
+  expected: Record<string, JsonValue>,
+  params: Request['params']
+): boolean => {
+  return Object.entries(expected).every(([key, value]) => {
+    const actual = params[key];
+
+    if (actual === undefined) {
+      return false;
+    }
+
+    const actualValue = Array.isArray(actual) ? actual[0] : actual;
+
+    return String(value) === String(actualValue);
+  });
+};
+
 const matchesQuery = (
   expected: Record<string, JsonValue>,
   query: Request['query']
@@ -57,10 +74,15 @@ const matchesQuery = (
 };
 
 export const matchesRequest = (match: MockMatch, req: Request): boolean => {
+  const hasParams = isObject(match.params);
   const hasQuery = isObject(match.query);
   const hasBody = match.body !== undefined;
 
-  if (!hasQuery && !hasBody) {
+  if (!hasParams && !hasQuery && !hasBody) {
+    return false;
+  }
+
+  if (hasParams && !matchesParams(match.params as Record<string, JsonValue>, req.params)) {
     return false;
   }
 

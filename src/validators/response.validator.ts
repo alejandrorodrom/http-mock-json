@@ -23,17 +23,34 @@ const validateMatch = (
   }
 
   const matchObject = match as Record<string, unknown>;
+  const hasParams = hasProperty(matchObject, 'params');
   const hasQuery = hasProperty(matchObject, 'query');
   const hasBody = hasProperty(matchObject, 'body');
 
-  if (!hasQuery && !hasBody) {
+  if (!hasParams && !hasQuery && !hasBody) {
     errors.push({
       endpoint,
       method,
-      message: 'The "match" property must include "query" and/or "body"'
+      message: 'The "match" property must include "params", "query" and/or "body"'
     });
 
     return errors;
+  }
+
+  if (hasParams) {
+    if (!isObject(matchObject.params)) {
+      errors.push({
+        endpoint,
+        method,
+        message: 'The "match.params" property must be an object'
+      });
+    } else if (isEmpty(matchObject.params)) {
+      errors.push({
+        endpoint,
+        method,
+        message: 'The "match.params" property must not be empty'
+      });
+    }
   }
 
   if (hasQuery) {

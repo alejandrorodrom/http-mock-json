@@ -30,7 +30,7 @@
 - **Automatic Validation** - Comprehensive validation system prevents errors before they happen
 - **Hot Reload** - Watch mode automatically restarts server on file changes
 - **Multiple Responses** - Simulate different scenarios (success, error, etc.) for the same endpoint
-- **Request Matching** - Select responses by query params and/or request body
+- **Request Matching** - Select responses by route params, query params and/or request body
 - **Response Delay** - Simulate latency per method or per response
 - **Type Safe** - Built with TypeScript for better developer experience
 - **RESTful Support** - Full support for GET, POST, PUT, PATCH, DELETE methods
@@ -123,7 +123,8 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | statusCode   | ✅*      | string/number  | `200`, `"200"`, `404`, `"404"`          | Required unless the response uses `proxy`                                  |
    | headers      | ❌       | object         | `{ "Content-Type": "application/json" }`  | Headers in json format (optional)                                          |
    | body         | ✅*      | any            |                                          | Required unless the response uses `proxy`                                  |
-   | match        | ❌       | object         | `{ "query": { "status": "active" } }`    | Request matching rules (`query` and/or `body`). First match wins           |
+   | match        | ❌       | object         | `{ "params": { "id": "1" } }`            | Request matching rules (`params`, `query` and/or `body`). First match wins |
+   | match.params | ❌       | object         | `{ "id": "1" }`                          | Partial match against route params (e.g. `/users/:id`)                     |
    | match.query  | ❌       | object         | `{ "page": "1" }`                        | Partial match against request query params                                 |
    | match.body   | ❌       | any            | `{ "email": "a@b.com" }`                 | Partial match against request body                                         |
    | delay        | ❌       | number         | `500`                                    | Latency in ms for this response (overrides method-level `delay`)           |
@@ -474,7 +475,47 @@ This example shows how to create multiple responses for the same endpoint, allow
 }
    ```
 
-### Example 5: Match by query params and delay
+### Example 5: Match by route params
+
+`match.params` matches against Express route parameters (e.g. `:id` in `/api/users/:id`).
+Values are compared as strings (`"1"` matches `1`).
+
+```json
+{
+  "api/users/:id": {
+    "GET": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "found",
+          "statusCode": 200,
+          "match": {
+            "params": {
+              "id": "1"
+            }
+          },
+          "body": {
+            "id": 1,
+            "name": "Juan Pérez"
+          }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "body": {
+            "message": "User not found"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+- `GET /api/users/1` → `found`
+- `GET /api/users/99` → `not-found` (fallback via `nameResponse`)
+
+### Example 6: Match by query params and delay
 
 When a request arrives, responses with `match` are evaluated in order. The first match wins.
 If nothing matches, the server falls back to `nameResponse`.
@@ -518,7 +559,7 @@ If nothing matches, the server falls back to `nameResponse`.
 - `GET /api/search?status=active` → `active` (after 300ms)
 - `GET /api/search` → `default` (after 100ms)
 
-### Example 6: Match by request body
+### Example 7: Match by request body
 
 `match.body` does a partial deep match against the JSON request body.
 
@@ -557,20 +598,21 @@ If nothing matches, the server falls back to `nameResponse`.
 - `POST /api/login` with `{ "email": "admin@example.com", "password": "secret" }` → `success`
 - Any other body → `invalid` (fallback via `nameResponse`)
 
-You can combine both in the same response:
+You can combine `params`, `query`, and `body` in the same response:
 
 ```json
 {
   "match": {
+    "params": { "id": "1" },
     "query": { "source": "web" },
     "body": { "role": "admin" }
   }
 }
 ```
 
-Both conditions must match.
+All listed conditions must match.
 
-### Example 7: Proxy to a real backend
+### Example 8: Proxy to a real backend
 
 Matching rules stay the same. After a response is selected, if it has `proxy`, the mock acts as an intermediary: it forwards the original request to the real backend and returns that response (status, headers, and body) to the frontend.
 
@@ -776,8 +818,10 @@ These errors occur when individual response objects are invalid:
 | `The "headers" property must be an object`   | `headers` is not an object              | If provided, `headers` must be an object: `"headers": {}`     |
 | `The "delay" "X" is not a valid number`      | Response-level `delay` is not a number  | Use a number of milliseconds: `"delay": 500`                  |
 | `The "delay" must be greater than or equal to 0` | Response-level `delay` is negative  | Use `0` or a positive number                                  |
-| `The "match" property must be an object`     | `match` is not an object                | Use `"match": { "query": {...} }` and/or `"body": {...}`      |
-| `The "match" property must include "query" and/or "body"` | `match` is empty             | Add at least `"query"` or `"body"` inside `match`             |
+| `The "match" property must be an object`     | `match` is not an object                | Use `"match": { "params": {...} }`, `"query": {...}` and/or `"body": {...}` |
+| `The "match" property must include "params", "query" and/or "body"` | `match` is empty | Add at least `"params"`, `"query"`, or `"body"` inside `match` |
+| `The "match.params" property must be an object` | `match.params` is not an object    | Use an object of route params: `"params": { "id": "1" }`       |
+| `The "match.params" property must not be empty` | `match.params` is `{}`             | Add at least one route param key/value to match                |
 | `The "match.query" property must be an object` | `match.query` is not an object        | Use an object of query keys/values: `"query": { "page": "1" }` |
 | `The "match.query" property must not be empty` | `match.query` is `{}`                 | Add at least one query key/value to match                      |
 | `The "proxy" must be a valid http or https URL` | Invalid proxy URL                    | Use a full URL like `"https://api.staging.com"`               |
