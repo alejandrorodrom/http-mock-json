@@ -27,9 +27,13 @@ jobs:
     name: E2E
     uses: ./.github/workflows/e2e.yml
 
+  npm-audit:
+    name: npm audit
+    uses: ./.github/workflows/npm-audit.yml
+
   publish:
     name: Publish
-    needs: [ci, e2e]
+    needs: [ci, e2e, npm-audit]
     runs-on: ubuntu-latest
     environment: production
     steps:
