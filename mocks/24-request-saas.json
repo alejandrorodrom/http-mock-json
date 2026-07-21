@@ -1,0 +1,144 @@
+{
+  "api/saas/signup": {
+    "POST": {
+      "nameResponse": "created",
+      "request": {
+        "body": {
+          "email": { "type": "string", "format": "email", "message": "Use a valid work email" },
+          "password": { "type": "string", "minLength": 10, "maxLength": 128 },
+          "company": { "type": "string", "minLength": 2 },
+          "plan": { "type": "string", "enum": ["free", "pro", "business"] },
+          "seats?": { "type": "number", "min": 1, "max": 500 },
+          "website?": { "type": "string", "format": "url" },
+          "billing": {
+            "type": "object",
+            "properties": {
+              "country": { "type": "string", "minLength": 2, "maxLength": 2 },
+              "vat?": { "type": "string", "pattern": "^[A-Z]{2}[A-Z0-9]{8,12}$" }
+            }
+          }
+        },
+        "invalidResponse": "validation-error",
+        "errorFormat": "array",
+        "errorDetail": {
+          "field": "{{path}}",
+          "message": "{{message}}"
+        }
+      },
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": 201,
+          "body": { "orgId": "org_1", "status": "active" }
+        },
+        {
+          "name": "email-taken",
+          "statusCode": 409,
+          "match": { "body": { "email": "taken@acme.com" } },
+          "body": { "code": "EMAIL_TAKEN" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Signup validation failed", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/saas/orgs/:orgId/members": {
+    "POST": {
+      "nameResponse": "not-found",
+      "request": {
+        "body": {
+          "email": { "type": "string", "format": "email" },
+          "role": { "type": "string", "enum": ["owner", "admin", "member"] }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "invited",
+          "statusCode": 201,
+          "match": { "params": { "orgId": "org_1" } },
+          "body": { "inviteId": "inv_1", "status": "pending" }
+        },
+        {
+          "name": "forbidden",
+          "statusCode": 403,
+          "match": {
+            "params": { "orgId": "org_2" },
+            "body": { "role": "owner" }
+          },
+          "body": { "code": "INSUFFICIENT_ROLE" }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "body": { "code": "ORG_NOT_FOUND" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid request", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/saas/webhooks": {
+    "POST": {
+      "nameResponse": "created",
+      "request": {
+        "body": {
+          "url": { "type": "string", "format": "url" },
+          "events": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 10,
+            "items": {
+              "type": "string",
+              "enum": ["invoice.paid", "invoice.failed", "member.joined"]
+            }
+          },
+          "secret": { "type": "string", "minLength": 16 }
+        },
+        "errorFormat": "map",
+        "errorDetailsKey": "errors"
+      },
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": 201,
+          "body": { "webhookId": "wh_1" }
+        }
+      ]
+    }
+  },
+  "api/saas/reports": {
+    "GET": {
+      "nameResponse": "ok",
+      "request": {
+        "query": {
+          "from": { "type": "string", "format": "date" },
+          "to": { "type": "string", "format": "date" },
+          "format?": { "type": "string", "enum": ["csv", "json"] }
+        },
+        "invalidResponse": "bad-query",
+        "errorFormat": "map",
+        "errorDetail": "{{path}}: {{message}}",
+        "errorDetailsKey": "fields"
+      },
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": { "rows": 12 }
+        },
+        {
+          "name": "bad-query",
+          "statusCode": 400,
+          "body": { "message": "Invalid report query", "fields": {} }
+        }
+      ]
+    }
+  }
+}

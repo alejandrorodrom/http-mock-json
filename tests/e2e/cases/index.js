@@ -26,7 +26,10 @@ const successCases = [
   require('./success/18-rest-resource-lifecycle'),
   require('./success/19-checkout-resilience'),
   require('./success/20-multi-tenant-rbac'),
-  require('./success/21-match-matrix')
+  require('./success/21-match-matrix'),
+  require('./success/22-request'),
+  require('./success/23-request-matrix'),
+  require('./success/24-request-saas')
 ];
 
 const errorCases = [
@@ -38,7 +41,8 @@ const errorCases = [
   require('./error/method-responses-not-array'),
   require('./error/response-errors'),
   require('./error/match-errors'),
-  require('./error/proxy-errors')
+  require('./error/proxy-errors'),
+  require('./error/request-errors')
 ];
 
 const systemCases = [
@@ -66,14 +70,19 @@ const runtimeCases = [
   require('./runtime/rest-resource-lifecycle'),
   require('./runtime/checkout-resilience'),
   require('./runtime/multi-tenant-rbac'),
-  require('./runtime/match-matrix')
+  require('./runtime/match-matrix'),
+  require('./runtime/request-validation'),
+  require('./runtime/request-matrix'),
+  require('./runtime/request-saas'),
+  require('./runtime/watch-request-failed')
 ];
 
 const unitCases = [
   require('./unit/unsupported-http-method'),
   require('./unit/fallback-response-missing'),
   require('./unit/package-json-missing'),
-  require('./unit/mocks-folder-mkdir-failed')
+  require('./unit/mocks-folder-mkdir-failed'),
+  require('./unit/invalid-mock-configuration')
 ];
 
 /** @type {{ name: string, description: string, run: () => Promise<import('../lib/reporter').CaseResult> }[]} */

@@ -39,7 +39,7 @@ export const getMocksData = (folderPath: string): Api[] => {
     const errorMessage = formatIssues(errorsByFile);
     logError(`Error:`, { lineBreakStart: true });
     logError(errorMessage, { showIcon: false, isBold: false, lineBreakEnd: true });
-    process.exit(1);
+    throw new Error('Invalid mock configuration');
   }
 
   return mockData;

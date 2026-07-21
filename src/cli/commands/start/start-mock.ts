@@ -8,6 +8,9 @@ import { validatePortAvailable } from './check-port';
 import { selectResponse } from '../../../scripts/match.script';
 import { resolveDelay, sleep } from '../../../scripts/delay.script';
 import { proxyRequest, resolveProxy } from '../../../scripts/proxy.script';
+import { checkRequest } from '../../../scripts/request-check.script';
+import { buildRequestError } from '../../../scripts/request-error.script';
+import { isEmpty } from '../../../scripts/guards.script';
 
 export const startMock = async (
   { port, folderPath, proxy }: StartMock
@@ -50,7 +53,24 @@ export const startMock = async (
   data.forEach(value => {
     logApi(value);
     app[value.method](value.route, async (req: Request, res: Response) => {
-      const selectedResponse = selectResponse(value.responses, value.nameResponse, req);
+      let selectedResponse;
+
+      if (value.request) {
+        const issues = checkRequest(value.request, req);
+
+        if (!isEmpty(issues)) {
+          selectedResponse = buildRequestError(
+            value.request,
+            issues,
+            value.responses
+          );
+        }
+      }
+
+      if (!selectedResponse) {
+        selectedResponse = selectResponse(value.responses, value.nameResponse, req);
+      }
+
       const delay = resolveDelay(selectedResponse.delay, value.delay);
 
       if (delay > 0) {

@@ -1,5 +1,6 @@
 import { JsonValue } from '../types/json.type';
 import { MethodProxyValue, ProxyValue } from '../types/proxy.type';
+import { MockRequest, RawMockRequest } from '../types/request.type';
 
 export interface MockMatch {
   params?: Record<string, JsonValue>;
@@ -23,6 +24,7 @@ export interface MockHttp {
   nameResponse: string;
   delay?: number;
   proxy?: MethodProxyValue;
+  request?: MockRequest;
   responses: MockResponseConfig[];
 }
 
@@ -40,5 +42,6 @@ export interface RawMockMethod {
   nameResponse: string;
   delay?: number;
   proxy?: MethodProxyValue;
+  request?: RawMockRequest;
   responses: RawMockResponse[];
 }

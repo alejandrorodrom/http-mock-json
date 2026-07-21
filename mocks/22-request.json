@@ -1,0 +1,230 @@
+{
+  "api/register": {
+    "POST": {
+      "nameResponse": "created",
+      "request": {
+        "body": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "message": "Email inválido"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 64
+          },
+          "age?": {
+            "type": "number",
+            "min": 18,
+            "max": 120
+          },
+          "active": "boolean",
+          "role": {
+            "type": "string",
+            "enum": ["admin", "user"]
+          },
+          "website?": {
+            "type": "string",
+            "format": "url"
+          },
+          "birthday?": {
+            "type": "string",
+            "format": "date"
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string",
+                "minLength": 2
+              },
+              "zip?": {
+                "type": "string",
+                "pattern": "^\\d{5}$"
+              }
+            }
+          }
+        },
+        "invalidResponse": "validation-error",
+        "errorFormat": "array",
+        "errorDetail": {
+          "field": "{{path}}",
+          "msg": "{{message}}"
+        }
+      },
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": 201,
+          "body": {
+            "id": 1,
+            "ok": true
+          }
+        },
+        {
+          "name": "duplicate-email",
+          "statusCode": 409,
+          "match": {
+            "body": {
+              "email": "taken@example.com"
+            }
+          },
+          "body": {
+            "message": "Email already exists"
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "message": "Invalid request",
+            "errors": []
+          }
+        }
+      ]
+    }
+  },
+  "api/search": {
+    "GET": {
+      "nameResponse": "success",
+      "request": {
+        "query": {
+          "page?": {
+            "type": "number",
+            "min": 1
+          },
+          "limit?": {
+            "type": "number",
+            "min": 1,
+            "max": 100
+          },
+          "q": {
+            "type": "string",
+            "minLength": 2
+          },
+          "strict?": "boolean"
+        },
+        "errorFormat": "map"
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {
+            "results": []
+          }
+        }
+      ]
+    }
+  },
+  "api/orders": {
+    "POST": {
+      "nameResponse": "created",
+      "request": {
+        "body": {
+          "customerId": "number",
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 10,
+            "items": {
+              "type": "object",
+              "properties": {
+                "sku": "string",
+                "qty": {
+                  "type": "number",
+                  "min": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": 201,
+          "body": {
+            "id": 10
+          }
+        }
+      ]
+    }
+  },
+  "api/profiles": {
+    "POST": {
+      "nameResponse": "created",
+      "request": {
+        "body": {
+          "address.city": {
+            "type": "string",
+            "minLength": 2
+          },
+          "address.zip?": {
+            "type": "string",
+            "pattern": "^\\d{5}$"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "errorDetailsKey": "details",
+        "errorDetail": "{{message}}"
+      },
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": 201,
+          "body": {
+            "id": "ok"
+          }
+        }
+      ]
+    }
+  },
+  "api/filters": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "query": {
+          "page?": {
+            "type": "number",
+            "min": 1
+          },
+          "active?": "boolean"
+        },
+        "body": {
+          "tags": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 5,
+            "items": "string"
+          }
+        },
+        "invalidResponse": "bad-request",
+        "errorFormat": "map",
+        "errorDetail": "{{path}}: {{message}}",
+        "errorDetailsKey": "fields"
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {
+            "ok": true
+          }
+        },
+        {
+          "name": "bad-request",
+          "statusCode": 400,
+          "body": {
+            "message": "Filter validation failed",
+            "fields": {}
+          }
+        }
+      ]
+    }
+  }
+}

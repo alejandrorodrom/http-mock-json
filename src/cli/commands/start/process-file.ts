@@ -11,6 +11,7 @@ import { validateMethod } from '../../../validators/method.validator';
 import { validateResponse } from '../../../validators/response.validator';
 import { JsonValue } from '../../../types/json.type';
 import { MockResponseConfig } from '../../../interfaces/data.interface';
+import { normalizeRequest } from '../../../scripts/request-norm.script';
 
 export const processFile = (
   file: string,
@@ -84,6 +85,9 @@ export const processFile = (
                   nameResponse: methodData.nameResponse,
                   delay: methodData.delay !== undefined ? Number(methodData.delay) : undefined,
                   proxy: methodData.proxy,
+                  request: methodData.request
+                    ? normalizeRequest(methodData.request)
+                    : undefined,
                   responses
                 })
               );

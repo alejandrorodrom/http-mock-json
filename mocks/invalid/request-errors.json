@@ -1,0 +1,549 @@
+{
+  "api/invalid/request-not-object": {
+    "POST": {
+      "nameResponse": "success",
+      "request": ["body"],
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-empty": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {},
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-body-not-object": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": "email"
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-body-empty": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {}
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-query-not-object": {
+    "GET": {
+      "nameResponse": "success",
+      "request": {
+        "query": ["page"]
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-query-empty": {
+    "GET": {
+      "nameResponse": "success",
+      "request": {
+        "query": {}
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-field-invalid": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "email": true
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-field-name-invalid": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "?": "string"
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-type-invalid": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "email": {
+            "type": "text"
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-string-rules-on-number": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "age": {
+            "type": "number",
+            "minLength": 2
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-range-on-string": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "name": {
+            "type": "string",
+            "min": 1
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-array-rules-on-string": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "name": {
+            "type": "string",
+            "minItems": 1
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-properties-on-string": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "name": {
+            "type": "string",
+            "properties": {
+              "x": "string"
+            }
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-properties-empty": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "address": {
+            "type": "object",
+            "properties": {}
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-negative-minLength": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "name": {
+            "type": "string",
+            "minLength": -1
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-pattern-invalid": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "code": {
+            "type": "string",
+            "pattern": "["
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-pattern-empty": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "code": {
+            "type": "string",
+            "pattern": ""
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-pattern-not-string": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "code": {
+            "type": "string",
+            "pattern": 123
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-format-invalid": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "email": {
+            "type": "string",
+            "format": "phone"
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-enum-empty": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "role": {
+            "type": "string",
+            "enum": []
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-enum-values-invalid": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "role": {
+            "type": "string",
+            "enum": ["admin", true]
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-message-not-string": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "email": {
+            "type": "string",
+            "message": 123
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-invalid-response-missing": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "email": "string"
+        },
+        "invalidResponse": "missing-error"
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-invalid-response-empty": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "email": "string"
+        },
+        "invalidResponse": ""
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-invalid-response-not-string": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "email": "string"
+        },
+        "invalidResponse": 400
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-error-format": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "email": "string"
+        },
+        "errorFormat": "object"
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-error-detail-values": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "email": "string"
+        },
+        "errorDetail": {
+          "field": 1
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-error-detail-empty-string": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "email": "string"
+        },
+        "errorDetail": ""
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-error-detail-array": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "email": "string"
+        },
+        "errorDetail": ["{{message}}"]
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-error-details-key": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "email": "string"
+        },
+        "errorDetailsKey": ""
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  }
+}

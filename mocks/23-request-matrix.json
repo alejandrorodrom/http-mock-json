@@ -1,0 +1,232 @@
+{
+  "api/v1/auth/login": {
+    "POST": {
+      "nameResponse": "ok",
+      "delay": 50,
+      "request": {
+        "body": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 8, "maxLength": 72 },
+          "otp?": { "type": "string", "pattern": "^\\d{6}$" }
+        },
+        "invalidResponse": "validation-error",
+        "errorFormat": "array",
+        "errorDetail": {
+          "field": "{{path}}",
+          "rule": "{{rule}}",
+          "msg": "{{message}}"
+        }
+      },
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "delay": 120,
+          "headers": { "X-Auth": "session" },
+          "body": { "token": "jwt-ok" }
+        },
+        {
+          "name": "locked",
+          "statusCode": 423,
+          "delay": 180,
+          "match": { "body": { "email": "locked@example.com" } },
+          "body": { "code": "ACCOUNT_LOCKED" }
+        },
+        {
+          "name": "mfa-required",
+          "statusCode": 401,
+          "match": { "body": { "email": "mfa@example.com", "password": "secret123" } },
+          "body": { "code": "MFA_REQUIRED" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "delay": 140,
+          "body": { "message": "Invalid request", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/v1/catalog": {
+    "GET": {
+      "nameResponse": "empty",
+      "request": {
+        "query": {
+          "q": { "type": "string", "minLength": 2 },
+          "page?": { "type": "number", "min": 1 },
+          "limit?": { "type": "number", "min": 1, "max": 50 },
+          "active?": "boolean"
+        },
+        "errorFormat": "map"
+      },
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "match": { "query": { "q": "pro" } },
+          "body": { "items": [{ "sku": "PRO-1" }], "matched": "pro" }
+        },
+        {
+          "name": "empty",
+          "statusCode": 200,
+          "body": { "items": [], "matched": "fallback" }
+        }
+      ]
+    }
+  },
+  "api/v1/checkout": {
+    "POST": {
+      "nameResponse": "paid",
+      "request": {
+        "body": {
+          "cartId": { "type": "string", "format": "uuid" },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 20,
+            "items": {
+              "type": "object",
+              "properties": {
+                "sku": "string",
+                "qty": { "type": "number", "min": 1, "max": 99 }
+              }
+            }
+          },
+          "coupon?": { "type": "string", "pattern": "^[A-Z0-9]{4,12}$" }
+        },
+        "invalidResponse": "bad-payload",
+        "errorFormat": "map",
+        "errorDetail": "{{message}}",
+        "errorDetailsKey": "fields"
+      },
+      "responses": [
+        {
+          "name": "paid",
+          "statusCode": 201,
+          "headers": { "Location": "/api/v1/orders/100" },
+          "body": { "orderId": 100, "status": "paid" }
+        },
+        {
+          "name": "coupon-applied",
+          "statusCode": 201,
+          "match": { "body": { "coupon": "SAVE20" } },
+          "body": { "orderId": 101, "status": "paid", "discount": 20 }
+        },
+        {
+          "name": "inventory-conflict",
+          "statusCode": 409,
+          "match": {
+            "body": {
+              "cartId": "11111111-1111-4111-8111-111111111111",
+              "items": [{ "sku": "OUT", "qty": 1 }]
+            }
+          },
+          "body": { "code": "INVENTORY_CONFLICT" }
+        },
+        {
+          "name": "bad-payload",
+          "statusCode": 400,
+          "body": { "message": "Checkout validation failed", "fields": {} }
+        }
+      ]
+    }
+  },
+  "api/v1/proxy-guard": {
+    "POST": {
+      "nameResponse": "mock",
+      "proxy": "https://jsonplaceholder.typicode.com",
+      "request": {
+        "body": {
+          "title": { "type": "string", "minLength": 3 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "live",
+          "proxy": {
+            "target": "https://jsonplaceholder.typicode.com",
+            "path": "/posts"
+          },
+          "match": { "body": { "title": "live-post" } }
+        },
+        {
+          "name": "mock",
+          "statusCode": 200,
+          "body": { "source": "mock" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid request", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/v1/tickets/:id": {
+    "PATCH": {
+      "nameResponse": "fallback",
+      "delay": 40,
+      "request": {
+        "body": {
+          "status": { "type": "string", "enum": ["open", "closed"] },
+          "note?": { "type": "string", "minLength": 2 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "admin-web-close",
+          "statusCode": 200,
+          "delay": 160,
+          "match": {
+            "params": { "id": "t1" },
+            "query": { "actor": "admin", "channel": "web" },
+            "body": { "status": "closed" }
+          },
+          "headers": { "X-Match": "admin-web-close" },
+          "body": { "matched": "admin-web-close" }
+        },
+        {
+          "name": "agent-app-open",
+          "statusCode": 200,
+          "match": {
+            "params": { "id": "t2" },
+            "query": { "actor": "agent" },
+            "body": { "status": "open" }
+          },
+          "headers": { "X-Match": "agent-app-open" },
+          "body": { "matched": "agent-app-open" }
+        },
+        {
+          "name": "fallback",
+          "statusCode": 200,
+          "body": { "matched": "fallback" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "delay": 110,
+          "body": { "message": "Invalid request", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/v1/types": {
+    "POST": {
+      "nameResponse": "ok",
+      "request": {
+        "body": {
+          "flag": "boolean",
+          "count": "number",
+          "label": "string",
+          "meta": "object",
+          "tags": { "type": "array", "minItems": 0, "maxItems": 3, "items": "string" }
+        }
+      },
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": { "ok": true } }
+      ]
+    }
+  }
+}

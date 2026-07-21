@@ -258,6 +258,197 @@ const ERROR_CATALOG = [
     caseName: 'error/match-errors'
   },
 
+  // --- request validation (startup) ---
+  {
+    id: 'request.not-object',
+    message: 'The "request" property must be an object',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.empty',
+    message: 'The "request" property must include "body" and/or "query"',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.body-not-object',
+    message: 'The "request.body" property must be an object',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.body-empty',
+    message: 'The "request.body" property must not be empty',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.query-not-object',
+    message: 'The "request.query" property must be an object',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.query-empty',
+    message: 'The "request.query" property must not be empty',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.field-invalid',
+    message: 'The "request.body.email" field must be a type string or a rule object with "type"',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.field-name-invalid',
+    message: 'The "request.body" contains an invalid field name',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.type-invalid',
+    message: 'The "request.body.email.type" must be one of: string, number, boolean, object, array',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.string-rules-type',
+    message: 'The "request.body.age" string rules (minLength, maxLength, pattern, format) require type "string"',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.range-rules-type',
+    message: 'The "request.body.name" range rules (min, max) require type "number"',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.array-rules-type',
+    message: 'The "request.body.name" array rules (minItems, maxItems, items) require type "array"',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.properties-type',
+    message: 'The "request.body.name.properties" requires type "object"',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.properties-empty',
+    message: 'The "request.body.address.properties" must be a non-empty object',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.bound-negative',
+    message: 'The "request.body.name.minLength" must be a non-negative number',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.pattern-invalid',
+    message: 'The "request.body.code.pattern" is not a valid regular expression',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.pattern-empty',
+    message: 'The "request.body.code.pattern" must be a non-empty string',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.format-invalid',
+    message: 'The "request.body.email.format" must be one of: email, uuid, url, date',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.enum-empty',
+    message: 'The "request.body.role.enum" must be a non-empty array',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.enum-values-invalid',
+    message: 'The "request.body.role.enum" values must be strings or numbers',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.message-not-string',
+    message: 'The "request.body.email.message" must be a string',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.invalid-response-missing',
+    message: 'The "request.invalidResponse" "missing-error" does not exist in responses',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.invalid-response-empty',
+    message: 'The "request.invalidResponse" must be a non-empty string',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.error-format',
+    message: 'The "request.errorFormat" must be one of: array, map',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.error-detail-values',
+    message: 'The "request.errorDetail" object values must be strings',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.error-detail-shape',
+    message: 'The "request.errorDetail" must be a non-empty string or object',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.error-details-key',
+    message: 'The "request.errorDetailsKey" must be a non-empty string',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+
   // --- proxy validation ---
   {
     id: 'proxy.method-true-forbidden',
@@ -560,6 +751,162 @@ const ERROR_CATALOG = [
     source: 'mocks/21-match-matrix.json',
     kind: 'http',
     caseName: 'runtime/match-matrix'
+  },
+
+  // --- request validation controlled HTTP outcomes ---
+  {
+    id: 'http.422.register-validation',
+    message: 'Email inválido',
+    source: 'mocks/22-request.json',
+    kind: 'http',
+    caseName: 'runtime/request-validation'
+  },
+  {
+    id: 'http.409.register-duplicate',
+    message: 'Email already exists',
+    source: 'mocks/22-request.json',
+    kind: 'http',
+    caseName: 'runtime/request-validation'
+  },
+  {
+    id: 'http.400.search-map-errors',
+    message: 'query.q must have minLength 2',
+    source: 'mocks/22-request.json',
+    kind: 'http',
+    caseName: 'runtime/request-validation'
+  },
+  {
+    id: 'http.400.orders-nested',
+    message: 'items.0.qty must be >= 1',
+    source: 'mocks/22-request.json',
+    kind: 'http',
+    caseName: 'runtime/request-validation'
+  },
+  {
+    id: 'http.400.profiles-details',
+    message: 'userId must be a valid uuid',
+    source: 'mocks/22-request.json',
+    kind: 'http',
+    caseName: 'runtime/request-validation'
+  },
+  {
+    id: 'http.400.filters-fields',
+    message: 'Filter validation failed',
+    source: 'mocks/22-request.json',
+    kind: 'http',
+    caseName: 'runtime/request-validation'
+  },
+  {
+    id: 'http.423.login-locked',
+    message: 'ACCOUNT_LOCKED',
+    source: 'mocks/23-request-matrix.json',
+    kind: 'http',
+    caseName: 'runtime/request-matrix'
+  },
+  {
+    id: 'http.401.login-mfa',
+    message: 'MFA_REQUIRED',
+    source: 'mocks/23-request-matrix.json',
+    kind: 'http',
+    caseName: 'runtime/request-matrix'
+  },
+  {
+    id: 'http.422.login-validation',
+    message: 'Invalid request',
+    source: 'mocks/23-request-matrix.json',
+    kind: 'http',
+    caseName: 'runtime/request-matrix'
+  },
+  {
+    id: 'http.409.checkout-inventory',
+    message: 'INVENTORY_CONFLICT',
+    source: 'mocks/23-request-matrix.json',
+    kind: 'http',
+    caseName: 'runtime/request-matrix'
+  },
+  {
+    id: 'http.400.checkout-validation',
+    message: 'Checkout validation failed',
+    source: 'mocks/23-request-matrix.json',
+    kind: 'http',
+    caseName: 'runtime/request-matrix'
+  },
+  {
+    id: 'http.422.proxy-guard-validation',
+    message: 'Invalid request',
+    source: 'mocks/23-request-matrix.json',
+    kind: 'http',
+    caseName: 'runtime/request-matrix'
+  },
+  {
+    id: 'http.409.saas-email-taken',
+    message: 'EMAIL_TAKEN',
+    source: 'mocks/24-request-saas.json',
+    kind: 'http',
+    caseName: 'runtime/request-saas'
+  },
+  {
+    id: 'http.422.saas-signup-validation',
+    message: 'Signup validation failed',
+    source: 'mocks/24-request-saas.json',
+    kind: 'http',
+    caseName: 'runtime/request-saas'
+  },
+  {
+    id: 'http.403.saas-invite-forbidden',
+    message: 'INSUFFICIENT_ROLE',
+    source: 'mocks/24-request-saas.json',
+    kind: 'http',
+    caseName: 'runtime/request-saas'
+  },
+  {
+    id: 'http.404.saas-org-not-found',
+    message: 'ORG_NOT_FOUND',
+    source: 'mocks/24-request-saas.json',
+    kind: 'http',
+    caseName: 'runtime/request-saas'
+  },
+  {
+    id: 'http.400.saas-report-query',
+    message: 'Invalid report query',
+    source: 'mocks/24-request-saas.json',
+    kind: 'http',
+    caseName: 'runtime/request-saas'
+  },
+  {
+    id: 'http.201.request-match-proxy-live',
+    message: 'live-post',
+    source: 'mocks/23-request-matrix.json',
+    kind: 'http',
+    caseName: 'runtime/request-matrix'
+  },
+  {
+    id: 'http.200.request-match-params-query-body',
+    message: 'admin-web-close',
+    source: 'mocks/23-request-matrix.json',
+    kind: 'http',
+    caseName: 'runtime/request-matrix'
+  },
+  {
+    id: 'watch.request-config-invalid',
+    message: 'The "request.body.email.format" must be one of: email, uuid, url, date',
+    source: 'src/validators/request.validator.ts',
+    kind: 'watch',
+    caseName: 'runtime/watch-request-failed'
+  },
+  {
+    id: 'watch.request-restart-failed',
+    message: 'Mock server could not be restarted due to an invalid mock configuration. Please fix the mocks and run the command again.',
+    source: 'src/cli/commands/start/watch-mock.ts',
+    kind: 'watch',
+    caseName: 'runtime/watch-request-failed'
+  },
+  {
+    id: 'defensive.invalid-mock-configuration',
+    message: 'Invalid mock configuration',
+    source: 'src/cli/commands/start/files.ts',
+    kind: 'defensive',
+    caseName: 'unit/invalid-mock-configuration'
   }
 ];
 

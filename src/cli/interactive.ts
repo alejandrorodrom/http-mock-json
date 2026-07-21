@@ -11,7 +11,7 @@ export const interactive = () => {
 
   mock
     .name('mock-server')
-    .version('1.9.0', '-v, --version', 'Output the version number')
+    .version('1.10.0', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.');
 
@@ -90,7 +90,9 @@ export const interactive = () => {
           proxy: options.proxy
         });
       } catch (e) {
-        logError(e);
+        if (!(e instanceof Error && e.message === 'Invalid mock configuration')) {
+          logError(e);
+        }
         process.exit(1);
       }
     });

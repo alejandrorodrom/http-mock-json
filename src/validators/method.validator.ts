@@ -4,6 +4,7 @@ import { VALID_HTTP_METHODS } from '../constants/validation.constant';
 import { LocalIssue, MethodValidationResult } from '../types/validation.type';
 import { validateDelay } from './delay.validator';
 import { validateProxyValue } from './proxy.validator';
+import { validateRequest } from './request.validator';
 
 export const validateMethod = (
   endpoint: string,
@@ -89,6 +90,17 @@ export const validateMethod = (
         message: `The "nameResponse" "${ methodData.nameResponse }" does not exist in responses`
       });
     }
+  }
+
+  if (isExisting(methodData.request)) {
+    const requestResult = validateRequest(
+      endpoint,
+      method,
+      methodData.request,
+      methodData.responses
+    );
+    errors.push(...requestResult.errors);
+    warnings.push(...requestResult.warnings);
   }
 
   return { errors, warnings };

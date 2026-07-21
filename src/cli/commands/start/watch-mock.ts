@@ -60,7 +60,9 @@ export const watchMock = (
             proxy
           });
         } catch (error) {
-          logError(error);
+          if (!(error instanceof Error && error.message === 'Invalid mock configuration')) {
+            logError(error);
+          }
           console.log('Mock server could not be restarted due to an invalid mock configuration. Please fix the mocks and run the command again.');
           isRestarting = false;
         }
