@@ -7,45 +7,39 @@
           "name": "custom-299",
           "statusCode": 299,
           "body": {
-            "message": "Valid numeric statusCode but not in the standard list → warning",
+            "message": "Unassigned 2xx code → warning",
             "code": "CUSTOM_299"
           }
         },
         {
-          "name": "custom-418",
-          "statusCode": "418",
+          "name": "custom-419",
+          "statusCode": 419,
           "body": {
-            "message": "I'm a teapot (not in VALID_STATUS_CODES) → warning",
-            "code": "TEAPOT"
+            "message": "Unassigned 4xx code → warning",
+            "code": "CUSTOM_419"
           }
         },
         {
-          "name": "custom-429",
-          "statusCode": 429,
-          "headers": {
-            "Retry-After": "60",
-            "X-RateLimit-Limit": "100",
-            "X-RateLimit-Remaining": "0"
-          },
+          "name": "custom-430",
+          "statusCode": 430,
           "body": {
-            "message": "Too Many Requests (not in VALID_STATUS_CODES) → warning",
-            "code": "RATE_LIMIT_EXCEEDED",
-            "retryAfter": 60
+            "message": "Unassigned 4xx code → warning",
+            "code": "CUSTOM_430"
           }
         },
         {
-          "name": "custom-423",
-          "statusCode": "423",
+          "name": "custom-509",
+          "statusCode": 509,
           "body": {
-            "message": "Locked (not in VALID_STATUS_CODES) → warning",
-            "code": "LOCKED"
+            "message": "Unassigned 5xx code → warning",
+            "code": "CUSTOM_509"
           }
         },
         {
           "name": "custom-599",
           "statusCode": 599,
           "body": {
-            "message": "Network Connect Timeout Error → warning",
+            "message": "Unassigned 5xx code → warning",
             "code": "CUSTOM_599"
           }
         }

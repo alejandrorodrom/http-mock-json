@@ -1,0 +1,230 @@
+{
+  "api/v1/checkout/sessions": {
+    "POST": {
+      "nameResponse": "bad-request",
+      "delay": 80,
+      "responses": [
+        {
+          "name": "rate-limited",
+          "statusCode": 429,
+          "delay": 200,
+          "match": {
+            "query": { "scenario": "rate_limit" }
+          },
+          "headers": {
+            "Retry-After": "2",
+            "X-RateLimit-Limit": "100",
+            "X-RateLimit-Remaining": "0",
+            "Content-Type": "application/problem+json"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/rate-limited",
+            "title": "Too Many Requests",
+            "status": 429,
+            "detail": "Request rate exceeded; retry after the indicated delay",
+            "code": "RATE_LIMITED"
+          }
+        },
+        {
+          "name": "service-unavailable",
+          "statusCode": 503,
+          "delay": 150,
+          "match": {
+            "query": { "scenario": "maintenance" }
+          },
+          "headers": {
+            "Retry-After": "30",
+            "Content-Type": "application/problem+json"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/unavailable",
+            "title": "Service Unavailable",
+            "status": 503,
+            "detail": "Payments provider temporarily unavailable",
+            "code": "PROVIDER_UNAVAILABLE"
+          }
+        },
+        {
+          "name": "card-declined",
+          "statusCode": 402,
+          "match": {
+            "body": {
+              "paymentMethod": "card",
+              "card": { "number": "4000000000000002" }
+            }
+          },
+          "headers": {
+            "Content-Type": "application/problem+json"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/payment-required",
+            "title": "Payment Required",
+            "status": 402,
+            "detail": "The card was declined",
+            "code": "CARD_DECLINED",
+            "declineCode": "generic_decline"
+          }
+        },
+        {
+          "name": "insufficient-funds",
+          "statusCode": 402,
+          "match": {
+            "body": {
+              "paymentMethod": "card",
+              "card": { "number": "4000000000009995" }
+            }
+          },
+          "body": {
+            "type": "https://api.example.com/problems/payment-required",
+            "title": "Payment Required",
+            "status": 402,
+            "detail": "Insufficient funds",
+            "code": "INSUFFICIENT_FUNDS",
+            "declineCode": "insufficient_funds"
+          }
+        },
+        {
+          "name": "idempotent-replay",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "idempotencyKey": "idem_replay_001",
+              "amount": 2500
+            }
+          },
+          "headers": {
+            "Idempotent-Replayed": "true"
+          },
+          "body": {
+            "id": "cs_replay_001",
+            "status": "complete",
+            "amount": 2500,
+            "currency": "usd",
+            "replayed": true
+          }
+        },
+        {
+          "name": "idempotency-conflict",
+          "statusCode": 409,
+          "match": {
+            "body": {
+              "idempotencyKey": "idem_conflict_001",
+              "amount": 9999
+            }
+          },
+          "headers": {
+            "Content-Type": "application/problem+json"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/conflict",
+            "title": "Conflict",
+            "status": 409,
+            "detail": "Idempotency key reused with different parameters",
+            "code": "IDEMPOTENCY_KEY_MISMATCH"
+          }
+        },
+        {
+          "name": "inventory-conflict",
+          "statusCode": 409,
+          "match": {
+            "query": { "source": "web" },
+            "body": {
+              "sku": "SKU-OOS",
+              "quantity": 1
+            }
+          },
+          "body": {
+            "type": "https://api.example.com/problems/conflict",
+            "title": "Conflict",
+            "status": 409,
+            "detail": "Insufficient inventory for SKU-OOS",
+            "code": "INVENTORY_CONFLICT"
+          }
+        },
+        {
+          "name": "created",
+          "statusCode": 201,
+          "delay": 250,
+          "match": {
+            "query": { "source": "web" },
+            "body": {
+              "paymentMethod": "card",
+              "amount": 2500,
+              "currency": "usd"
+            }
+          },
+          "headers": {
+            "Location": "/api/v1/checkout/sessions/cs_ok_001"
+          },
+          "body": {
+            "id": "cs_ok_001",
+            "status": "complete",
+            "amount": 2500,
+            "currency": "usd",
+            "clientSecret": "cs_test_secret"
+          }
+        },
+        {
+          "name": "bad-request",
+          "statusCode": 400,
+          "headers": {
+            "Content-Type": "application/problem+json"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/bad-request",
+            "title": "Bad Request",
+            "status": 400,
+            "detail": "Missing required checkout fields",
+            "code": "BAD_REQUEST"
+          }
+        }
+      ]
+    }
+  },
+  "api/v1/checkout/sessions/:id": {
+    "GET": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "complete",
+          "statusCode": 200,
+          "match": {
+            "params": { "id": "cs_ok_001" },
+            "query": { "expand": "payment" }
+          },
+          "body": {
+            "id": "cs_ok_001",
+            "status": "complete",
+            "payment": {
+              "id": "pay_001",
+              "status": "succeeded"
+            }
+          }
+        },
+        {
+          "name": "processing",
+          "statusCode": 200,
+          "delay": 300,
+          "match": {
+            "params": { "id": "cs_pending_001" }
+          },
+          "body": {
+            "id": "cs_pending_001",
+            "status": "processing"
+          }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "body": {
+            "type": "https://api.example.com/problems/not-found",
+            "title": "Not Found",
+            "status": 404,
+            "detail": "Checkout session not found",
+            "code": "SESSION_NOT_FOUND"
+          }
+        }
+      ]
+    }
+  }
+}

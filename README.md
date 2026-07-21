@@ -865,7 +865,7 @@ Warnings don't prevent the server from starting but indicate potential issues:
 
 | Warning Message                                         | Description                             | Action                                                                                                     |
 |---------------------------------------------------------|-----------------------------------------|------------------------------------------------------------------------------------------------------------|
-| `The "statusCode" X is not a standard HTTP status code` | Status code is not in the standard list | Status codes like `299`, `599` work but may not be standard. Consider using standard codes (100-599 range) |
+| `The "statusCode" X is not a standard HTTP status code` | Status code is not in the IANA registry list | Unassigned codes like `299` or `599` still work, but prefer IANA-registered codes |
 
 **Standard HTTP Status Codes:**
 

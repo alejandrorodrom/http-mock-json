@@ -22,7 +22,11 @@ const successCases = [
   require('./success/14-http-methods-case'),
   require('./success/15-auth-scenarios'),
   require('./success/16-runtime-proxy-orphan'),
-  require('./success/17-proxy-request-failed')
+  require('./success/17-proxy-request-failed'),
+  require('./success/18-rest-resource-lifecycle'),
+  require('./success/19-checkout-resilience'),
+  require('./success/20-multi-tenant-rbac'),
+  require('./success/21-match-matrix')
 ];
 
 const errorCases = [
@@ -58,7 +62,11 @@ const runtimeCases = [
   require('./runtime/proxy-live'),
   require('./runtime/global-proxy-unmatched'),
   require('./runtime/proxy-request-failed'),
-  require('./runtime/watch-restart-failed')
+  require('./runtime/watch-restart-failed'),
+  require('./runtime/rest-resource-lifecycle'),
+  require('./runtime/checkout-resilience'),
+  require('./runtime/multi-tenant-rbac'),
+  require('./runtime/match-matrix')
 ];
 
 const unitCases = [

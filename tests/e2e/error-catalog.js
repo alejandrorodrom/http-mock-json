@@ -9,7 +9,7 @@
  * @property {string} id
  * @property {string} message Substring that the case must assert/produce
  * @property {string} source
- * @property {'validation' | 'cli' | 'runtime' | 'init' | 'watch' | 'warning' | 'defensive'} kind
+ * @property {'validation' | 'cli' | 'runtime' | 'init' | 'watch' | 'warning' | 'defensive' | 'http'} kind
  * @property {string} caseName Use-case `name` that covers this error
  */
 
@@ -383,6 +383,183 @@ const ERROR_CATALOG = [
     source: 'src/cli/commands/init/add-mocks-folder.ts',
     kind: 'init',
     caseName: 'unit/mocks-folder-mkdir-failed'
+  },
+
+  // --- controlled HTTP application errors (mock responses asserted at runtime) ---
+  {
+    id: 'http.400.bad-request',
+    message: '400 BAD_REQUEST',
+    source: 'mocks/19-checkout-resilience.json',
+    kind: 'http',
+    caseName: 'runtime/checkout-resilience'
+  },
+  {
+    id: 'http.401.unauthorized',
+    message: '401 UNAUTHORIZED',
+    source: 'mocks/20-multi-tenant-rbac.json',
+    kind: 'http',
+    caseName: 'runtime/multi-tenant-rbac'
+  },
+  {
+    id: 'http.402.card-declined',
+    message: '402 CARD_DECLINED',
+    source: 'mocks/19-checkout-resilience.json',
+    kind: 'http',
+    caseName: 'runtime/checkout-resilience'
+  },
+  {
+    id: 'http.402.insufficient-funds',
+    message: '402 INSUFFICIENT_FUNDS',
+    source: 'mocks/19-checkout-resilience.json',
+    kind: 'http',
+    caseName: 'runtime/checkout-resilience'
+  },
+  {
+    id: 'http.403.org-forbidden',
+    message: '403 ORG_FORBIDDEN',
+    source: 'mocks/20-multi-tenant-rbac.json',
+    kind: 'http',
+    caseName: 'runtime/multi-tenant-rbac'
+  },
+  {
+    id: 'http.403.insufficient-role',
+    message: '403 INSUFFICIENT_ROLE',
+    source: 'mocks/20-multi-tenant-rbac.json',
+    kind: 'http',
+    caseName: 'runtime/multi-tenant-rbac'
+  },
+  {
+    id: 'http.404.product-not-found',
+    message: '404 PRODUCT_NOT_FOUND',
+    source: 'mocks/18-rest-resource-lifecycle.json',
+    kind: 'http',
+    caseName: 'runtime/rest-resource-lifecycle'
+  },
+  {
+    id: 'http.404.project-hidden',
+    message: '404 PROJECT_NOT_FOUND',
+    source: 'mocks/20-multi-tenant-rbac.json',
+    kind: 'http',
+    caseName: 'runtime/multi-tenant-rbac'
+  },
+  {
+    id: 'http.409.duplicate-sku',
+    message: '409 DUPLICATE_SKU',
+    source: 'mocks/18-rest-resource-lifecycle.json',
+    kind: 'http',
+    caseName: 'runtime/rest-resource-lifecycle'
+  },
+  {
+    id: 'http.409.version-conflict',
+    message: '409 VERSION_CONFLICT',
+    source: 'mocks/18-rest-resource-lifecycle.json',
+    kind: 'http',
+    caseName: 'runtime/rest-resource-lifecycle'
+  },
+  {
+    id: 'http.409.idempotency-mismatch',
+    message: '409 IDEMPOTENCY_KEY_MISMATCH',
+    source: 'mocks/19-checkout-resilience.json',
+    kind: 'http',
+    caseName: 'runtime/checkout-resilience'
+  },
+  {
+    id: 'http.409.inventory-conflict',
+    message: '409 INVENTORY_CONFLICT',
+    source: 'mocks/19-checkout-resilience.json',
+    kind: 'http',
+    caseName: 'runtime/checkout-resilience'
+  },
+  {
+    id: 'http.410.product-gone',
+    message: '410 PRODUCT_GONE',
+    source: 'mocks/18-rest-resource-lifecycle.json',
+    kind: 'http',
+    caseName: 'runtime/rest-resource-lifecycle'
+  },
+  {
+    id: 'http.410.project-gone',
+    message: '410 PROJECT_GONE',
+    source: 'mocks/20-multi-tenant-rbac.json',
+    kind: 'http',
+    caseName: 'runtime/multi-tenant-rbac'
+  },
+  {
+    id: 'http.422.validation-failed',
+    message: '422 validation errors',
+    source: 'mocks/18-rest-resource-lifecycle.json',
+    kind: 'http',
+    caseName: 'runtime/rest-resource-lifecycle'
+  },
+  {
+    id: 'http.429.rate-limited',
+    message: '429 RATE_LIMITED',
+    source: 'mocks/19-checkout-resilience.json',
+    kind: 'http',
+    caseName: 'runtime/checkout-resilience'
+  },
+  {
+    id: 'http.503.provider-unavailable',
+    message: '503 PROVIDER_UNAVAILABLE',
+    source: 'mocks/19-checkout-resilience.json',
+    kind: 'http',
+    caseName: 'runtime/checkout-resilience'
+  },
+  {
+    id: 'http.401.ticket-unauthorized',
+    message: '401 UNAUTHORIZED',
+    source: 'mocks/21-match-matrix.json',
+    kind: 'http',
+    caseName: 'runtime/match-matrix'
+  },
+  {
+    id: 'http.403.ticket-insufficient-role',
+    message: '403 INSUFFICIENT_ROLE',
+    source: 'mocks/21-match-matrix.json',
+    kind: 'http',
+    caseName: 'runtime/match-matrix'
+  },
+  {
+    id: 'http.404.ticket-not-found',
+    message: '404 TICKET_NOT_FOUND',
+    source: 'mocks/21-match-matrix.json',
+    kind: 'http',
+    caseName: 'runtime/match-matrix'
+  },
+  {
+    id: 'http.409.ticket-version-conflict',
+    message: '409 VERSION_CONFLICT',
+    source: 'mocks/21-match-matrix.json',
+    kind: 'http',
+    caseName: 'runtime/match-matrix'
+  },
+  {
+    id: 'http.409.ticket-duplicate-title',
+    message: '409 DUPLICATE_TITLE',
+    source: 'mocks/21-match-matrix.json',
+    kind: 'http',
+    caseName: 'runtime/match-matrix'
+  },
+  {
+    id: 'http.410.ticket-gone',
+    message: '410 TICKET_GONE',
+    source: 'mocks/21-match-matrix.json',
+    kind: 'http',
+    caseName: 'runtime/match-matrix'
+  },
+  {
+    id: 'http.422.ticket-validation',
+    message: '422 VALIDATION_FAILED',
+    source: 'mocks/21-match-matrix.json',
+    kind: 'http',
+    caseName: 'runtime/match-matrix'
+  },
+  {
+    id: 'http.429.ticket-rate-limited',
+    message: '429 RATE_LIMITED',
+    source: 'mocks/21-match-matrix.json',
+    kind: 'http',
+    caseName: 'runtime/match-matrix'
   }
 ];
 

@@ -26,7 +26,9 @@ async function request(url, options = {}) {
   if (response.status !== 204) {
     const text = await response.text();
     if (text.length > 0) {
-      payload = contentType.includes('application/json') ? JSON.parse(text) : text;
+      // application/json, application/problem+json, and other +json types
+      const isJson = /(?:\+|\/)json\b/i.test(contentType) || contentType.includes('application/json');
+      payload = isJson ? JSON.parse(text) : text;
     }
   }
 

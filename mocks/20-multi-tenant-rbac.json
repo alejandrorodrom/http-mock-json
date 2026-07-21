@@ -1,0 +1,336 @@
+{
+  "api/v1/orgs/:orgId/projects": {
+    "GET": {
+      "nameResponse": "unauthorized",
+      "responses": [
+        {
+          "name": "list-admin",
+          "statusCode": 200,
+          "match": {
+            "params": { "orgId": "org_1" },
+            "query": { "role": "admin", "includeArchived": "false" }
+          },
+          "headers": {
+            "X-Org-Id": "org_1",
+            "X-Total-Count": "2"
+          },
+          "body": {
+            "data": [
+              { "id": "prj_1", "name": "Website", "role": "admin" },
+              { "id": "prj_2", "name": "Mobile", "role": "admin" }
+            ]
+          }
+        },
+        {
+          "name": "list-member",
+          "statusCode": 200,
+          "match": {
+            "params": { "orgId": "org_1" },
+            "query": { "role": "member" }
+          },
+          "body": {
+            "data": [
+              { "id": "prj_1", "name": "Website", "role": "viewer" }
+            ]
+          }
+        },
+        {
+          "name": "forbidden",
+          "statusCode": 403,
+          "match": {
+            "params": { "orgId": "org_2" },
+            "query": { "role": "member" }
+          },
+          "headers": {
+            "Content-Type": "application/problem+json"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/forbidden",
+            "title": "Forbidden",
+            "status": 403,
+            "detail": "Authenticated user cannot access this organization",
+            "code": "ORG_FORBIDDEN"
+          }
+        },
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "headers": {
+            "WWW-Authenticate": "Bearer",
+            "Content-Type": "application/problem+json"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/unauthorized",
+            "title": "Unauthorized",
+            "status": 401,
+            "detail": "Authentication required",
+            "code": "UNAUTHORIZED"
+          }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "unauthorized",
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": 201,
+          "match": {
+            "params": { "orgId": "org_1" },
+            "query": { "role": "admin" },
+            "body": { "name": "Billing", "visibility": "private" }
+          },
+          "headers": {
+            "Location": "/api/v1/orgs/org_1/projects/prj_3"
+          },
+          "body": {
+            "id": "prj_3",
+            "orgId": "org_1",
+            "name": "Billing",
+            "visibility": "private"
+          }
+        },
+        {
+          "name": "forbidden-member-create",
+          "statusCode": 403,
+          "match": {
+            "params": { "orgId": "org_1" },
+            "query": { "role": "member" },
+            "body": { "name": "Billing" }
+          },
+          "body": {
+            "type": "https://api.example.com/problems/forbidden",
+            "title": "Forbidden",
+            "status": 403,
+            "detail": "Members cannot create projects",
+            "code": "INSUFFICIENT_ROLE"
+          }
+        },
+        {
+          "name": "validation-failed",
+          "statusCode": 422,
+          "match": {
+            "params": { "orgId": "org_1" },
+            "query": { "role": "admin" },
+            "body": { "name": "" }
+          },
+          "body": {
+            "type": "https://api.example.com/problems/validation-failed",
+            "title": "Unprocessable Entity",
+            "status": 422,
+            "detail": "Project name is required",
+            "errors": [
+              { "field": "name", "code": "REQUIRED", "message": "Name is required" }
+            ]
+          }
+        },
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "body": {
+            "type": "https://api.example.com/problems/unauthorized",
+            "title": "Unauthorized",
+            "status": 401,
+            "detail": "Authentication required",
+            "code": "UNAUTHORIZED"
+          }
+        }
+      ]
+    }
+  },
+  "api/v1/orgs/:orgId/projects/:projectId": {
+    "GET": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "found",
+          "statusCode": 200,
+          "match": {
+            "params": { "orgId": "org_1", "projectId": "prj_1" },
+            "query": { "role": "admin" }
+          },
+          "body": {
+            "id": "prj_1",
+            "orgId": "org_1",
+            "name": "Website",
+            "visibility": "private"
+          }
+        },
+        {
+          "name": "hidden-as-not-found",
+          "statusCode": 404,
+          "match": {
+            "params": { "orgId": "org_1", "projectId": "prj_secret" },
+            "query": { "role": "member" }
+          },
+          "body": {
+            "type": "https://api.example.com/problems/not-found",
+            "title": "Not Found",
+            "status": 404,
+            "detail": "Project not found",
+            "code": "PROJECT_NOT_FOUND"
+          }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "body": {
+            "type": "https://api.example.com/problems/not-found",
+            "title": "Not Found",
+            "status": 404,
+            "detail": "Project not found",
+            "code": "PROJECT_NOT_FOUND"
+          }
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "soft-deleted",
+          "statusCode": 204,
+          "match": {
+            "params": { "orgId": "org_1", "projectId": "prj_1" },
+            "query": { "role": "admin" }
+          },
+          "body": null
+        },
+        {
+          "name": "already-gone",
+          "statusCode": 410,
+          "match": {
+            "params": { "orgId": "org_1", "projectId": "prj_archived" },
+            "query": { "role": "admin" }
+          },
+          "body": {
+            "type": "https://api.example.com/problems/gone",
+            "title": "Gone",
+            "status": 410,
+            "detail": "Project was already archived",
+            "code": "PROJECT_GONE"
+          }
+        },
+        {
+          "name": "forbidden",
+          "statusCode": 403,
+          "match": {
+            "params": { "orgId": "org_1", "projectId": "prj_1" },
+            "query": { "role": "member" }
+          },
+          "body": {
+            "type": "https://api.example.com/problems/forbidden",
+            "title": "Forbidden",
+            "status": 403,
+            "detail": "Members cannot delete projects",
+            "code": "INSUFFICIENT_ROLE"
+          }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "body": {
+            "type": "https://api.example.com/problems/not-found",
+            "title": "Not Found",
+            "status": 404,
+            "detail": "Project not found",
+            "code": "PROJECT_NOT_FOUND"
+          }
+        }
+      ]
+    }
+  },
+  "api/v1/jobs": {
+    "POST": {
+      "nameResponse": "accepted",
+      "responses": [
+        {
+          "name": "queued-export",
+          "statusCode": 202,
+          "match": {
+            "body": { "type": "export", "orgId": "org_1" }
+          },
+          "headers": {
+            "Location": "/api/v1/jobs/job_1"
+          },
+          "body": {
+            "id": "job_1",
+            "status": "queued",
+            "type": "export"
+          }
+        },
+        {
+          "name": "accepted",
+          "statusCode": 202,
+          "body": {
+            "id": "job_default",
+            "status": "queued",
+            "type": "unknown"
+          }
+        }
+      ]
+    }
+  },
+  "api/v1/jobs/:id": {
+    "GET": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "running",
+          "statusCode": 200,
+          "delay": 200,
+          "match": {
+            "params": { "id": "job_1" },
+            "query": { "wait": "false" }
+          },
+          "body": {
+            "id": "job_1",
+            "status": "running",
+            "progress": 45
+          }
+        },
+        {
+          "name": "succeeded",
+          "statusCode": 200,
+          "match": {
+            "params": { "id": "job_1" },
+            "query": { "wait": "true" }
+          },
+          "delay": 250,
+          "body": {
+            "id": "job_1",
+            "status": "succeeded",
+            "progress": 100,
+            "resultUrl": "/downloads/export-org_1.csv"
+          }
+        },
+        {
+          "name": "failed",
+          "statusCode": 200,
+          "match": {
+            "params": { "id": "job_fail" }
+          },
+          "body": {
+            "id": "job_fail",
+            "status": "failed",
+            "error": {
+              "code": "EXPORT_FAILED",
+              "message": "Upstream CSV renderer timed out"
+            }
+          }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "body": {
+            "type": "https://api.example.com/problems/not-found",
+            "title": "Not Found",
+            "status": 404,
+            "detail": "Job not found",
+            "code": "JOB_NOT_FOUND"
+          }
+        }
+      ]
+    }
+  }
+}

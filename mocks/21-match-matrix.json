@@ -1,0 +1,353 @@
+{
+  "api/v1/tickets/:ticketId": {
+    "PATCH": {
+      "nameResponse": "unauthorized",
+      "delay": 40,
+      "responses": [
+        {
+          "name": "rate-limited",
+          "statusCode": 429,
+          "delay": 100,
+          "match": {
+            "params": { "ticketId": "t_1" },
+            "query": { "actor": "admin", "channel": "web", "burst": "true" },
+            "body": { "status": "resolved", "resolution": "fixed" }
+          },
+          "headers": {
+            "Retry-After": "3",
+            "Content-Type": "application/problem+json",
+            "X-Match": "rate-limited"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/rate-limited",
+            "title": "Too Many Requests",
+            "status": 429,
+            "detail": "Too many ticket updates",
+            "code": "RATE_LIMITED"
+          }
+        },
+        {
+          "name": "resolve-admin-web",
+          "statusCode": 200,
+          "match": {
+            "params": { "ticketId": "t_1" },
+            "query": { "actor": "admin", "channel": "web" },
+            "body": { "status": "resolved", "resolution": "fixed" }
+          },
+          "headers": {
+            "ETag": "W/\"ticket-2\"",
+            "X-Match": "resolve-admin-web"
+          },
+          "body": {
+            "id": "t_1",
+            "status": "resolved",
+            "resolution": "fixed",
+            "actor": "admin",
+            "channel": "web"
+          }
+        },
+        {
+          "name": "resolve-admin-app",
+          "statusCode": 200,
+          "match": {
+            "params": { "ticketId": "t_1" },
+            "query": { "actor": "admin", "channel": "app" },
+            "body": { "status": "resolved" }
+          },
+          "headers": {
+            "X-Match": "resolve-admin-app"
+          },
+          "body": {
+            "id": "t_1",
+            "status": "resolved",
+            "actor": "admin",
+            "channel": "app"
+          }
+        },
+        {
+          "name": "reopen-agent",
+          "statusCode": 200,
+          "delay": 120,
+          "match": {
+            "params": { "ticketId": "t_2" },
+            "query": { "actor": "agent" },
+            "body": { "status": "open", "reason": "customer_reply" }
+          },
+          "headers": {
+            "X-Match": "reopen-agent"
+          },
+          "body": {
+            "id": "t_2",
+            "status": "open",
+            "reason": "customer_reply"
+          }
+        },
+        {
+          "name": "assign-overlap-first-wins",
+          "statusCode": 200,
+          "match": {
+            "params": { "ticketId": "t_3" },
+            "query": { "actor": "admin" },
+            "body": { "assignee": "user_9" }
+          },
+          "headers": {
+            "X-Match": "assign-overlap-first-wins"
+          },
+          "body": {
+            "id": "t_3",
+            "assignee": "user_9",
+            "matched": "first"
+          }
+        },
+        {
+          "name": "assign-overlap-second-never",
+          "statusCode": 200,
+          "match": {
+            "params": { "ticketId": "t_3" },
+            "query": { "actor": "admin" },
+            "body": { "assignee": "user_9", "priority": "high" }
+          },
+          "headers": {
+            "X-Match": "assign-overlap-second-never"
+          },
+          "body": {
+            "id": "t_3",
+            "assignee": "user_9",
+            "matched": "second"
+          }
+        },
+        {
+          "name": "validation-empty-status",
+          "statusCode": 422,
+          "match": {
+            "params": { "ticketId": "t_1" },
+            "query": { "actor": "admin", "channel": "web" },
+            "body": { "status": "" }
+          },
+          "headers": {
+            "Content-Type": "application/problem+json",
+            "X-Match": "validation-empty-status"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/validation-failed",
+            "title": "Unprocessable Content",
+            "status": 422,
+            "detail": "status cannot be empty",
+            "code": "VALIDATION_FAILED",
+            "errors": [
+              { "field": "status", "code": "REQUIRED", "message": "Status is required" }
+            ]
+          }
+        },
+        {
+          "name": "conflict-stale-version",
+          "statusCode": 409,
+          "match": {
+            "params": { "ticketId": "t_1" },
+            "query": { "actor": "admin", "channel": "web" },
+            "body": { "status": "resolved", "version": 1 }
+          },
+          "headers": {
+            "Content-Type": "application/problem+json",
+            "ETag": "W/\"ticket-2\"",
+            "X-Match": "conflict-stale-version"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/conflict",
+            "title": "Conflict",
+            "status": 409,
+            "detail": "Ticket was modified by another actor",
+            "code": "VERSION_CONFLICT",
+            "currentVersion": 2
+          }
+        },
+        {
+          "name": "forbidden-member",
+          "statusCode": 403,
+          "match": {
+            "params": { "ticketId": "t_1" },
+            "query": { "actor": "member" },
+            "body": { "status": "resolved" }
+          },
+          "headers": {
+            "Content-Type": "application/problem+json",
+            "X-Match": "forbidden-member"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/forbidden",
+            "title": "Forbidden",
+            "status": 403,
+            "detail": "Members cannot resolve tickets",
+            "code": "INSUFFICIENT_ROLE"
+          }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "match": {
+            "params": { "ticketId": "t_missing" },
+            "query": { "actor": "admin", "channel": "web" },
+            "body": { "status": "resolved" }
+          },
+          "headers": {
+            "Content-Type": "application/problem+json",
+            "X-Match": "not-found"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/not-found",
+            "title": "Not Found",
+            "status": 404,
+            "detail": "Ticket not found",
+            "code": "TICKET_NOT_FOUND"
+          }
+        },
+        {
+          "name": "gone",
+          "statusCode": 410,
+          "match": {
+            "params": { "ticketId": "t_archived" },
+            "query": { "actor": "admin", "channel": "web" },
+            "body": { "status": "resolved" }
+          },
+          "headers": {
+            "Content-Type": "application/problem+json",
+            "X-Match": "gone"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/gone",
+            "title": "Gone",
+            "status": 410,
+            "detail": "Ticket was permanently archived",
+            "code": "TICKET_GONE"
+          }
+        },
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "headers": {
+            "WWW-Authenticate": "Bearer",
+            "Content-Type": "application/problem+json",
+            "X-Match": "unauthorized"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/unauthorized",
+            "title": "Unauthorized",
+            "status": 401,
+            "detail": "Authentication required",
+            "code": "UNAUTHORIZED"
+          }
+        }
+      ]
+    }
+  },
+  "api/v1/tickets": {
+    "POST": {
+      "nameResponse": "bad-request",
+      "responses": [
+        {
+          "name": "created-priority-high",
+          "statusCode": 201,
+          "match": {
+            "query": { "source": "web" },
+            "body": {
+              "title": "Outage",
+              "priority": "high",
+              "labels": ["prod", "p0"]
+            }
+          },
+          "headers": {
+            "Location": "/api/v1/tickets/t_new_high",
+            "X-Match": "created-priority-high"
+          },
+          "body": {
+            "id": "t_new_high",
+            "title": "Outage",
+            "priority": "high"
+          }
+        },
+        {
+          "name": "created-priority-low",
+          "statusCode": 201,
+          "match": {
+            "query": { "source": "web" },
+            "body": {
+              "title": "Typo",
+              "priority": "low"
+            }
+          },
+          "headers": {
+            "Location": "/api/v1/tickets/t_new_low",
+            "X-Match": "created-priority-low"
+          },
+          "body": {
+            "id": "t_new_low",
+            "title": "Typo",
+            "priority": "low"
+          }
+        },
+        {
+          "name": "duplicate-title",
+          "statusCode": 409,
+          "match": {
+            "query": { "source": "web" },
+            "body": {
+              "title": "Outage",
+              "priority": "medium"
+            }
+          },
+          "headers": {
+            "Content-Type": "application/problem+json",
+            "X-Match": "duplicate-title"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/conflict",
+            "title": "Conflict",
+            "status": 409,
+            "detail": "An open ticket with this title already exists",
+            "code": "DUPLICATE_TITLE"
+          }
+        },
+        {
+          "name": "validation-missing-title",
+          "statusCode": 422,
+          "match": {
+            "query": { "source": "web" },
+            "body": {
+              "title": "",
+              "priority": "low"
+            }
+          },
+          "headers": {
+            "Content-Type": "application/problem+json",
+            "X-Match": "validation-missing-title"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/validation-failed",
+            "title": "Unprocessable Content",
+            "status": 422,
+            "detail": "title is required",
+            "code": "VALIDATION_FAILED",
+            "errors": [
+              { "field": "title", "code": "REQUIRED", "message": "Title is required" }
+            ]
+          }
+        },
+        {
+          "name": "bad-request",
+          "statusCode": 400,
+          "headers": {
+            "Content-Type": "application/problem+json",
+            "X-Match": "bad-request"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/bad-request",
+            "title": "Bad Request",
+            "status": 400,
+            "detail": "Missing source query or ticket payload",
+            "code": "BAD_REQUEST"
+          }
+        }
+      ]
+    }
+  }
+}

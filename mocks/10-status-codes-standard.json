@@ -6,19 +6,70 @@
         {
           "name": "continue",
           "statusCode": 100,
-          "body": { "message": "Continue" }
+          "body": {
+            "message": "Continue",
+            "statusCode": 100
+          }
         }
       ]
     }
   },
   "api/status/101": {
     "GET": {
-      "nameResponse": "switching",
+      "nameResponse": "switching-protocols",
       "responses": [
         {
-          "name": "switching",
-          "statusCode": "101",
-          "body": { "message": "Switching Protocols" }
+          "name": "switching-protocols",
+          "statusCode": 101,
+          "body": {
+            "message": "Switching Protocols",
+            "statusCode": 101
+          }
+        }
+      ]
+    }
+  },
+  "api/status/102": {
+    "GET": {
+      "nameResponse": "processing",
+      "responses": [
+        {
+          "name": "processing",
+          "statusCode": 102,
+          "body": {
+            "message": "Processing",
+            "statusCode": 102
+          }
+        }
+      ]
+    }
+  },
+  "api/status/103": {
+    "GET": {
+      "nameResponse": "early-hints",
+      "responses": [
+        {
+          "name": "early-hints",
+          "statusCode": 103,
+          "body": {
+            "message": "Early Hints",
+            "statusCode": 103
+          }
+        }
+      ]
+    }
+  },
+  "api/status/104": {
+    "GET": {
+      "nameResponse": "upload-resumption-supported",
+      "responses": [
+        {
+          "name": "upload-resumption-supported",
+          "statusCode": 104,
+          "body": {
+            "message": "Upload Resumption Supported",
+            "statusCode": 104
+          }
         }
       ]
     }
@@ -30,7 +81,10 @@
         {
           "name": "ok",
           "statusCode": 200,
-          "body": { "message": "OK" }
+          "body": {
+            "message": "OK",
+            "statusCode": 200
+          }
         }
       ]
     }
@@ -41,8 +95,11 @@
       "responses": [
         {
           "name": "created",
-          "statusCode": "201",
-          "body": { "message": "Created", "id": 1 }
+          "statusCode": 201,
+          "body": {
+            "message": "Created",
+            "statusCode": 201
+          }
         }
       ]
     }
@@ -54,7 +111,25 @@
         {
           "name": "accepted",
           "statusCode": 202,
-          "body": { "message": "Accepted", "jobId": "job-1" }
+          "body": {
+            "message": "Accepted",
+            "statusCode": 202
+          }
+        }
+      ]
+    }
+  },
+  "api/status/203": {
+    "GET": {
+      "nameResponse": "non-authoritative-information",
+      "responses": [
+        {
+          "name": "non-authoritative-information",
+          "statusCode": 203,
+          "body": {
+            "message": "Non-Authoritative Information",
+            "statusCode": 203
+          }
         }
       ]
     }
@@ -65,35 +140,113 @@
       "responses": [
         {
           "name": "no-content",
-          "statusCode": "204",
+          "statusCode": 204,
           "body": null
+        }
+      ]
+    }
+  },
+  "api/status/205": {
+    "DELETE": {
+      "nameResponse": "reset-content",
+      "responses": [
+        {
+          "name": "reset-content",
+          "statusCode": 205,
+          "body": null
+        }
+      ]
+    }
+  },
+  "api/status/206": {
+    "GET": {
+      "nameResponse": "partial-content",
+      "responses": [
+        {
+          "name": "partial-content",
+          "statusCode": 206,
+          "body": {
+            "message": "Partial Content",
+            "statusCode": 206
+          }
+        }
+      ]
+    }
+  },
+  "api/status/207": {
+    "GET": {
+      "nameResponse": "multi-status",
+      "responses": [
+        {
+          "name": "multi-status",
+          "statusCode": 207,
+          "body": {
+            "message": "Multi-Status",
+            "statusCode": 207
+          }
+        }
+      ]
+    }
+  },
+  "api/status/208": {
+    "GET": {
+      "nameResponse": "already-reported",
+      "responses": [
+        {
+          "name": "already-reported",
+          "statusCode": 208,
+          "body": {
+            "message": "Already Reported",
+            "statusCode": 208
+          }
+        }
+      ]
+    }
+  },
+  "api/status/226": {
+    "GET": {
+      "nameResponse": "im-used",
+      "responses": [
+        {
+          "name": "im-used",
+          "statusCode": 226,
+          "body": {
+            "message": "IM Used",
+            "statusCode": 226
+          }
         }
       ]
     }
   },
   "api/status/300": {
     "GET": {
-      "nameResponse": "multiple",
+      "nameResponse": "multiple-choices",
       "responses": [
         {
-          "name": "multiple",
+          "name": "multiple-choices",
           "statusCode": 300,
-          "body": { "message": "Multiple Choices" }
+          "body": {
+            "message": "Multiple Choices",
+            "statusCode": 300
+          }
         }
       ]
     }
   },
   "api/status/301": {
     "GET": {
-      "nameResponse": "moved",
+      "nameResponse": "moved-permanently",
       "responses": [
         {
-          "name": "moved",
-          "statusCode": "301",
+          "name": "moved-permanently",
+          "statusCode": 301,
+          "body": {
+            "message": "Moved Permanently",
+            "statusCode": 301
+          },
           "headers": {
             "Location": "/api/status/200"
-          },
-          "body": { "message": "Moved Permanently" }
+          }
         }
       ]
     }
@@ -105,10 +258,31 @@
         {
           "name": "found",
           "statusCode": 302,
+          "body": {
+            "message": "Found",
+            "statusCode": 302
+          },
           "headers": {
             "Location": "/api/status/200"
+          }
+        }
+      ]
+    }
+  },
+  "api/status/303": {
+    "GET": {
+      "nameResponse": "see-other",
+      "responses": [
+        {
+          "name": "see-other",
+          "statusCode": 303,
+          "body": {
+            "message": "See Other",
+            "statusCode": 303
           },
-          "body": { "message": "Found" }
+          "headers": {
+            "Location": "/api/status/200"
+          }
         }
       ]
     }
@@ -119,8 +293,74 @@
       "responses": [
         {
           "name": "not-modified",
-          "statusCode": "304",
+          "statusCode": 304,
           "body": null
+        }
+      ]
+    }
+  },
+  "api/status/305": {
+    "GET": {
+      "nameResponse": "use-proxy",
+      "responses": [
+        {
+          "name": "use-proxy",
+          "statusCode": 305,
+          "body": {
+            "message": "Use Proxy",
+            "statusCode": 305
+          }
+        }
+      ]
+    }
+  },
+  "api/status/306": {
+    "GET": {
+      "nameResponse": "unused",
+      "responses": [
+        {
+          "name": "unused",
+          "statusCode": 306,
+          "body": {
+            "message": "Unused",
+            "statusCode": 306
+          }
+        }
+      ]
+    }
+  },
+  "api/status/307": {
+    "GET": {
+      "nameResponse": "temporary-redirect",
+      "responses": [
+        {
+          "name": "temporary-redirect",
+          "statusCode": 307,
+          "body": {
+            "message": "Temporary Redirect",
+            "statusCode": 307
+          },
+          "headers": {
+            "Location": "/api/status/200"
+          }
+        }
+      ]
+    }
+  },
+  "api/status/308": {
+    "GET": {
+      "nameResponse": "permanent-redirect",
+      "responses": [
+        {
+          "name": "permanent-redirect",
+          "statusCode": 308,
+          "body": {
+            "message": "Permanent Redirect",
+            "statusCode": 308
+          },
+          "headers": {
+            "Location": "/api/status/200"
+          }
         }
       ]
     }
@@ -132,7 +372,10 @@
         {
           "name": "bad-request",
           "statusCode": 400,
-          "body": { "message": "Bad Request", "code": "BAD_REQUEST" }
+          "body": {
+            "message": "Bad Request",
+            "statusCode": 400
+          }
         }
       ]
     }
@@ -143,11 +386,29 @@
       "responses": [
         {
           "name": "unauthorized",
-          "statusCode": "401",
+          "statusCode": 401,
+          "body": {
+            "message": "Unauthorized",
+            "statusCode": 401
+          },
           "headers": {
             "WWW-Authenticate": "Bearer"
-          },
-          "body": { "message": "Unauthorized", "code": "UNAUTHORIZED" }
+          }
+        }
+      ]
+    }
+  },
+  "api/status/402": {
+    "GET": {
+      "nameResponse": "payment-required",
+      "responses": [
+        {
+          "name": "payment-required",
+          "statusCode": 402,
+          "body": {
+            "message": "Payment Required",
+            "statusCode": 402
+          }
         }
       ]
     }
@@ -159,7 +420,10 @@
         {
           "name": "forbidden",
           "statusCode": 403,
-          "body": { "message": "Forbidden", "code": "FORBIDDEN" }
+          "body": {
+            "message": "Forbidden",
+            "statusCode": 403
+          }
         }
       ]
     }
@@ -170,8 +434,11 @@
       "responses": [
         {
           "name": "not-found",
-          "statusCode": "404",
-          "body": { "message": "Not Found", "code": "NOT_FOUND" }
+          "statusCode": 404,
+          "body": {
+            "message": "Not Found",
+            "statusCode": 404
+          }
         }
       ]
     }
@@ -183,10 +450,61 @@
         {
           "name": "method-not-allowed",
           "statusCode": 405,
-          "headers": {
-            "Allow": "POST, PUT"
+          "body": {
+            "message": "Method Not Allowed",
+            "statusCode": 405
           },
-          "body": { "message": "Method Not Allowed", "code": "METHOD_NOT_ALLOWED" }
+          "headers": {
+            "Allow": "GET, POST"
+          }
+        }
+      ]
+    }
+  },
+  "api/status/406": {
+    "GET": {
+      "nameResponse": "not-acceptable",
+      "responses": [
+        {
+          "name": "not-acceptable",
+          "statusCode": 406,
+          "body": {
+            "message": "Not Acceptable",
+            "statusCode": 406
+          }
+        }
+      ]
+    }
+  },
+  "api/status/407": {
+    "GET": {
+      "nameResponse": "proxy-authentication-required",
+      "responses": [
+        {
+          "name": "proxy-authentication-required",
+          "statusCode": 407,
+          "body": {
+            "message": "Proxy Authentication Required",
+            "statusCode": 407
+          },
+          "headers": {
+            "WWW-Authenticate": "Bearer"
+          }
+        }
+      ]
+    }
+  },
+  "api/status/408": {
+    "GET": {
+      "nameResponse": "request-timeout",
+      "responses": [
+        {
+          "name": "request-timeout",
+          "statusCode": 408,
+          "body": {
+            "message": "Request Timeout",
+            "statusCode": 408
+          }
         }
       ]
     }
@@ -197,23 +515,298 @@
       "responses": [
         {
           "name": "conflict",
-          "statusCode": "409",
-          "body": { "message": "Conflict", "code": "CONFLICT" }
+          "statusCode": 409,
+          "body": {
+            "message": "Conflict",
+            "statusCode": 409
+          }
+        }
+      ]
+    }
+  },
+  "api/status/410": {
+    "GET": {
+      "nameResponse": "gone",
+      "responses": [
+        {
+          "name": "gone",
+          "statusCode": 410,
+          "body": {
+            "message": "Gone",
+            "statusCode": 410
+          }
+        }
+      ]
+    }
+  },
+  "api/status/411": {
+    "GET": {
+      "nameResponse": "length-required",
+      "responses": [
+        {
+          "name": "length-required",
+          "statusCode": 411,
+          "body": {
+            "message": "Length Required",
+            "statusCode": 411
+          }
+        }
+      ]
+    }
+  },
+  "api/status/412": {
+    "GET": {
+      "nameResponse": "precondition-failed",
+      "responses": [
+        {
+          "name": "precondition-failed",
+          "statusCode": 412,
+          "body": {
+            "message": "Precondition Failed",
+            "statusCode": 412
+          }
+        }
+      ]
+    }
+  },
+  "api/status/413": {
+    "GET": {
+      "nameResponse": "content-too-large",
+      "responses": [
+        {
+          "name": "content-too-large",
+          "statusCode": 413,
+          "body": {
+            "message": "Content Too Large",
+            "statusCode": 413
+          }
+        }
+      ]
+    }
+  },
+  "api/status/414": {
+    "GET": {
+      "nameResponse": "uri-too-long",
+      "responses": [
+        {
+          "name": "uri-too-long",
+          "statusCode": 414,
+          "body": {
+            "message": "URI Too Long",
+            "statusCode": 414
+          }
+        }
+      ]
+    }
+  },
+  "api/status/415": {
+    "GET": {
+      "nameResponse": "unsupported-media-type",
+      "responses": [
+        {
+          "name": "unsupported-media-type",
+          "statusCode": 415,
+          "body": {
+            "message": "Unsupported Media Type",
+            "statusCode": 415
+          }
+        }
+      ]
+    }
+  },
+  "api/status/416": {
+    "GET": {
+      "nameResponse": "range-not-satisfiable",
+      "responses": [
+        {
+          "name": "range-not-satisfiable",
+          "statusCode": 416,
+          "body": {
+            "message": "Range Not Satisfiable",
+            "statusCode": 416
+          }
+        }
+      ]
+    }
+  },
+  "api/status/417": {
+    "GET": {
+      "nameResponse": "expectation-failed",
+      "responses": [
+        {
+          "name": "expectation-failed",
+          "statusCode": 417,
+          "body": {
+            "message": "Expectation Failed",
+            "statusCode": 417
+          }
+        }
+      ]
+    }
+  },
+  "api/status/418": {
+    "GET": {
+      "nameResponse": "unused",
+      "responses": [
+        {
+          "name": "unused",
+          "statusCode": 418,
+          "body": {
+            "message": "Unused",
+            "statusCode": 418
+          }
+        }
+      ]
+    }
+  },
+  "api/status/421": {
+    "GET": {
+      "nameResponse": "misdirected-request",
+      "responses": [
+        {
+          "name": "misdirected-request",
+          "statusCode": 421,
+          "body": {
+            "message": "Misdirected Request",
+            "statusCode": 421
+          }
         }
       ]
     }
   },
   "api/status/422": {
     "GET": {
-      "nameResponse": "unprocessable",
+      "nameResponse": "unprocessable-content",
       "responses": [
         {
-          "name": "unprocessable",
+          "name": "unprocessable-content",
           "statusCode": 422,
           "body": {
-            "message": "Unprocessable Entity",
-            "code": "UNPROCESSABLE_ENTITY",
-            "errors": [{ "field": "email", "message": "Invalid" }]
+            "message": "Unprocessable Content",
+            "statusCode": 422
+          }
+        }
+      ]
+    }
+  },
+  "api/status/423": {
+    "GET": {
+      "nameResponse": "locked",
+      "responses": [
+        {
+          "name": "locked",
+          "statusCode": 423,
+          "body": {
+            "message": "Locked",
+            "statusCode": 423
+          }
+        }
+      ]
+    }
+  },
+  "api/status/424": {
+    "GET": {
+      "nameResponse": "failed-dependency",
+      "responses": [
+        {
+          "name": "failed-dependency",
+          "statusCode": 424,
+          "body": {
+            "message": "Failed Dependency",
+            "statusCode": 424
+          }
+        }
+      ]
+    }
+  },
+  "api/status/425": {
+    "GET": {
+      "nameResponse": "too-early",
+      "responses": [
+        {
+          "name": "too-early",
+          "statusCode": 425,
+          "body": {
+            "message": "Too Early",
+            "statusCode": 425
+          }
+        }
+      ]
+    }
+  },
+  "api/status/426": {
+    "GET": {
+      "nameResponse": "upgrade-required",
+      "responses": [
+        {
+          "name": "upgrade-required",
+          "statusCode": 426,
+          "body": {
+            "message": "Upgrade Required",
+            "statusCode": 426
+          }
+        }
+      ]
+    }
+  },
+  "api/status/428": {
+    "GET": {
+      "nameResponse": "precondition-required",
+      "responses": [
+        {
+          "name": "precondition-required",
+          "statusCode": 428,
+          "body": {
+            "message": "Precondition Required",
+            "statusCode": 428
+          }
+        }
+      ]
+    }
+  },
+  "api/status/429": {
+    "GET": {
+      "nameResponse": "too-many-requests",
+      "responses": [
+        {
+          "name": "too-many-requests",
+          "statusCode": 429,
+          "body": {
+            "message": "Too Many Requests",
+            "statusCode": 429
+          },
+          "headers": {
+            "Retry-After": "2"
+          }
+        }
+      ]
+    }
+  },
+  "api/status/431": {
+    "GET": {
+      "nameResponse": "request-header-fields-too-large",
+      "responses": [
+        {
+          "name": "request-header-fields-too-large",
+          "statusCode": 431,
+          "body": {
+            "message": "Request Header Fields Too Large",
+            "statusCode": 431
+          }
+        }
+      ]
+    }
+  },
+  "api/status/451": {
+    "GET": {
+      "nameResponse": "unavailable-for-legal-reasons",
+      "responses": [
+        {
+          "name": "unavailable-for-legal-reasons",
+          "statusCode": 451,
+          "body": {
+            "message": "Unavailable For Legal Reasons",
+            "statusCode": 451
           }
         }
       ]
@@ -221,12 +814,15 @@
   },
   "api/status/500": {
     "GET": {
-      "nameResponse": "server-error",
+      "nameResponse": "internal-server-error",
       "responses": [
         {
-          "name": "server-error",
-          "statusCode": "500",
-          "body": { "message": "Internal Server Error", "code": "INTERNAL_ERROR" }
+          "name": "internal-server-error",
+          "statusCode": 500,
+          "body": {
+            "message": "Internal Server Error",
+            "statusCode": 500
+          }
         }
       ]
     }
@@ -238,7 +834,10 @@
         {
           "name": "not-implemented",
           "statusCode": 501,
-          "body": { "message": "Not Implemented", "code": "NOT_IMPLEMENTED" }
+          "body": {
+            "message": "Not Implemented",
+            "statusCode": 501
+          }
         }
       ]
     }
@@ -249,23 +848,119 @@
       "responses": [
         {
           "name": "bad-gateway",
-          "statusCode": "502",
-          "body": { "message": "Bad Gateway", "code": "BAD_GATEWAY" }
+          "statusCode": 502,
+          "body": {
+            "message": "Bad Gateway",
+            "statusCode": 502
+          }
         }
       ]
     }
   },
   "api/status/503": {
     "GET": {
-      "nameResponse": "unavailable",
+      "nameResponse": "service-unavailable",
       "responses": [
         {
-          "name": "unavailable",
+          "name": "service-unavailable",
           "statusCode": 503,
-          "headers": {
-            "Retry-After": "300"
+          "body": {
+            "message": "Service Unavailable",
+            "statusCode": 503
           },
-          "body": { "message": "Service Unavailable", "code": "SERVICE_UNAVAILABLE" }
+          "headers": {
+            "Retry-After": "2"
+          }
+        }
+      ]
+    }
+  },
+  "api/status/504": {
+    "GET": {
+      "nameResponse": "gateway-timeout",
+      "responses": [
+        {
+          "name": "gateway-timeout",
+          "statusCode": 504,
+          "body": {
+            "message": "Gateway Timeout",
+            "statusCode": 504
+          }
+        }
+      ]
+    }
+  },
+  "api/status/505": {
+    "GET": {
+      "nameResponse": "http-version-not-supported",
+      "responses": [
+        {
+          "name": "http-version-not-supported",
+          "statusCode": 505,
+          "body": {
+            "message": "HTTP Version Not Supported",
+            "statusCode": 505
+          }
+        }
+      ]
+    }
+  },
+  "api/status/506": {
+    "GET": {
+      "nameResponse": "variant-also-negotiates",
+      "responses": [
+        {
+          "name": "variant-also-negotiates",
+          "statusCode": 506,
+          "body": {
+            "message": "Variant Also Negotiates",
+            "statusCode": 506
+          }
+        }
+      ]
+    }
+  },
+  "api/status/507": {
+    "GET": {
+      "nameResponse": "insufficient-storage",
+      "responses": [
+        {
+          "name": "insufficient-storage",
+          "statusCode": 507,
+          "body": {
+            "message": "Insufficient Storage",
+            "statusCode": 507
+          }
+        }
+      ]
+    }
+  },
+  "api/status/508": {
+    "GET": {
+      "nameResponse": "loop-detected",
+      "responses": [
+        {
+          "name": "loop-detected",
+          "statusCode": 508,
+          "body": {
+            "message": "Loop Detected",
+            "statusCode": 508
+          }
+        }
+      ]
+    }
+  },
+  "api/status/511": {
+    "GET": {
+      "nameResponse": "network-authentication-required",
+      "responses": [
+        {
+          "name": "network-authentication-required",
+          "statusCode": 511,
+          "body": {
+            "message": "Network Authentication Required",
+            "statusCode": 511
+          }
         }
       ]
     }

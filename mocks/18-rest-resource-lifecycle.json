@@ -1,0 +1,257 @@
+{
+  "api/v1/products": {
+    "GET": {
+      "nameResponse": "empty",
+      "delay": 50,
+      "responses": [
+        {
+          "name": "page-1-active",
+          "statusCode": 200,
+          "match": {
+            "query": {
+              "page": "1",
+              "status": "active"
+            }
+          },
+          "headers": {
+            "X-Total-Count": "2",
+            "Cache-Control": "private, max-age=30"
+          },
+          "body": {
+            "data": [
+              { "id": "prod_1", "name": "Starter", "status": "active", "price": 990 },
+              { "id": "prod_2", "name": "Pro", "status": "active", "price": 2990 }
+            ],
+            "page": 1,
+            "pageSize": 10,
+            "total": 2
+          }
+        },
+        {
+          "name": "page-2",
+          "statusCode": 200,
+          "match": {
+            "query": {
+              "page": "2",
+              "limit": "10"
+            }
+          },
+          "headers": {
+            "X-Total-Count": "12"
+          },
+          "body": {
+            "data": [{ "id": "prod_11", "name": "Enterprise", "status": "active" }],
+            "page": 2,
+            "pageSize": 10,
+            "total": 12
+          }
+        },
+        {
+          "name": "empty",
+          "statusCode": 200,
+          "headers": {
+            "X-Total-Count": "0"
+          },
+          "body": {
+            "data": [],
+            "page": 1,
+            "pageSize": 10,
+            "total": 0
+          }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "created",
+      "responses": [
+        {
+          "name": "validation-failed",
+          "statusCode": 422,
+          "match": {
+            "body": {
+              "name": ""
+            }
+          },
+          "headers": {
+            "Content-Type": "application/problem+json"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/validation-failed",
+            "title": "Unprocessable Entity",
+            "status": 422,
+            "detail": "One or more fields failed validation",
+            "errors": [
+              { "field": "name", "code": "REQUIRED", "message": "Name is required" },
+              { "field": "price", "code": "MIN", "message": "Price must be >= 0" }
+            ]
+          }
+        },
+        {
+          "name": "duplicate-sku",
+          "statusCode": 409,
+          "match": {
+            "body": {
+              "sku": "SKU-EXISTS"
+            }
+          },
+          "headers": {
+            "Content-Type": "application/problem+json"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/conflict",
+            "title": "Conflict",
+            "status": 409,
+            "detail": "A product with this SKU already exists",
+            "code": "DUPLICATE_SKU"
+          }
+        },
+        {
+          "name": "created",
+          "statusCode": 201,
+          "headers": {
+            "Location": "/api/v1/products/prod_99"
+          },
+          "body": {
+            "id": "prod_99",
+            "name": "New Product",
+            "sku": "SKU-NEW",
+            "status": "draft",
+            "version": 1
+          }
+        }
+      ]
+    }
+  },
+  "api/v1/products/:id": {
+    "GET": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "found",
+          "statusCode": 200,
+          "match": {
+            "params": { "id": "prod_1" }
+          },
+          "headers": {
+            "ETag": "W/\"v3\""
+          },
+          "body": {
+            "id": "prod_1",
+            "name": "Starter",
+            "status": "active",
+            "price": 990,
+            "version": 3
+          }
+        },
+        {
+          "name": "gone",
+          "statusCode": 410,
+          "match": {
+            "params": { "id": "prod_gone" }
+          },
+          "headers": {
+            "Content-Type": "application/problem+json"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/gone",
+            "title": "Gone",
+            "status": 410,
+            "detail": "Product was permanently deleted",
+            "code": "PRODUCT_GONE"
+          }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "headers": {
+            "Content-Type": "application/problem+json"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/not-found",
+            "title": "Not Found",
+            "status": 404,
+            "detail": "Product not found",
+            "code": "PRODUCT_NOT_FOUND"
+          }
+        }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "version-conflict",
+          "statusCode": 409,
+          "match": {
+            "params": { "id": "prod_1" },
+            "body": { "version": 2, "name": "Starter Plus" }
+          },
+          "headers": {
+            "Content-Type": "application/problem+json",
+            "ETag": "W/\"v3\""
+          },
+          "body": {
+            "type": "https://api.example.com/problems/conflict",
+            "title": "Conflict",
+            "status": 409,
+            "detail": "Resource version mismatch; refetch and retry",
+            "code": "VERSION_CONFLICT",
+            "currentVersion": 3
+          }
+        },
+        {
+          "name": "updated",
+          "statusCode": 200,
+          "match": {
+            "params": { "id": "prod_1" },
+            "body": { "version": 3, "name": "Starter Plus" }
+          },
+          "headers": {
+            "ETag": "W/\"v4\""
+          },
+          "body": {
+            "id": "prod_1",
+            "name": "Starter Plus",
+            "status": "active",
+            "version": 4
+          }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "body": {
+            "type": "https://api.example.com/problems/not-found",
+            "title": "Not Found",
+            "status": 404,
+            "detail": "Product not found",
+            "code": "PRODUCT_NOT_FOUND"
+          }
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "deleted",
+          "statusCode": 204,
+          "match": {
+            "params": { "id": "prod_1" }
+          },
+          "body": null
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "body": {
+            "type": "https://api.example.com/problems/not-found",
+            "title": "Not Found",
+            "status": 404,
+            "detail": "Product not found",
+            "code": "PRODUCT_NOT_FOUND"
+          }
+        }
+      ]
+    }
+  }
+}
