@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { Api } from '../../../models/api.model';
 import { RawMockFile } from '../../../types/mock.type';
 import { LocalIssue } from '../../../types/validation.type';
-import { isEmpty, isObject } from '../../../scripts/guards.script';
+import { isArray, isEmpty, isObject } from '../../../scripts/guards.script';
 import { addIssues } from '../../../scripts/issues.script';
 import { getKeys, iterateEntries } from '../../../scripts/objects.script';
 import { validateEndpoint } from '../../../validators/endpoint.validator';
@@ -54,6 +54,10 @@ export const processFile = (
           addIssues(warningsByFile, file, methodResult.warnings);
 
           if (isObject(methodData) && methodData.responses) {
+            if (!isArray(methodData.responses)) {
+              continue;
+            }
+
             let hasResponseErrors = false;
 
             for (const response of methodData.responses) {

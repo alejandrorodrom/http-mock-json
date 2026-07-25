@@ -51,14 +51,6 @@ const ERROR_CATALOG = [
     kind: 'validation',
     caseName: 'error/file-syntax-error'
   },
-  {
-    id: 'file.processing-error',
-    message: 'Error processing file: methodData.responses is not iterable',
-    source: 'src/cli/commands/start/process-file.ts',
-    kind: 'validation',
-    caseName: 'error/method-responses-not-array'
-  },
-
   // --- endpoint ---
   {
     id: 'endpoint.invalid-path',

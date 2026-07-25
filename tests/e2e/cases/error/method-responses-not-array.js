@@ -14,8 +14,7 @@ module.exports = {
       stdoutIncludes: [
         '✖ Error:',
         'File: method-responses-not-array.json',
-        'The "responses" property must be an array',
-        'Error processing file: methodData.responses is not iterable'
+        'The "responses" property must be an array'
       ],
       stdoutExcludes: ['Mock server is running']
     }
