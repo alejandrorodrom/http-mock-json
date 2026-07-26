@@ -20,6 +20,19 @@
 - [Validation System](#validation-system-)
 - [Advanced examples](#advanced-examples)
 - [Real-world projects](#real-world-projects-)
+- [Mutable store (CRUD in memory)](#mutable-store-crud-in-memory-)
+  - [How it works](#how-it-works)
+  - [Actions](#actions)
+  - [Schema](#schema-definition-vs-reference)
+  - [Key generation on create](#key-generation-on-create)
+  - [Conflicts](#conflicts-409)
+  - [Persist and restart](#persist-and-restart-behavior)
+  - [Runtime HTTP statuses](#runtime-http-statuses)
+  - [Out of scope](#out-of-scope)
+  - [Example A — Simple](#example-a--simple-notes-crud)
+  - [Example B — Complex](#example-b--complex-multi-tenant-users)
+  - [Example C — Todo app](#example-c--real-project-todo--notes-app)
+  - [Example D — SaaS projects](#example-d--real-project-saas-projects-board)
 - [Troubleshooting](#troubleshooting-)
 - [License](#license-)
 
@@ -33,6 +46,7 @@
 - **Multiple Responses** - Simulate different scenarios (success, error, etc.) for the same endpoint
 - **Request Matching** - Select responses by route params, query params and/or request body
 - **Request Validation** - Validate request `body`/`query` shape with rules (`type`, `minLength`, `format`, nested objects, etc.)
+- **Mutable Store** - Opt-in in-memory CRUD (`store` + `action`) with `seed`, `template`, unique/key conflicts, optional disk `persist`, and `--reset-store`
 - **Response Delay** - Simulate latency per method or per response
 - **Type Safe** - Built with TypeScript for better developer experience
 - **RESTful Support** - Full support for GET, POST, PUT, PATCH, DELETE methods
@@ -72,7 +86,7 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    ```
 
    This command will:
-    - Create a `mocks` folder in your project root (or in the specified path)
+    - Create a directory for your mock JSON files in your project root (or in the specified path)
     - Add a `mock:start` script to your `package.json` (enabled by default)
     - Optionally create your first mock file (enabled by default)
 
@@ -116,6 +130,13 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | Key          | Required | Type           | Example                                  | Description                                                                |
    |--------------|----------|----------------|------------------------------------------|----------------------------------------------------------------------------|
    | endpoint     | ✅       | string         | `data/animals`, `data/animal/:parameter` | API route. Allowed characters: letters, numbers, "-", "_", ".", "~", "/", and parameters like ":id" |
+   | store        | ❌       | object         | `{ "id": "users", "seed": [] }`          | Opt-in collection for this endpoint. Shared across routes by `store.id` (one full definition; others reference) |
+   | store.id     | ✅*      | string         | `"users"`                                | Required when `store` is present. Reference form is `{ "id": "users" }` only |
+   | store.key    | ❌       | string/array/object | `"id"`, `["tenantId","id"]`         | Primary key (default `"id"`). Composite keys + optional `conflict.response` |
+   | store.seed   | ❌       | array          | `[{ "id": 1 }]`                          | Initial items (`[]` allowed). Used when there is no persist snapshot (or after `--reset-store`) |
+   | store.template | ❌     | object         | `{ "active": true }`                     | Base object merged on `create` / `update` (not on `patch`). Key placeholders ignored unless client sends them |
+   | store.unique | ❌       | array/object   | `["email"]` or `{ "fields": [...], "conflict": {...} }` | Unique fields + customizable `409` conflict response |
+   | store.persist| ❌       | boolean/object | `true` or `{ "enabled": true, "file": "state.json" }` | Persist to disk under the mock files root (default `.store/<id>.json`). Custom `file` must be relative (no `..`) |
    | HTTP Method  | ✅       | string         | `GET`, `POST`, `PUT`, `PATCH`, `DELETE`  | HTTP verb (must be uppercase)                                              |
    | nameResponse | ✅       | string         | `success`, `error`, `error-401`          | Fallback response when no `match` applies (must exist in responses array) |
    | request      | ❌       | object         | `{ "body": { "email": "string" } }`      | Validate incoming `body` and/or `query` before selecting a response        |
@@ -131,7 +152,8 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | name         | ✅       | string         |                                          | Response name (unique within the responses array)                          |
    | statusCode   | ✅*      | string/number  | `200`, `"200"`, `404`, `"404"`          | Required unless the response uses `proxy`                                  |
    | headers      | ❌       | object         | `{ "Content-Type": "application/json" }`  | Headers in json format (optional)                                          |
-   | body         | ✅*      | any            |                                          | Required unless the response uses `proxy`                                  |
+   | body         | ✅*      | any            |                                          | Required unless the response uses `proxy` or `action`                      |
+   | action       | ❌       | string         | `"list"`, `"get"`, `"create"`, `"update"`, `"patch"`, `"delete"` | Run a store operation instead of a fixed `body` (requires `store`; incompatible with `proxy`). `body` ignored (warning). `delete` always `204` |
    | match        | ❌       | object         | `{ "params": { "id": "1" } }`            | Request matching rules (`params`, `query` and/or `body`). First match wins |
    | match.params | ❌       | object         | `{ "id": "1" }`                          | Partial match against route params (e.g. `/users/:id`)                     |
    | match.query  | ❌       | object         | `{ "page": "1" }`                        | Partial match against request query params                                 |
@@ -141,7 +163,7 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
 
 5. Edit the mock file to add your response data.
 
-   Open the created JSON file (e.g., `mocks/animals.json`) and fill in the `body` objects with your mock data:
+   Open the created JSON file (e.g., `animals.json`) and fill in the `body` objects with your mock data:
 
    ```json
    {
@@ -225,10 +247,13 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | -p --port   | `3000`  | Indicates the port where the mock will be executed                          |
    | -f --path   | `root`  | Indicates the location of the mocks in a specific folder.                   |
    | --proxy     | -       | Global proxy target (`http`/`https`). Used by `"proxy": true` and unmatched routes |
+   | --reset-store | -     | Delete persisted store files **before the initial start** (all stores, or comma-separated ids). Not re-applied on watch reloads |
 
    **Example:**
    ```
    mock-server start --port 3001 --path apps/folder1 --proxy https://api.staging.com
+   mock-server start --reset-store
+   mock-server start --reset-store notes,users
    ```
 
 3. `add`
@@ -266,7 +291,8 @@ When you run `mock-server start`, the system automatically validates in this ord
 5. **Response matching**: Verifies that `nameResponse` references exist in the responses array
 6. **Optional match/delay/proxy**: Validates `match`, non-negative `delay`, and `proxy` URL shapes
 7. **Optional request validation**: Validates `request.body` / `request.query` rule shapes, formats, and `invalidResponse` references
-8. **JSON structure**: Ensures files contain valid JSON objects
+8. **Optional store / action**: Validates `store` schema, unique/key/seed rules, `action` values, and conflict response names
+9. **JSON structure**: Ensures files contain valid JSON objects
 
 ### Error Handling
 
@@ -287,15 +313,18 @@ When files change during watch mode:
 - If validation errors are found, the restart is prevented
 - Clear error messages are displayed
 - The server waits for you to fix the issues before restarting
+- Persist snapshots (`.store/` and custom `persist.file` paths) are ignored by the watcher so store writes do not trigger a restart
+- `--reset-store` is **not** re-applied on watch reloads (only the initial `start`)
 
 ---
 
 ## Recommendations 📋
 
-* Review the advanced examples.
+* Review the advanced examples and the [mutable store guide](#mutable-store-crud-in-memory-) if you need mutable CRUD.
 * A single json file can contain many mocks.
 * There can be many json files each with their respective mocks.
 * The server validates your mocks automatically - fix any errors before the server can start.
+* Prefer `request` for input shape and `store.unique` / conflict responses for business uniqueness (`409`).
 
 ---
 
@@ -1029,16 +1058,689 @@ Proxy values:
 | `{ "target": "https://api.com", "path": "/v2/users" }` | Rewrite path to `/v2/users`; keep the original query |
 | `true` | Use method-level `proxy`, or `--proxy` if method has none |
 
+### Example 10: Mutable store (in-memory CRUD)
+
+Opt-in collections that mutate while the server runs. Declare `store` on the endpoint and mark responses with `action`.
+
+See the full guide (schema, persist, conflicts, simple/complex/real-project examples):  
+**[Mutable store (CRUD in memory)](#mutable-store-crud-in-memory-)**
+
+---
+
+## Mutable store (CRUD in memory) 🗄️
+
+Opt-in feature (≥ `1.11.0`). Without `store` + `action`, mocks stay 100% static.
+
+Use it when the frontend needs **real CRUD flows**: create an item, list it, edit it, delete it — without a backend. Data lives in memory for the process lifetime; optionally survive restarts with `persist`.
+
+### How it works
+
+1. Put `store` at **endpoint level** (sibling of `GET` / `POST` / …, not inside a method).
+2. Define the collection **once** (full object with `id`, optional `key` / `seed` / `template` / `unique` / `persist`).
+3. Other routes that share data use the **reference** form: `"store": { "id": "notes" }`.
+4. On each response you want to mutate/read the collection, set `"action": "list" | "get" | "create" | "update" | "patch" | "delete"`.
+
+Request pipeline (fixed order):
+
+1. `request` validation (if any) → may return `invalidResponse` and **never** hits the store  
+2. `match` → picks a response (`nameResponse` fallback)  
+3. `delay` (once)  
+4. `proxy` **or** `action` (not both on the same response)  
+5. otherwise static `body`
+
+### Actions
+
+| Action | Behavior | Success status | Common errors |
+|--------|----------|----------------|---------------|
+| `list` | Returns all items (array). If route params overlap `key` fields, filters by those params | response `statusCode` | — |
+| `get` | Loads one item; all `key` fields must come from route params | response `statusCode` | `404` `{ "message": "Not found" }` |
+| `create` | Inserts; merges `template` + body; auto-generates missing numeric key fields; route params override key fields | typically `201` | `400` (body not object), `409` (conflict) |
+| `update` | Full replace (`template` + body), preserves existing key | response `statusCode` | `404` / `400` / `409` |
+| `patch` | Partial merge on existing item (no template), preserves key | response `statusCode` | `404` / `400` / `409` |
+| `delete` | Removes item; **always** `204` with empty body (`statusCode` in JSON is ignored, warning if ≠ 204) | `204` | `404` |
+
+Rules for `action`:
+
+- Requires `store` on the endpoint  
+- Cannot be combined with `proxy` on the same response  
+- `body` is optional and ignored (warning)  
+- Returned items are **clones** (mutating the HTTP response does not mutate the store)
+
+### Schema (definition vs reference)
+
+**Full definition** (only once per `id` in the whole mock set):
+
+```json
+"store": {
+  "id": "notes",
+  "key": "id",
+  "seed": [],
+  "template": { "id": 0, "title": "", "done": false },
+  "unique": ["title"],
+  "persist": true
+}
+```
+
+**Reference** (other endpoints sharing the same collection — **only** `id`; any other property makes it a full definition):
+
+```json
+"store": { "id": "notes" }
+```
+
+| Field | Default | Notes |
+|-------|---------|-------|
+| `id` | — | Required. Collection name in memory (and default persist filename) |
+| `key` | `"id"` | String, string array, or `{ "field" }` / `{ "fields", "conflict?" }` — not both `field` and `fields` |
+| `seed` | `[]` | Initial rows. Every seed item must include all key fields; no duplicate key/unique values |
+| `template` | — | Defaults for `create` / `update`. Values on key fields are placeholders unless the client sends them |
+| `unique` | — | `["email"]` or `{ "fields": [...], "conflict": { "response", "detail" } }` |
+| `persist` | off | `true` / `{ "enabled": true, "file?": "relative/path.json" }` |
+
+Rules:
+
+1. `store` is **not** an HTTP method; the endpoint still needs at least one verb (`GET`, `POST`, …).
+2. Unknown keys inside `store` → startup error.
+3. Several endpoints may share the same `store.id`; the full definition can appear only once.
+4. A reference to an undefined `id` → startup error.
+5. `seed` must be an array of objects (when present). `[]` or omitted → empty collection at start (unless a persist snapshot loads).
+6. `unique.fields` must be non-empty. Each entry is a non-empty string or `{ "field", "conflict?" }`.
+7. `conflict` objects only allow `response` and `detail`.
+8. `conflict.detail` is a non-empty string **or** a non-empty object whose values are strings (templates).
+9. Named `conflict.response` values must exist in `responses` of every method that uses mutating actions (`create` / `update` / `patch`) for that store.
+
+`key` shapes:
+
+```json
+"key": "id"
+"key": ["tenantId", "id"]
+"key": { "field": "id", "conflict": { "response": "duplicate-key" } }
+"key": { "fields": ["tenantId", "id"], "conflict": { "response": "duplicate-key" } }
+```
+
+`unique` shapes:
+
+```json
+"unique": ["email", "username"]
+"unique": {
+  "fields": [
+    "email",
+    { "field": "username", "conflict": { "response": "duplicate-username" } }
+  ],
+  "conflict": {
+    "response": "duplicate-fields",
+    "detail": { "campo": "{{field}}", "valor": "{{value}}" }
+  }
+}
+```
+
+### Key generation on `create`
+
+Merge order, then key resolution for each key field:
+
+1. `base = { ...template, ...body }`
+2. If the field is present in **route params** → use the param (params win over body). Pure numeric strings are coerced to numbers (`"12"` → `12`; `"12a"` stays a string).
+3. Else if the field is present in the **body** → keep the body value (template placeholders for that key field are ignored).
+4. Else → **auto-generate** a number: among items that share the other key fields (“siblings”), take `max(field) + 1`, or `1` if none.
+
+Examples:
+
+- `POST /api/notes` with `{ "title": "A" }` and `key: "id"` → `id` becomes `1`, then `2`, …
+- `POST /api/acme/users` with composite key `["tenantId","id"]` → `tenantId` from params, next `id` among that tenant only
+
+### `update` vs `patch`
+
+| | `update` (PUT) | `patch` |
+|--|----------------|---------|
+| Merge | `{ ...template, ...body }` | `{ ...existing, ...body }` |
+| Key fields | Always forced back to the existing item’s key (cannot change PK via body) | Same |
+| Missing fields | Come from template (then body) | Kept from the existing item |
+
+### Conflicts (`409`)
+
+Checked on `create` / `update` / `patch` (not on `list` / `get` / `delete`):
+
+1. Primary-key collision (for `update`/`patch`, the current item is ignored).
+2. Each `unique` field present on the item — compared with `String(value)` (so `1` and `"1"` collide).
+
+**All** conflicts are collected; there is no “stop at first” mode.
+
+Which named response / `detail` is used:
+
+| Situation | Response / detail source |
+|-----------|--------------------------|
+| Only key conflict(s) | `key.conflict` if set; else default `409` |
+| Exactly one unique conflict (and no key conflict) | That field’s `fields[].conflict` if set; else `unique.conflict`; else default |
+| Multiple conflicts (any mix) | `unique.conflict`, falling back to `key.conflict`; else default |
+| No `conflict.response` configured | Default body below |
+
+Default conflict response:
+
+```json
+{
+  "message": "Duplicate value(s)",
+  "conflicts": [
+    { "field": "email", "value": "a@b.com", "message": "Duplicate value for unique field \"email\"" }
+  ]
+}
+```
+
+Status `409`. For a composite key conflict, `field` is the key fields joined with `+` (e.g. `"tenantId+id"`).
+
+Placeholders in the **named** conflict response `body` (deep replace):
+
+| Placeholder | Meaning |
+|-------------|---------|
+| `{{conflicts}}` as the **entire** property value | Replaced by an array shaped by `conflict.detail` (not a JSON string) |
+| `{{conflicts}}` inside a larger string | Replaced by `JSON.stringify(...)` of that array |
+| `{{field}}` / `{{value}}` / `{{message}}` | First conflict only |
+
+`conflict.detail` shaping of each conflict entry:
+
+| `detail` | Each conflict becomes |
+|----------|------------------------|
+| omitted | `{ "field", "value", "message" }` |
+| string template | that string with placeholders applied |
+| object of string templates | same keys; each value is a template |
+
+Headers from the selected conflict response are applied. `delay` already ran once before the action (including when the result is a conflict).
+
+### Persist and restart behavior
+
+| Mode | On `mock-server start` / watch reload |
+|------|----------------------------------------|
+| No `persist` | Registry rebuilt from `seed` every time |
+| `persist: true` / `{ "enabled": true }` | Loads `.store/<id>.json` under the mock files root if present and valid; otherwise `seed`. Successful mutations rewrite the snapshot |
+| `{ "enabled": true, "file": "..." }` | Same, but custom path **relative** to the mock files root (no absolute paths, no `..`) |
+| `false` / `{ "enabled": false }` | Same as no persist |
+
+Snapshot file shape:
+
+```json
+{
+  "items": [ { "id": 1, "title": "A" } ]
+}
+```
+
+Behavior details:
+
+1. Write is atomic: write `*.tmp`, then rename over the target.
+2. Your mock JSON definition files are **never** modified by persist.
+3. If a write fails, the server logs `Failed to persist store "<id>": ...` and **keeps the in-memory mutation** (the HTTP response still succeeds).
+4. Invalid snapshot at startup (bad JSON, missing `items` array, non-object items, missing key fields, duplicate key/unique) → **startup fails** (server does not start).
+5. Watcher ignores `.store/**`, custom persist files, their `.tmp` siblings, and custom parent dirs (when those dirs are not the mock files root), so persist I/O does not restart the server.
+6. `--reset-store` deletes persist files **only on the initial CLI start**, then loads from `seed`. Watch reloads do **not** re-apply `--reset-store`.
+
+```bash
+mock-server start --reset-store              # clear all persist files, then start from seed
+mock-server start --reset-store notes,users  # clear only those store ids
+```
+
+You can also delete `.store/<id>.json` (or your custom file) manually before start.
+
+### Runtime HTTP statuses
+
+| Case | Status | Body |
+|------|--------|------|
+| `list` / `get` / `create` / `update` / `patch` success | Response `statusCode` (use `201` for create if you want) | Cloned item or array; response `headers` applied |
+| `delete` success | Always `204` | Empty (`null`); JSON `statusCode` ignored |
+| Item not found (`get` / `update` / `patch` / `delete`) | `404` | `{ "message": "Not found" }` — **not** customizable in this version |
+| Body of `create` / `update` / `patch` is not a JSON object | `400` | `{ "message": "Request body must be a JSON object" }` |
+| Key / unique conflict | `409` or status of the named conflict response | Default or named conflict body (see above) |
+| `request` validation failed | Your `invalidResponse` (or generic `400`) | Never reaches the store |
+| `match` selected a static response (no `action`) | That response’s status/body | Store is not called |
+
+Implications of the pipeline:
+
+- `match` can return a static `401`/`403`/etc. on an endpoint that also has store actions.
+- `action` and `proxy` cannot share the same response.
+- `delay` runs once before the action; conflicts / `404` / `400` do not wait again.
+- Response bodies from the store are deep clones; mutating them in the client does not change memory.
+
+### Coexistence with other features
+
+| Feature | Relationship |
+|---------|--------------|
+| `request` | Validates input **before** the store. Use it for types/format/`minLength`; use `unique` for business uniqueness |
+| `match` | Chooses which response runs; may skip `action` entirely |
+| `delay` / `headers` | Applied to action success and to named conflict responses |
+| `proxy` | Incompatible with `action` on the same response |
+| Watch / restart | Without persist → back to `seed`. With persist → reload snapshot (unless `--reset-store` on initial start) |
+
+### Out of scope
+
+Not implemented (do not expect these):
+
+- Pagination, sort, or filters on `list` beyond filtering by key fields present in route params  
+- Composite unique constraints other than the primary `key` (e.g. unique on `email + tenantId` as a pair)  
+- Case-insensitive / trimmed unique comparison  
+- Soft delete  
+- Relations between stores  
+- Customizable `404` / `not_found` response body  
+- HTTP admin routes to reset stores (use `--reset-store` or delete the snapshot file)  
+- Re-implementing `request` rules inside `store`
+
+### Example A — Simple (notes CRUD)
+
+Minimal list/create/get/delete. Empty seed; `id` auto-increments; titles unique; optional persist.
+
+```json
+{
+  "api/notes": {
+    "store": {
+      "id": "notes",
+      "key": "id",
+      "seed": [],
+      "template": { "id": 0, "title": "", "done": false },
+      "unique": ["title"],
+      "persist": true
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  },
+  "api/notes/:id": {
+    "store": { "id": "notes" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        { "name": "get", "statusCode": 200, "action": "get" }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    }
+  }
+}
+```
+
+Try:
+
+```bash
+curl -s http://localhost:3000/api/notes
+curl -s -X POST http://localhost:3000/api/notes -H 'Content-Type: application/json' -d '{"title":"Buy milk"}'
+curl -s http://localhost:3000/api/notes/1
+curl -s -X DELETE http://localhost:3000/api/notes/1 -o /dev/null -w '%{http_code}\n'
+```
+
+### Example B — Complex (multi-tenant users)
+
+Composite key, template defaults, request validation, custom conflict bodies, shared store across collection + item routes, `list` filtered by `:tenantId`.
+
+```json
+{
+  "api/:tenantId/users": {
+    "store": {
+      "id": "users",
+      "key": {
+        "fields": ["tenantId", "id"],
+        "conflict": { "response": "duplicate-key" }
+      },
+      "seed": [
+        {
+          "tenantId": "acme",
+          "id": 1,
+          "name": "Juan",
+          "email": "juan@acme.com",
+          "username": "juan",
+          "active": true
+        }
+      ],
+      "template": {
+        "tenantId": "",
+        "id": 0,
+        "name": "",
+        "email": "",
+        "username": "",
+        "active": true
+      },
+      "unique": {
+        "fields": ["email", "username"],
+        "conflict": {
+          "response": "duplicate-fields",
+          "detail": { "campo": "{{field}}", "valor": "{{value}}" }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "body": {
+          "name": { "type": "string", "minLength": 2 },
+          "email": { "type": "string", "format": "email" },
+          "username": { "type": "string", "minLength": 3 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "validation-error",
+          "statusCode": 400,
+          "body": { "code": "VALIDATION_ERROR", "message": "Invalid request" }
+        },
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": { "ok": false, "code": "DUPLICATE", "errores": "{{conflicts}}" }
+        },
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE_KEY", "message": "Id already exists for tenant" }
+        },
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  },
+  "api/:tenantId/users/:id": {
+    "store": { "id": "users" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        { "name": "get", "statusCode": 200, "action": "get" }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "patch",
+      "responses": [
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": { "ok": false, "code": "DUPLICATE", "errores": "{{conflicts}}" }
+        },
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE_KEY", "message": "Id already exists for tenant" }
+        },
+        { "name": "patch", "statusCode": 200, "action": "patch" }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    }
+  }
+}
+```
+
+Behavior:
+
+- `GET /api/acme/users` → only users with `tenantId: "acme"`  
+- `POST /api/acme/users` with body `{ "name", "email", "username" }` → `tenantId` from params, next numeric `id`, `active: true` from template  
+- Duplicate email/username → `409` with `errores` shaped by `detail`  
+- Invalid email format → `400` from `request` (store never runs)
+
+### Example C — Real project: Todo / notes app
+
+Typical SPA: list, create with validation, toggle done (`patch`), delete. Persist so a browser refresh after server restart still sees data.
+
+```json
+{
+  "api/todos": {
+    "store": {
+      "id": "todos",
+      "seed": [
+        { "id": 1, "title": "Ship landing page", "done": false },
+        { "id": 2, "title": "Write README", "done": true }
+      ],
+      "template": { "id": 0, "title": "", "done": false },
+      "unique": {
+        "fields": ["title"],
+        "conflict": {
+          "response": "duplicate-title",
+          "detail": { "field": "{{field}}", "value": "{{value}}" }
+        }
+      },
+      "persist": true
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "body": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 120 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid todo", "errors": [] }
+        },
+        {
+          "name": "duplicate-title",
+          "statusCode": 409,
+          "body": { "code": "TITLE_TAKEN", "conflicts": "{{conflicts}}" }
+        },
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  },
+  "api/todos/:id": {
+    "store": { "id": "todos" },
+    "PATCH": {
+      "nameResponse": "patch",
+      "request": {
+        "body": {
+          "title?": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "done?": { "type": "boolean" }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid patch", "errors": [] }
+        },
+        {
+          "name": "duplicate-title",
+          "statusCode": 409,
+          "body": { "code": "TITLE_TAKEN", "conflicts": "{{conflicts}}" }
+        },
+        { "name": "patch", "statusCode": 200, "action": "patch" }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    }
+  }
+}
+```
+
+Frontend flow: load board → `POST` new todo → `PATCH` `{ "done": true }` → `DELETE` when archived. Snapshot: `.store/todos.json` under the mock files root.
+
+### Example D — Real project: SaaS projects board
+
+Org-scoped projects with slug uniqueness, forbidden org via `match`, persist across restarts. Pattern used by project-management / B2B dashboards.
+
+```json
+{
+  "api/orgs/:orgId/projects": {
+    "store": {
+      "id": "projects",
+      "key": {
+        "fields": ["orgId", "id"],
+        "conflict": { "response": "duplicate-key" }
+      },
+      "seed": [
+        {
+          "orgId": "org_acme",
+          "id": 1,
+          "name": "Website Redesign",
+          "slug": "website",
+          "status": "active",
+          "ownerEmail": "lead@acme.com"
+        }
+      ],
+      "template": {
+        "orgId": "",
+        "id": 0,
+        "name": "",
+        "slug": "",
+        "status": "active",
+        "ownerEmail": ""
+      },
+      "unique": {
+        "fields": [
+          {
+            "field": "slug",
+            "conflict": {
+              "response": "slug-taken",
+              "detail": { "field": "{{field}}", "value": "{{value}}" }
+            }
+          }
+        ],
+        "conflict": {
+          "response": "duplicate-fields",
+          "detail": { "campo": "{{field}}", "valor": "{{value}}" }
+        }
+      },
+      "persist": true
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "forbidden-org",
+          "statusCode": 403,
+          "match": { "params": { "orgId": "org_blocked" } },
+          "body": { "code": "ORG_FORBIDDEN", "message": "You cannot access this organization" }
+        },
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "body": {
+          "name": { "type": "string", "minLength": 3, "maxLength": 80 },
+          "slug": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 40,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "ownerEmail": { "type": "string", "format": "email" },
+          "status?": { "type": "string", "enum": ["active", "paused"] }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "forbidden-org",
+          "statusCode": 403,
+          "match": { "params": { "orgId": "org_blocked" } },
+          "body": { "code": "ORG_FORBIDDEN" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid project", "errors": [] }
+        },
+        {
+          "name": "slug-taken",
+          "statusCode": 409,
+          "body": { "code": "SLUG_TAKEN", "conflicts": "{{conflicts}}" }
+        },
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE", "errores": "{{conflicts}}" }
+        },
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE_KEY" }
+        },
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  },
+  "api/orgs/:orgId/projects/:id": {
+    "store": { "id": "projects" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        { "name": "get", "statusCode": 200, "action": "get" }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "patch",
+      "responses": [
+        {
+          "name": "slug-taken",
+          "statusCode": 409,
+          "body": { "code": "SLUG_TAKEN", "conflicts": "{{conflicts}}" }
+        },
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE", "errores": "{{conflicts}}" }
+        },
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE_KEY" }
+        },
+        { "name": "patch", "statusCode": 200, "action": "patch" }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    }
+  }
+}
+```
+
+- `GET /api/orgs/org_acme/projects` → store `list` filtered by `orgId`  
+- `GET /api/orgs/org_blocked/projects` → static `403` via `match` (no store)  
+- Duplicate `slug` alone → `slug-taken`; other unique clashes → `duplicate-fields`
+
 ---
 
 ## Real-world projects 🏢
 
-The [Advanced examples](#advanced-examples) teach one feature at a time. This section shows **product-style scenarios** you can paste into your own `mocks/*.json` and adapt to your frontend routes.
+The [Advanced examples](#advanced-examples) teach one feature at a time. This section shows **product-style scenarios** you can paste into your own mock JSON files and adapt to your frontend routes.
 
 ### What each scenario covers
 
 | Scenario | Features used | Frontend focus |
 |----------|---------------|----------------|
+| [Todo / notes app](#example-c--real-project-todo--notes-app) | `store` + `request` + `persist` | Mutable list, toggle done, survive restart |
+| [SaaS projects board](#example-d--real-project-saas-projects-board) | `store` + `match` + `unique` + `persist` | Org-scoped CRUD, slug conflicts, forbidden org |
 | SaaS signup + org invite | `request` + `match` | Form validation vs business errors (`409`, `403`) |
 | Checkout resilience | `match` + `delay` + headers | `402` / `429` / `503`, retries, idempotency |
 | Multi-tenant RBAC | `match.params` + `match.query` | Admin vs member, `403` across orgs |
@@ -1609,7 +2311,7 @@ Validate callback URL, event list, and secret before returning a webhook id.
 
 ### Tips for your project
 
-1. Paste the JSON into a file under your project’s `mocks/` folder (created by `mock-server init`).
+1. Paste the JSON into a mock JSON file in the directory created by `mock-server init` (or the path you pass to `start`).
 2. Rename route prefixes (`api/saas/...`) to match your frontend base URL.
 3. Keep `request` for contract checks and `match` for business branches — they stack, they don’t replace each other.
 4. Prefer one JSON file per product area (auth, billing, orgs) so hot reload stays fast while editing.
@@ -1626,8 +2328,8 @@ These errors occur when there are issues with the file structure or file system:
 
 | Error Message                               | Description                             | Solution                                                            |
 |---------------------------------------------|-----------------------------------------|---------------------------------------------------------------------|
-| `The directory named mocks does not exist`  | The mocks folder is missing             | Run `mock-server init` to create the folder                         |
-| `No files found`                            | No JSON files found in the mocks folder | Create at least one `.json` file in the `mocks` folder              |
+| `The directory named mocks does not exist`  | The mock files directory is missing     | Run `mock-server init` to create it                                 |
+| `No files found`                            | No JSON files found in that directory   | Create at least one `.json` mock file there                         |
 | `JSON syntax error: ...`                    | Invalid JSON syntax in the file         | Check for missing commas, brackets, or quotes. Use a JSON validator |
 | `Error processing file: ...`                | General file processing error           | Check file permissions and ensure the file is readable              |
 | `The file must contain a valid JSON object` | File content is not a JSON object       | Ensure the file starts with `{` and contains valid JSON structure   |
@@ -1779,6 +2481,27 @@ These errors occur when individual response objects are invalid:
 | `request.errorDetail object values must be strings` | Non-string template value | Use only string values in the object |
 | `request.errorDetailsKey must be a non-empty string` | Empty key | Use e.g. `"errors"` or `"fields"` |
 
+### Store / action Errors
+
+These errors occur when `store` or `action` configuration is invalid:
+
+| Error Message | Description | Solution |
+|---|---|---|
+| `The "store" property must be an object` | `store` is not an object | Use `{ "id": "..." }` |
+| `The "store.id" must be a non-empty string` | Missing/empty id | Set a non-empty `id` |
+| `The store "X" is already defined` | Duplicate full store definition | Define seed/key/unique once; other routes use `{ "id": "X" }` |
+| `The store "X" is referenced but not defined` | Reference without definition | Add a full `store` with that `id` somewhere |
+| `The "store.seed" contains duplicate key (...)` | Seed PK collision | Make seed keys unique |
+| `The "store.seed" contains duplicate unique field "X"` | Seed unique collision | Make unique values unique in seed |
+| `The "action" must be one of: list, get, create, update, patch, delete` | Unknown action | Use a supported action |
+| `The "action" property requires a "store" on the endpoint` | Action without store | Add `store` to the endpoint |
+| `The "action" property cannot be used together with "proxy"` | Action + proxy | Remove one of them |
+| `The store conflict response "X" does not exist in responses` | Missing conflict response name | Add a response with that `name` on mutating methods |
+| `The "store.persist" property must be a boolean or an object` | Invalid persist shape | Use `true` or `{ "enabled": true }` |
+| `The "store.persist.enabled" must be a boolean` | Missing/invalid enabled | Set `"enabled": true/false` |
+| `The "store.persist.file" must be a non-empty string` | Empty custom path | Provide a non-empty relative path under the mock files root |
+| `The "store.persist.file" must be a relative path under the mocks directory` | Absolute path or `..` escape | Use a relative path like `custom/state.json` (no `..`, not absolute) |
+
 **Example:**
 
 ❌ **Invalid** - Invalid statusCode and missing body:
@@ -1851,7 +2574,7 @@ These responses happen while the server is running (HTTP `502`), not during mock
 
 **Watch mode not restarting:**
 
-- Check that you're saving files in the correct `mocks` folder
+- Check that you're saving files in the mock files directory used by `mock-server start`
 - Ensure files have `.json` extension
 - Fix any validation errors that prevent restart
 - Check console for error messages
@@ -1934,7 +2657,7 @@ A: Simply change the `nameResponse` value in your mock JSON file and the server 
 automatically.
 
 **Q: Can I have multiple mock files?**  
-A: Yes! You can have as many JSON files as you want in the `mocks` folder. All will be loaded automatically.
+A: Yes! You can have as many JSON files as you want in the mock files directory. All will be loaded automatically.
 
 ---
 

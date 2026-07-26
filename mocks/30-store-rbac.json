@@ -1,0 +1,582 @@
+{
+  "api/v1/workspaces/:workspaceId/documents": {
+    "store": {
+      "id": "documents",
+      "key": {
+        "fields": ["workspaceId", "id"],
+        "conflict": { "response": "duplicate-key" }
+      },
+      "seed": [
+        {
+          "workspaceId": "ws_acme",
+          "id": 1,
+          "title": "Handbook",
+          "slug": "handbook",
+          "visibility": "internal",
+          "status": "published"
+        },
+        {
+          "workspaceId": "ws_acme",
+          "id": 2,
+          "title": "Roadmap",
+          "slug": "roadmap",
+          "visibility": "private",
+          "status": "draft"
+        }
+      ],
+      "template": {
+        "workspaceId": "",
+        "id": 0,
+        "title": "",
+        "slug": "",
+        "visibility": "private",
+        "status": "draft"
+      },
+      "unique": {
+        "fields": [
+          {
+            "field": "slug",
+            "conflict": {
+              "response": "slug-taken",
+              "detail": { "field": "{{field}}", "value": "{{value}}" }
+            }
+          }
+        ]
+      },
+      "persist": true
+    },
+    "GET": {
+      "nameResponse": "unauthorized",
+      "responses": [
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "headers": {
+            "WWW-Authenticate": "Bearer",
+            "Content-Type": "application/problem+json"
+          },
+          "body": {
+            "type": "https://api.example.com/problems/unauthorized",
+            "title": "Unauthorized",
+            "status": 401,
+            "code": "UNAUTHORIZED"
+          }
+        },
+        {
+          "name": "forbidden-workspace",
+          "statusCode": 403,
+          "match": { "params": { "workspaceId": "ws_blocked" } },
+          "headers": { "Content-Type": "application/problem+json" },
+          "body": {
+            "type": "https://api.example.com/problems/forbidden",
+            "title": "Forbidden",
+            "status": 403,
+            "code": "WORKSPACE_FORBIDDEN"
+          }
+        },
+        {
+          "name": "maintenance",
+          "statusCode": 503,
+          "match": { "query": { "scenario": "maintenance" } },
+          "headers": {
+            "Retry-After": "30",
+            "Content-Type": "application/problem+json"
+          },
+          "body": {
+            "code": "MAINTENANCE",
+            "title": "Service Unavailable",
+            "status": 503
+          }
+        },
+        {
+          "name": "list-admin",
+          "statusCode": 200,
+          "match": { "query": { "role": "admin" } },
+          "action": "list",
+          "headers": { "X-Role": "admin" }
+        },
+        {
+          "name": "list-member",
+          "statusCode": 200,
+          "match": { "query": { "role": "member" } },
+          "action": "list",
+          "headers": { "X-Role": "member" }
+        },
+        {
+          "name": "list-viewer",
+          "statusCode": 200,
+          "match": { "query": { "role": "viewer" } },
+          "action": "list",
+          "headers": { "X-Role": "viewer" }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "unauthorized",
+      "request": {
+        "body": {
+          "title": { "type": "string", "minLength": 3, "maxLength": 100 },
+          "slug": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 40,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "visibility?": { "type": "string", "enum": ["private", "internal", "public"] }
+        },
+        "invalidResponse": "validation-error",
+        "errorFormat": "array",
+        "errorDetail": {
+          "field": "{{path}}",
+          "message": "{{message}}"
+        }
+      },
+      "responses": [
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "headers": {
+            "WWW-Authenticate": "Bearer",
+            "Content-Type": "application/problem+json"
+          },
+          "body": {
+            "code": "UNAUTHORIZED",
+            "status": 401
+          }
+        },
+        {
+          "name": "forbidden-workspace",
+          "statusCode": 403,
+          "match": { "params": { "workspaceId": "ws_blocked" } },
+          "body": { "code": "WORKSPACE_FORBIDDEN" }
+        },
+        {
+          "name": "rate-limited",
+          "statusCode": 429,
+          "delay": 100,
+          "match": { "query": { "scenario": "rate_limit" } },
+          "headers": {
+            "Retry-After": "2",
+            "Content-Type": "application/problem+json"
+          },
+          "body": {
+            "code": "RATE_LIMITED",
+            "status": 429
+          }
+        },
+        {
+          "name": "maintenance",
+          "statusCode": 503,
+          "match": { "query": { "scenario": "maintenance" } },
+          "headers": { "Retry-After": "30" },
+          "body": { "code": "MAINTENANCE", "status": 503 }
+        },
+        {
+          "name": "forbidden-viewer",
+          "statusCode": 403,
+          "match": { "query": { "role": "viewer" } },
+          "body": {
+            "code": "INSUFFICIENT_ROLE",
+            "detail": "Viewers cannot create documents"
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid document payload",
+            "errors": []
+          }
+        },
+        {
+          "name": "slug-taken",
+          "statusCode": 409,
+          "body": {
+            "code": "SLUG_TAKEN",
+            "errors": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE_KEY" }
+        },
+        {
+          "name": "create-admin",
+          "statusCode": 201,
+          "match": { "query": { "role": "admin" } },
+          "action": "create",
+          "headers": { "X-Role": "admin" }
+        },
+        {
+          "name": "create-member",
+          "statusCode": 201,
+          "match": { "query": { "role": "member" } },
+          "action": "create",
+          "headers": { "X-Role": "member" }
+        }
+      ]
+    }
+  },
+  "api/v1/workspaces/:workspaceId/documents/:id": {
+    "store": { "id": "documents" },
+    "GET": {
+      "nameResponse": "unauthorized",
+      "responses": [
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "body": { "code": "UNAUTHORIZED" }
+        },
+        {
+          "name": "gone",
+          "statusCode": 410,
+          "match": {
+            "params": { "id": "410" },
+            "query": { "role": "admin" }
+          },
+          "headers": { "Content-Type": "application/problem+json" },
+          "body": {
+            "code": "DOCUMENT_GONE",
+            "title": "Gone",
+            "status": 410,
+            "detail": "Document was soft-deleted"
+          }
+        },
+        {
+          "name": "hidden-from-member",
+          "statusCode": 404,
+          "match": {
+            "params": { "id": "2" },
+            "query": { "role": "member" }
+          },
+          "body": {
+            "code": "NOT_FOUND",
+            "detail": "Private drafts are hidden from members"
+          }
+        },
+        {
+          "name": "get-admin",
+          "statusCode": 200,
+          "match": { "query": { "role": "admin" } },
+          "action": "get"
+        },
+        {
+          "name": "get-member",
+          "statusCode": 200,
+          "match": { "query": { "role": "member" } },
+          "action": "get"
+        },
+        {
+          "name": "get-viewer",
+          "statusCode": 200,
+          "match": { "query": { "role": "viewer" } },
+          "action": "get"
+        }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "unauthorized",
+      "request": {
+        "body": {
+          "title?": { "type": "string", "minLength": 3, "maxLength": 100 },
+          "status?": { "type": "string", "enum": ["draft", "published", "archived"] },
+          "visibility?": { "type": "string", "enum": ["private", "internal", "public"] }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "body": { "code": "UNAUTHORIZED" }
+        },
+        {
+          "name": "forbidden-viewer",
+          "statusCode": 403,
+          "match": { "query": { "role": "viewer" } },
+          "body": { "code": "INSUFFICIENT_ROLE" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid document patch",
+            "errors": []
+          }
+        },
+        {
+          "name": "slug-taken",
+          "statusCode": 409,
+          "body": { "code": "SLUG_TAKEN", "errors": "{{conflicts}}" }
+        },
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE_KEY" }
+        },
+        {
+          "name": "patch-admin",
+          "statusCode": 200,
+          "match": { "query": { "role": "admin" } },
+          "action": "patch"
+        },
+        {
+          "name": "patch-member",
+          "statusCode": 200,
+          "match": { "query": { "role": "member" } },
+          "action": "patch"
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "unauthorized",
+      "responses": [
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "body": { "code": "UNAUTHORIZED" }
+        },
+        {
+          "name": "forbidden-non-admin",
+          "statusCode": 403,
+          "match": { "query": { "role": "member" } },
+          "body": {
+            "code": "INSUFFICIENT_ROLE",
+            "detail": "Only admins can delete documents"
+          }
+        },
+        {
+          "name": "forbidden-viewer",
+          "statusCode": 403,
+          "match": { "query": { "role": "viewer" } },
+          "body": { "code": "INSUFFICIENT_ROLE" }
+        },
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "match": { "query": { "role": "admin" } },
+          "action": "delete"
+        }
+      ]
+    }
+  },
+  "api/v1/workspaces/:workspaceId/invites": {
+    "store": {
+      "id": "invites",
+      "key": {
+        "fields": ["workspaceId", "id"]
+      },
+      "seed": [],
+      "template": {
+        "id": 0,
+        "workspaceId": "",
+        "email": "",
+        "role": "member",
+        "status": "pending"
+      },
+      "unique": ["email"],
+      "persist": false
+    },
+    "GET": {
+      "nameResponse": "unauthorized",
+      "responses": [
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "body": { "code": "UNAUTHORIZED" }
+        },
+        {
+          "name": "forbidden-non-admin",
+          "statusCode": 403,
+          "match": {
+            "query": { "role": "member" }
+          },
+          "body": { "code": "INSUFFICIENT_ROLE" }
+        },
+        {
+          "name": "list",
+          "statusCode": 200,
+          "match": { "query": { "role": "admin" } },
+          "action": "list"
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "unauthorized",
+      "delay": 50,
+      "request": {
+        "body": {
+          "email": { "type": "string", "format": "email" },
+          "role": { "type": "string", "enum": ["admin", "member", "viewer"] }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "body": { "code": "UNAUTHORIZED" }
+        },
+        {
+          "name": "forbidden-non-admin",
+          "statusCode": 403,
+          "match": { "query": { "role": "member" } },
+          "body": { "code": "INSUFFICIENT_ROLE" }
+        },
+        {
+          "name": "owner-role-blocked",
+          "statusCode": 403,
+          "match": {
+            "query": { "role": "admin" },
+            "body": { "role": "admin", "email": "owner-transfer@acme.com" }
+          },
+          "body": {
+            "code": "OWNER_TRANSFER_REQUIRED",
+            "detail": "Promoting to admin requires owner approval flow"
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid invite",
+            "errors": []
+          }
+        },
+        {
+          "name": "create",
+          "statusCode": 201,
+          "match": { "query": { "role": "admin" } },
+          "action": "create"
+        }
+      ]
+    }
+  },
+  "api/v1/workspaces/:workspaceId/credits": {
+    "store": {
+      "id": "credits",
+      "key": {
+        "fields": ["workspaceId", "id"]
+      },
+      "seed": [
+        {
+          "workspaceId": "ws_acme",
+          "id": 1,
+          "sku": "seat",
+          "quantity": 5
+        }
+      ],
+      "template": {
+        "workspaceId": "",
+        "id": 0,
+        "sku": "seat",
+        "quantity": 1
+      },
+      "unique": ["sku"],
+      "persist": true
+    },
+    "GET": {
+      "nameResponse": "unauthorized",
+      "responses": [
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "body": { "code": "UNAUTHORIZED" }
+        },
+        {
+          "name": "list",
+          "statusCode": 200,
+          "match": { "query": { "role": "admin" } },
+          "action": "list"
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "unauthorized",
+      "request": {
+        "body": {
+          "sku": { "type": "string", "enum": ["seat", "storage", "ai"] },
+          "quantity": { "type": "number", "min": 1, "max": 1000 },
+          "paymentMethod?": { "type": "string", "enum": ["card", "invoice"] },
+          "cardNumber?": { "type": "string" }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "body": { "code": "UNAUTHORIZED" }
+        },
+        {
+          "name": "card-declined",
+          "statusCode": 402,
+          "match": {
+            "query": { "role": "admin" },
+            "body": {
+              "paymentMethod": "card",
+              "cardNumber": "4000000000000002"
+            }
+          },
+          "body": {
+            "code": "CARD_DECLINED",
+            "status": 402
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid credit purchase",
+            "errors": []
+          }
+        },
+        {
+          "name": "create",
+          "statusCode": 201,
+          "match": { "query": { "role": "admin" } },
+          "action": "create"
+        }
+      ]
+    }
+  },
+  "api/v1/workspaces/:workspaceId/credits/:id": {
+    "store": { "id": "credits" },
+    "PATCH": {
+      "nameResponse": "unauthorized",
+      "request": {
+        "body": {
+          "quantity": { "type": "number", "min": 0, "max": 1000 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "body": { "code": "UNAUTHORIZED" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid credit patch",
+            "errors": []
+          }
+        },
+        {
+          "name": "patch",
+          "statusCode": 200,
+          "match": { "query": { "role": "admin" } },
+          "action": "patch"
+        }
+      ]
+    }
+  }
+}

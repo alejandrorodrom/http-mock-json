@@ -1,0 +1,116 @@
+{
+  "api/alpha": {
+    "store": {
+      "id": "alpha",
+      "key": "id",
+      "seed": [{ "id": 1, "name": "seed-alpha" }],
+      "template": { "id": 0, "name": "" },
+      "persist": true
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  },
+  "api/alpha/:id": {
+    "store": { "id": "alpha" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        { "name": "get", "statusCode": 200, "action": "get" }
+      ]
+    },
+    "PUT": {
+      "nameResponse": "update",
+      "responses": [
+        { "name": "update", "statusCode": 200, "action": "update" }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "patch",
+      "responses": [
+        { "name": "patch", "statusCode": 200, "action": "patch" }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    }
+  },
+  "api/beta": {
+    "store": {
+      "id": "beta",
+      "key": "id",
+      "seed": [],
+      "template": { "id": 0, "name": "" },
+      "persist": {
+        "enabled": true,
+        "file": "custom/beta-state.json"
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  },
+  "api/gamma": {
+    "store": {
+      "id": "gamma",
+      "key": "id",
+      "seed": [{ "id": 1, "name": "ephemeral" }],
+      "persist": false
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  },
+  "api/delta": {
+    "store": {
+      "id": "delta",
+      "key": "id",
+      "seed": [],
+      "persist": {
+        "enabled": false
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  }
+}

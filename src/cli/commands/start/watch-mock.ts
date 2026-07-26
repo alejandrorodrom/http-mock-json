@@ -11,7 +11,7 @@ import { logError } from '../../../scripts/log.script';
 import { executeMock } from './execute-mock';
 
 export const watchMock = (
-  { server, port, folderPath, mocks, proxy }: WatchMock
+  { server, port, folderPath, mocks, proxy, persistWatchIgnored }: WatchMock
 ) => {
   const connections: Connection = new Map();
   let isRestarting = false;
@@ -28,6 +28,7 @@ export const watchMock = (
 
   const watcher = chokidar.watch(mocks, {
     ignoreInitial: true,
+    ignored: persistWatchIgnored,
     awaitWriteFinish: {
       stabilityThreshold: AWAIT_WRITE_FINISH_STABILITY_THRESHOLD,
       pollInterval: AWAIT_WRITE_FINISH_POLL_INTERVAL

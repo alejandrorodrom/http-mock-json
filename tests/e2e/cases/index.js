@@ -29,7 +29,13 @@ const successCases = [
   require('./success/21-match-matrix'),
   require('./success/22-request'),
   require('./success/23-request-matrix'),
-  require('./success/24-request-saas')
+  require('./success/24-request-saas'),
+  require('./success/25-store'),
+  require('./success/26-store-persist'),
+  require('./success/27-store-matrix'),
+  require('./success/28-store-persist-matrix'),
+  require('./success/29-store-saas'),
+  require('./success/30-store-rbac')
 ];
 
 const errorCases = [
@@ -42,7 +48,9 @@ const errorCases = [
   require('./error/response-errors'),
   require('./error/match-errors'),
   require('./error/proxy-errors'),
-  require('./error/request-errors')
+  require('./error/request-errors'),
+  require('./error/store-errors'),
+  require('./error/store-persist-corrupt')
 ];
 
 const systemCases = [
@@ -74,7 +82,14 @@ const runtimeCases = [
   require('./runtime/request-validation'),
   require('./runtime/request-matrix'),
   require('./runtime/request-saas'),
-  require('./runtime/watch-request-failed')
+  require('./runtime/watch-request-failed'),
+  require('./runtime/store-mutable'),
+  require('./runtime/store-persist'),
+  require('./runtime/store-matrix'),
+  require('./runtime/store-persist-matrix'),
+  require('./runtime/store-persist-write-failed'),
+  require('./runtime/store-saas'),
+  require('./runtime/store-rbac')
 ];
 
 const unitCases = [
@@ -82,7 +97,8 @@ const unitCases = [
   require('./unit/fallback-response-missing'),
   require('./unit/package-json-missing'),
   require('./unit/mocks-folder-mkdir-failed'),
-  require('./unit/invalid-mock-configuration')
+  require('./unit/invalid-mock-configuration'),
+  require('./unit/store-response-clone')
 ];
 
 /** @type {{ name: string, description: string, run: () => Promise<import('../lib/reporter').CaseResult> }[]} */

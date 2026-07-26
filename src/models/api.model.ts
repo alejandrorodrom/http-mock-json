@@ -12,6 +12,7 @@ export class Api {
   delay?: number;
   proxy?: MethodProxyValue;
   request?: MockRequest;
+  storeId?: string;
   responses: MockResponseConfig[];
 
   constructor(data: MockHttp) {
@@ -21,6 +22,7 @@ export class Api {
     this.delay = data.delay;
     this.proxy = data.proxy;
     this.request = data.request;
+    this.storeId = data.storeId;
     this.responses = data.responses;
   }
 

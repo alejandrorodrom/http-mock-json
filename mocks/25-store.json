@@ -1,0 +1,180 @@
+{
+  "api/:tenantId/users": {
+    "store": {
+      "id": "users",
+      "key": {
+        "fields": ["tenantId", "id"],
+        "conflict": {
+          "response": "duplicate-key"
+        }
+      },
+      "seed": [
+        {
+          "tenantId": "acme",
+          "id": 1,
+          "name": "Juan",
+          "email": "juan@acme.com",
+          "username": "juan",
+          "active": true
+        }
+      ],
+      "template": {
+        "tenantId": "",
+        "id": 0,
+        "name": "",
+        "email": "",
+        "username": "",
+        "active": true
+      },
+      "unique": {
+        "fields": [
+          "email",
+          "username"
+        ],
+        "conflict": {
+          "response": "duplicate-fields",
+          "detail": {
+            "campo": "{{field}}",
+            "valor": "{{value}}"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "body": {
+          "name": { "type": "string", "minLength": 2 },
+          "email": { "type": "string", "format": "email" },
+          "username": { "type": "string", "minLength": 3 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "validation-error",
+          "statusCode": 400,
+          "body": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid request"
+          }
+        },
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": {
+            "ok": false,
+            "code": "DUPLICATE",
+            "errores": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE_KEY",
+            "message": "Id already exists for tenant"
+          }
+        },
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
+      ]
+    }
+  },
+  "api/:tenantId/users/:id": {
+    "store": { "id": "users" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "patch",
+      "responses": [
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": {
+            "ok": false,
+            "code": "DUPLICATE",
+            "errores": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE_KEY",
+            "message": "Id already exists for tenant"
+          }
+        },
+        {
+          "name": "patch",
+          "statusCode": 200,
+          "action": "patch"
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
+      ]
+    }
+  },
+  "api/notes": {
+    "store": {
+      "id": "notes",
+      "key": "id",
+      "seed": [],
+      "template": {
+        "id": 0,
+        "title": "",
+        "done": false
+      },
+      "unique": ["title"]
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
+      ]
+    }
+  }
+}

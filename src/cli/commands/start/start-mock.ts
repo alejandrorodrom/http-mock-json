@@ -2,7 +2,6 @@ import { StartMock } from '../../../interfaces/mock.interface';
 import express, { Express, Request, Response } from 'express';
 import { getMocksData } from './files';
 import { logApi, logError } from '../../../scripts/log.script';
-import { Server } from 'node:net';
 import cors from 'cors';
 import { validatePortAvailable } from './check-port';
 import { selectResponse } from '../../../scripts/match.script';
@@ -11,11 +10,18 @@ import { proxyRequest, resolveProxy } from '../../../scripts/proxy.script';
 import { checkRequest } from '../../../scripts/request-check.script';
 import { buildRequestError } from '../../../scripts/request-error.script';
 import { isEmpty } from '../../../scripts/guards.script';
+import { defaultNotFoundBody, StoreRegistry } from '../../../scripts/store.script';
+import { buildStoreConflictResponse } from '../../../scripts/store-conflict.script';
+import { buildPersistWatchIgnored } from '../../../scripts/store-persist.script';
+import {
+  DEFAULT_NOT_FOUND_STATUS
+} from '../../../constants/store.constant';
+import { MockResponseConfig } from '../../../interfaces/data.interface';
+import { StartMockResult } from '../../../interfaces/mock.interface';
 
 export const startMock = async (
-  { port, folderPath, proxy }: StartMock
-): Promise<Server> => {
-  // Validate port availability BEFORE loading mocks (more efficient: uses socket connection)
+  { port, folderPath, proxy, resetStore }: StartMock
+): Promise<StartMockResult> => {
   await validatePortAvailable(port);
 
   const app: Express = express();
@@ -26,7 +32,11 @@ export const startMock = async (
   app.use(express.json({ strict: false }));
   app.use(express.urlencoded({ extended: true }));
 
-  const data = getMocksData(folderPath);
+  const { apis, stores } = getMocksData(folderPath);
+  const registry = new StoreRegistry(stores, {
+    mocksDir: folderPath,
+    resetStore
+  });
 
   app.get('/', (_req: Request, res: Response) => {
     res.send(`
@@ -50,10 +60,10 @@ export const startMock = async (
     `);
   });
 
-  data.forEach(value => {
+  apis.forEach(value => {
     logApi(value);
     app[value.method](value.route, async (req: Request, res: Response) => {
-      let selectedResponse;
+      let selectedResponse: MockResponseConfig | undefined;
 
       if (value.request) {
         const issues = checkRequest(value.request, req);
@@ -91,6 +101,37 @@ export const startMock = async (
         return;
       }
 
+      if (selectedResponse.action && value.storeId) {
+        const result = registry.execute(value.storeId, selectedResponse.action, req);
+
+        if (!result.ok) {
+          if (result.kind === 'conflict') {
+            const conflictResponse = buildStoreConflictResponse(
+              result.conflicts,
+              value.responses,
+              result.responseName,
+              result.detail
+            );
+            res.set(conflictResponse.headers)
+              .status(conflictResponse.status)
+              .json(conflictResponse.body);
+            return;
+          }
+
+          if (result.kind === 'not_found') {
+            res.status(DEFAULT_NOT_FOUND_STATUS).json(defaultNotFoundBody());
+            return;
+          }
+
+          res.status(400).json({ message: result.message });
+          return;
+        }
+
+        const status = result.status ?? selectedResponse.status;
+        res.set(selectedResponse.headers).status(status).json(result.body);
+        return;
+      }
+
       res.set(selectedResponse.headers).status(selectedResponse.status).json(selectedResponse.body);
     });
   });
@@ -109,11 +150,12 @@ export const startMock = async (
   });
 
   server.on('error', (error: NodeJS.ErrnoException) => {
-    // This should rarely happen since we check port availability first,
-    // but keep it as a safety net for race conditions
     logError(error);
     process.exit(1);
   });
 
-  return server;
+  return {
+    server,
+    persistWatchIgnored: buildPersistWatchIgnored(folderPath, stores)
+  };
 };

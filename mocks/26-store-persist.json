@@ -1,0 +1,59 @@
+{
+  "api/notes": {
+    "store": {
+      "id": "notes",
+      "key": "id",
+      "seed": [],
+      "template": {
+        "id": 0,
+        "title": "",
+        "done": false
+      },
+      "unique": ["title"],
+      "persist": true
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
+      ]
+    }
+  },
+  "api/notes/:id": {
+    "store": { "id": "notes" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
+      ]
+    }
+  }
+}

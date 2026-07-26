@@ -11,7 +11,7 @@ export const interactive = () => {
 
   mock
     .name('mock-server')
-    .version('1.10.1', '-v, --version', 'Output the version number')
+    .version('1.11.0', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.');
 
@@ -81,13 +81,34 @@ export const interactive = () => {
         return value;
       }
     )
+    .option(
+      '--reset-store [ids]',
+      'Clear persisted store snapshots before start (all stores, or comma-separated ids)',
+      (value: string | boolean | undefined) => {
+        if (value === undefined || value === true || value === '') {
+          return true;
+        }
+
+        const ids = String(value)
+          .split(',')
+          .map(item => item.trim())
+          .filter(item => item.length > 0);
+
+        if (ids.length === 0) {
+          throw new Error('Reset store ids must be a non-empty comma-separated list');
+        }
+
+        return ids;
+      }
+    )
     .description('Start mock server.')
     .action(async (options: StartOptions) => {
       try {
         await executeMock({
           port: options.port,
           folderPath: options.path,
-          proxy: options.proxy
+          proxy: options.proxy,
+          resetStore: options.resetStore
         });
       } catch (e) {
         if (!(e instanceof Error && e.message === 'Invalid mock configuration')) {

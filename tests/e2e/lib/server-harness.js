@@ -204,19 +204,40 @@ function runCli(options) {
 /**
  * Starts the mock server and keeps it alive for HTTP assertions.
  * @param {object} options
- * @param {string | string[]} options.mockRelativePath
+ * @param {string | string[]} [options.mockRelativePath]
+ * @param {string} [options.workspaceDir]
+ * @param {() => void} [options.cleanup]
  * @param {string} [options.proxy]
+ * @param {boolean | string} [options.resetStore]
+ * @param {boolean} [options.cleanupOnStop]
  * @param {number} [options.timeoutMs]
  */
 async function startMockServer(options) {
   const port = await getFreePort();
-  const { workspaceDir, cleanup } = createWorkspace(options.mockRelativePath);
+  let workspaceDir;
+  let cleanup;
+
+  if (options.workspaceDir) {
+    workspaceDir = options.workspaceDir;
+    cleanup = options.cleanup ?? (() => undefined);
+  } else {
+    ({ workspaceDir, cleanup } = createWorkspace(options.mockRelativePath));
+  }
+
   const mocksDir = path.join(workspaceDir, 'mocks');
   const args = ['start', '-p', String(port), '-f', ''];
 
   if (options.proxy) {
     args.push('--proxy', options.proxy);
   }
+
+  if (options.resetStore === true) {
+    args.push('--reset-store');
+  } else if (typeof options.resetStore === 'string' && options.resetStore.length > 0) {
+    args.push('--reset-store', options.resetStore);
+  }
+
+  const cleanupOnStop = options.cleanupOnStop !== false;
 
   if (!fs.existsSync(CLI_PATH)) {
     cleanup();
@@ -292,7 +313,9 @@ async function startMockServer(options) {
     async stop() {
       killProcessTree(child);
       await new Promise((resolve) => setTimeout(resolve, 100));
-      cleanup();
+      if (cleanupOnStop) {
+        cleanup();
+      }
     }
   };
 }

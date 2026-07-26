@@ -485,6 +485,337 @@ const ERROR_CATALOG = [
     caseName: 'error/proxy-errors'
   },
 
+  // --- store ---
+  {
+    id: 'store.not-object',
+    message: 'The "store" property must be an object',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.id-invalid',
+    message: 'The "store.id" must be a non-empty string',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.unknown-key',
+    message: 'The "store" property contains unknown key "foo"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.seed-not-array',
+    message: 'The "store.seed" property must be an array',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.seed-item-not-object',
+    message: 'The "store.seed[0]" item must be an object',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.template-not-object',
+    message: 'The "store.template" property must be an object',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.unique-type',
+    message: 'The "store.unique" property must be an array or an object',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.unique-empty',
+    message: 'The "store.unique" array must not be empty',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.unique-fields-missing',
+    message: 'The "store.unique" object must include "fields"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.key-type',
+    message: 'The "store.key" must be a string, an array of strings, or an object',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.seed-duplicate-key',
+    message: 'The "store.seed" contains duplicate key (id)',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.seed-duplicate-unique',
+    message: 'The "store.seed" contains duplicate unique field "email"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.action-requires-store',
+    message: 'The "action" property requires a "store" on the endpoint',
+    source: 'src/validators/action.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.action-with-proxy',
+    message: 'The "action" property cannot be used together with "proxy"',
+    source: 'src/validators/action.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.action-invalid',
+    message: 'The "action" must be one of: list, get, create, update, patch, delete',
+    source: 'src/validators/action.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.action-body-ignored',
+    message: 'The "body" property is ignored when "action" is set',
+    source: 'src/validators/action.validator.ts',
+    kind: 'warning',
+    caseName: 'success/27-store-matrix'
+  },
+  {
+    id: 'store.action-delete-status-ignored',
+    message: 'The "statusCode" is ignored for action "delete" (always responds with 204)',
+    source: 'src/validators/action.validator.ts',
+    kind: 'warning',
+    caseName: 'success/27-store-matrix'
+  },
+  {
+    id: 'store.conflict-response-missing',
+    message: 'The store conflict response "duplicate-email" does not exist in responses',
+    source: 'src/cli/commands/start/process-file.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.reference-missing',
+    message: 'The store "does-not-exist" is referenced but not defined',
+    source: 'src/cli/commands/start/process-file.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.persist-type',
+    message: 'The "store.persist" property must be a boolean or an object',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.persist-enabled',
+    message: 'The "store.persist.enabled" must be a boolean',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.persist-file',
+    message: 'The "store.persist.file" must be a non-empty string',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.persist.file-escape',
+    message: 'The "store.persist.file" must be a relative path under the mocks directory',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.seed-missing-key',
+    message: 'The "store.seed[0]" item is missing key field "id"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.already-defined',
+    message: 'The store "shared-dup" is already defined',
+    source: 'src/cli/commands/start/process-file.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'http.store.409.unique',
+    message: 'DUPLICATE',
+    source: 'src/scripts/store.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-mutable'
+  },
+  {
+    id: 'http.store.404.not-found',
+    message: 'Not found',
+    source: 'src/scripts/store.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-mutable'
+  },
+  {
+    id: 'http.store.persist.survives-restart',
+    message: 'Persistida',
+    source: 'src/scripts/store-persist.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-persist'
+  },
+  {
+    id: 'http.store.matrix.put-unique-list',
+    message: 'DUPLICATE_SKU',
+    source: 'src/scripts/store.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-matrix'
+  },
+  {
+    id: 'http.store.persist.matrix',
+    message: 'alpha-2-updated',
+    source: 'src/scripts/store-persist.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-persist-matrix'
+  },
+  {
+    id: 'store.persist.corrupt-file',
+    message: 'Invalid persisted store file',
+    source: 'src/scripts/store-persist.script.ts',
+    kind: 'runtime',
+    caseName: 'error/store-persist-corrupt'
+  },
+  {
+    id: 'store.persist.missing-key',
+    message: 'missing key field "id"',
+    source: 'src/scripts/store-persist.script.ts',
+    kind: 'runtime',
+    caseName: 'error/store-persist-corrupt'
+  },
+  {
+    id: 'store.persist.duplicate-key',
+    message: 'duplicate key',
+    source: 'src/scripts/store-persist.script.ts',
+    kind: 'runtime',
+    caseName: 'error/store-persist-corrupt'
+  },
+  {
+    id: 'store.persist.duplicate-unique',
+    message: 'duplicate unique field "title"',
+    source: 'src/scripts/store-persist.script.ts',
+    kind: 'runtime',
+    caseName: 'error/store-persist-corrupt'
+  },
+  {
+    id: 'store.persist.write-failed',
+    message: 'Failed to persist store "notes"',
+    source: 'src/scripts/store.script.ts',
+    kind: 'runtime',
+    caseName: 'runtime/store-persist-write-failed'
+  },
+  {
+    id: 'http.store.params-win-over-body',
+    message: 'acme',
+    source: 'src/scripts/store.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-matrix'
+  },
+  {
+    id: 'http.store.default-conflict',
+    message: 'Duplicate value(s)',
+    source: 'src/scripts/store-conflict.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-matrix'
+  },
+  {
+    id: 'http.store.static-match',
+    message: 'static-match',
+    source: 'src/scripts/match.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-matrix'
+  },
+  {
+    id: 'http.store.action-header',
+    message: 'X-Store-Action',
+    source: 'src/cli/commands/start/start-mock.ts',
+    kind: 'http',
+    caseName: 'runtime/store-matrix'
+  },
+  {
+    id: 'http.store.watch-skips-reset-store',
+    message: 'after-reset',
+    source: 'src/cli/commands/start/watch-mock.ts',
+    kind: 'http',
+    caseName: 'runtime/store-persist-matrix'
+  },
+  {
+    id: 'http.store.saas-slug-taken',
+    message: 'SLUG_TAKEN',
+    source: 'mocks/29-store-saas.json',
+    kind: 'http',
+    caseName: 'runtime/store-saas'
+  },
+  {
+    id: 'http.store.saas-board-match',
+    message: 'static-match',
+    source: 'mocks/29-store-saas.json',
+    kind: 'http',
+    caseName: 'runtime/store-saas'
+  },
+  {
+    id: 'http.store.saas-persist-restart',
+    message: 'Ship MVP',
+    source: 'src/scripts/store-persist.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-saas'
+  },
+  {
+    id: 'http.store.rbac-unauthorized',
+    message: 'UNAUTHORIZED',
+    source: 'mocks/30-store-rbac.json',
+    kind: 'http',
+    caseName: 'runtime/store-rbac'
+  },
+  {
+    id: 'http.store.rbac-gone',
+    message: 'DOCUMENT_GONE',
+    source: 'mocks/30-store-rbac.json',
+    kind: 'http',
+    caseName: 'runtime/store-rbac'
+  },
+  {
+    id: 'http.store.rbac-card-declined',
+    message: 'CARD_DECLINED',
+    source: 'mocks/30-store-rbac.json',
+    kind: 'http',
+    caseName: 'runtime/store-rbac'
+  },
+  {
+    id: 'http.store.rbac-persist',
+    message: 'launch-plan',
+    source: 'src/scripts/store-persist.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-rbac'
+  },
+
   // --- CLI ---
   {
     id: 'cli.port-invalid',

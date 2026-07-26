@@ -2,6 +2,7 @@ import { RawMockEndpoint } from '../types/mock.type';
 import { isEmpty, isObject } from '../scripts/guards.script';
 import { getKeys } from '../scripts/objects.script';
 import { VALID_ENDPOINT_REGEXP } from '../constants/validation.constant';
+import { STORE_PROPERTY } from '../constants/store.constant';
 import { EndpointValidationResult, LocalIssue } from '../types/validation.type';
 
 export const validateEndpoint = (
@@ -27,7 +28,7 @@ export const validateEndpoint = (
     return { errors, warnings };
   }
 
-  const methods = getKeys(endpointData);
+  const methods = getKeys(endpointData).filter(key => key !== STORE_PROPERTY);
 
   if (isEmpty(methods)) {
     errors.push({

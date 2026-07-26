@@ -4,6 +4,7 @@ import { VALID_STATUS_CODES } from '../constants/validation.constant';
 import { LocalIssue, ResponseValidationResult } from '../types/validation.type';
 import { validateDelay } from './delay.validator';
 import { validateProxyValue } from './proxy.validator';
+import { validateAction } from './action.validator';
 
 const validateMatch = (
   endpoint: string,
@@ -106,7 +107,8 @@ const validateStatusCode = (
 export const validateResponse = (
   endpoint: string,
   method: string,
-  response: RawMockResponse
+  response: RawMockResponse,
+  hasStore = false
 ): ResponseValidationResult => {
   const errors: LocalIssue[] = [];
   const warnings: LocalIssue[] = [];
@@ -130,6 +132,10 @@ export const validateResponse = (
   }
 
   const hasProxy = hasProperty(response, 'proxy');
+  const actionResult = validateAction(endpoint, method, response, hasStore);
+  errors.push(...actionResult.errors);
+  warnings.push(...actionResult.warnings);
+  const hasAction = hasProperty(response, 'action') && isEmpty(actionResult.errors);
 
   if (hasProxy) {
     errors.push(...validateProxyValue(endpoint, method, response.proxy));
@@ -153,7 +159,7 @@ export const validateResponse = (
     return { errors, warnings };
   }
 
-  if (!hasProxy && !hasProperty(response, 'body')) {
+  if (!hasProxy && !hasAction && !hasProperty(response, 'body')) {
     errors.push({
       endpoint,
       method,

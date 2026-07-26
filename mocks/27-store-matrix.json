@@ -1,0 +1,209 @@
+{
+  "api/:tenantId/items": {
+    "store": {
+      "id": "items",
+      "key": {
+        "fields": ["tenantId", "id"],
+        "conflict": {
+          "response": "duplicate-key"
+        }
+      },
+      "seed": [
+        {
+          "tenantId": "acme",
+          "id": 1,
+          "sku": "SKU-1",
+          "name": "Alpha",
+          "active": true
+        },
+        {
+          "tenantId": "globex",
+          "id": 1,
+          "sku": "SKU-G1",
+          "name": "Globex One",
+          "active": true
+        }
+      ],
+      "template": {
+        "tenantId": "",
+        "id": 0,
+        "sku": "",
+        "name": "",
+        "active": true
+      },
+      "unique": {
+        "fields": [
+          {
+            "field": "sku",
+            "conflict": {
+              "response": "duplicate-sku",
+              "detail": {
+                "field": "{{field}}",
+                "value": "{{value}}",
+                "msg": "{{message}}"
+              }
+            }
+          },
+          "name"
+        ],
+        "conflict": {
+          "response": "duplicate-fields",
+          "detail": {
+            "campo": "{{field}}",
+            "valor": "{{value}}"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "delay": 200,
+      "responses": [
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE_KEY",
+            "message": "Key already exists"
+          }
+        },
+        {
+          "name": "duplicate-sku",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE_SKU",
+            "errors": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE_FIELDS",
+            "field": "{{field}}",
+            "value": "{{value}}",
+            "errors": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create",
+          "headers": {
+            "X-Store-Action": "create"
+          },
+          "body": { "ignored": true }
+        }
+      ]
+    }
+  },
+  "api/:tenantId/items/:id": {
+    "store": { "id": "items" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get",
+          "headers": {
+            "X-Store-Action": "get"
+          }
+        }
+      ]
+    },
+    "PUT": {
+      "nameResponse": "update",
+      "responses": [
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE_KEY" }
+        },
+        {
+          "name": "duplicate-sku",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE_SKU",
+            "errors": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE_FIELDS",
+            "errors": "{{conflicts}}"
+          }
+        },
+        { "name": "update", "statusCode": 200, "action": "update" }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "patch",
+      "responses": [
+        {
+          "name": "duplicate-sku",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE_SKU",
+            "errors": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE_FIELDS",
+            "errors": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE_KEY" }
+        },
+        { "name": "patch", "statusCode": 200, "action": "patch" }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 200, "action": "delete" }
+      ]
+    }
+  },
+  "api/tags": {
+    "store": {
+      "id": "tags",
+      "key": "id",
+      "seed": [],
+      "template": { "id": 0, "label": "" },
+      "unique": ["label"]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "frozen",
+          "statusCode": 200,
+          "match": { "query": { "mode": "static" } },
+          "body": { "frozen": true, "source": "static-match" }
+        },
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    }
+  }
+}

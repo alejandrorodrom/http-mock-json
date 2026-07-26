@@ -51,3 +51,6 @@ ui-debug.log
 
 # Local ad-hoc mocks (optional). E2E fixtures under /mocks are committed.
 # /mocks
+
+# Persisted in-memory store snapshots
+**/.store/

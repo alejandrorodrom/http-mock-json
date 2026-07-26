@@ -1,0 +1,347 @@
+{
+  "bad-store-type": {
+    "store": "users",
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-id": {
+    "store": {
+      "id": ""
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-unknown-key": {
+    "store": {
+      "id": "x",
+      "foo": true
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-seed": {
+    "store": {
+      "id": "seed-bad",
+      "seed": "nope"
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-seed-item": {
+    "store": {
+      "id": "seed-item-bad",
+      "seed": [1]
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-template": {
+    "store": {
+      "id": "template-bad",
+      "template": []
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-unique-type": {
+    "store": {
+      "id": "unique-type",
+      "unique": "email"
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-unique-empty": {
+    "store": {
+      "id": "unique-empty",
+      "unique": []
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-unique-fields-missing": {
+    "store": {
+      "id": "unique-fields-missing",
+      "unique": {
+        "conflict": {
+          "response": "x"
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-key": {
+    "store": {
+      "id": "key-bad",
+      "key": 10
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-seed-duplicate-key": {
+    "store": {
+      "id": "dup-key",
+      "key": "id",
+      "seed": [
+        { "id": 1, "email": "a@a.com" },
+        { "id": 1, "email": "b@b.com" }
+      ]
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-seed-duplicate-unique": {
+    "store": {
+      "id": "dup-unique",
+      "key": "id",
+      "unique": ["email"],
+      "seed": [
+        { "id": 1, "email": "a@a.com" },
+        { "id": 2, "email": "a@a.com" }
+      ]
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "action-without-store": {
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    }
+  },
+  "action-with-proxy": {
+    "store": {
+      "id": "action-proxy",
+      "seed": []
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list",
+          "proxy": "https://example.com"
+        }
+      ]
+    }
+  },
+  "action-invalid": {
+    "store": {
+      "id": "action-invalid",
+      "seed": []
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "upsert"
+        }
+      ]
+    }
+  },
+  "missing-conflict-response": {
+    "store": {
+      "id": "missing-conflict",
+      "unique": {
+        "fields": ["email"],
+        "conflict": {
+          "response": "duplicate-email"
+        }
+      },
+      "seed": []
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
+      ]
+    }
+  },
+  "store-reference-missing": {
+    "store": { "id": "does-not-exist" },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    }
+  },
+  "bad-store-persist-type": {
+    "store": {
+      "id": "persist-type",
+      "persist": "yes"
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-persist-enabled": {
+    "store": {
+      "id": "persist-enabled",
+      "persist": {
+        "file": "custom.json"
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-persist-file": {
+    "store": {
+      "id": "persist-file",
+      "persist": {
+        "enabled": true,
+        "file": ""
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-persist-file-escape": {
+    "store": {
+      "id": "persist-escape",
+      "persist": {
+        "enabled": true,
+        "file": "../outside-state.json"
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-persist-file-absolute": {
+    "store": {
+      "id": "persist-absolute",
+      "persist": {
+        "enabled": true,
+        "file": "/tmp/http-mock-json-store.json"
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-seed-missing-key": {
+    "store": {
+      "id": "seed-missing-key",
+      "key": "id",
+      "seed": [
+        { "email": "a@a.com" }
+      ]
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "store-already-defined": {
+    "store": {
+      "id": "shared-dup",
+      "key": "id",
+      "seed": []
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "store-already-defined-again": {
+    "store": {
+      "id": "shared-dup",
+      "key": "id",
+      "seed": []
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  }
+}
