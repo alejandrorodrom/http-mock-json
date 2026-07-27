@@ -1,15 +1,29 @@
-import { STORE_PROPERTY } from '../constants/store.constant';
+import {
+  STORE_LIST_FILTER_OPS_LABEL,
+  STORE_LIST_FILTER_OP_SET,
+  STORE_PROPERTY
+} from '../constants/store.constant';
 import { LocalIssue } from '../types/validation.type';
 import {
   RawStoreConfig,
   RawStoreKey,
+  RawStoreList,
+  RawStoreListObject,
   RawStorePersist,
   RawStoreUnique,
   StoreConflictConfig,
   StoreDefinition,
   StoreUniqueField
 } from '../types/store.type';
-import { hasProperty, isArray, isEmpty, isExisting, isObject } from '../scripts/guards.script';
+import {
+  hasProperty,
+  isArray,
+  isEmpty,
+  isExisting,
+  isNonNegativeInt,
+  isObject,
+  isPositiveInt
+} from '../scripts/guards.script';
 import { getKeys } from '../scripts/objects.script';
 import {
   isStoreReference,
@@ -254,6 +268,455 @@ const validateSeedUniqueness = (
   });
 };
 
+const validateFilterFieldEntries = (
+  errors: LocalIssue[],
+  endpoint: string,
+  path: string,
+  entries: unknown
+): void => {
+  if (!isArray(entries) || isEmpty(entries)) {
+    push(
+      errors,
+      endpoint,
+      `The "${ path }" must be a non-empty array of strings or field objects`
+    );
+    return;
+  }
+
+  for (const [index, entry] of entries.entries()) {
+    if (typeof entry === 'string') {
+      if (entry.length === 0) {
+        push(
+          errors,
+          endpoint,
+          `The "${ path }" must be a non-empty array of strings or field objects`
+        );
+      }
+      continue;
+    }
+    if (!isObject(entry)) {
+      push(
+        errors,
+        endpoint,
+        `The "${ path }" must be a non-empty array of strings or field objects`
+      );
+      continue;
+    }
+    const fieldEntry = entry as Record<string, unknown>;
+    const entryKeys = getKeys(fieldEntry);
+    for (const key of entryKeys) {
+      if (key !== 'field' && key !== 'op' && key !== 'query') {
+        push(
+          errors,
+          endpoint,
+          `The "${ path }[${ index }]" property contains unknown key "${ key }"`
+        );
+      }
+    }
+    if (
+      !hasProperty(fieldEntry, 'field')
+      || typeof fieldEntry.field !== 'string'
+      || fieldEntry.field.length === 0
+    ) {
+      push(
+        errors,
+        endpoint,
+        `The "${ path }[${ index }].field" must be a non-empty string`
+      );
+    }
+    if (hasProperty(fieldEntry, 'op')) {
+      if (typeof fieldEntry.op !== 'string' || !STORE_LIST_FILTER_OP_SET.has(fieldEntry.op)) {
+        push(
+          errors,
+          endpoint,
+          `The "${ path }[${ index }].op" must be one of: ${ STORE_LIST_FILTER_OPS_LABEL }`
+        );
+      }
+    }
+    if (
+      hasProperty(fieldEntry, 'query')
+      && (typeof fieldEntry.query !== 'string' || fieldEntry.query.length === 0)
+    ) {
+      push(
+        errors,
+        endpoint,
+        `The "${ path }[${ index }].query" must be a non-empty string`
+      );
+    }
+  }
+};
+
+const validateList = (
+  errors: LocalIssue[],
+  endpoint: string,
+  list: RawStoreList
+): void => {
+  if (typeof list === 'boolean') {
+    return;
+  }
+
+  if (!isObject(list)) {
+    push(errors, endpoint, 'The "store.list" property must be a boolean or an object');
+    return;
+  }
+
+  const config = list as RawStoreListObject;
+  const keys = getKeys(config as unknown as Record<string, unknown>);
+  for (const key of keys) {
+    if (!['page', 'pageSize', 'offset', 'limit', 'sort', 'order', 'filter', 'cursor'].includes(key)) {
+      push(errors, endpoint, `The "store.list" property contains unknown key "${ key }"`);
+    }
+  }
+
+  if (hasProperty(config, 'page')) {
+    if (!isObject(config.page)) {
+      push(errors, endpoint, 'The "store.list.page" property must be an object');
+    } else {
+      const pageKeys = getKeys(config.page as Record<string, unknown>);
+      for (const key of pageKeys) {
+        if (key !== 'query' && key !== 'default') {
+          push(errors, endpoint, `The "store.list.page" property contains unknown key "${ key }"`);
+        }
+      }
+      if (hasProperty(config.page, 'query')
+        && (typeof config.page.query !== 'string' || config.page.query.length === 0)) {
+        push(errors, endpoint, 'The "store.list.page.query" must be a non-empty string');
+      }
+      if (hasProperty(config.page, 'default') && !isPositiveInt(config.page.default)) {
+        push(errors, endpoint, 'The "store.list.page.default" must be an integer >= 1');
+      }
+    }
+  }
+
+  if (hasProperty(config, 'pageSize')) {
+    if (!isObject(config.pageSize)) {
+      push(errors, endpoint, 'The "store.list.pageSize" property must be an object');
+    } else {
+      const pageSizeKeys = getKeys(config.pageSize as Record<string, unknown>);
+      for (const key of pageSizeKeys) {
+        if (!['query', 'default', 'max', 'aliases'].includes(key)) {
+          push(
+            errors,
+            endpoint,
+            `The "store.list.pageSize" property contains unknown key "${ key }"`
+          );
+        }
+      }
+      if (hasProperty(config.pageSize, 'query')
+        && (typeof config.pageSize.query !== 'string' || config.pageSize.query.length === 0)) {
+        push(errors, endpoint, 'The "store.list.pageSize.query" must be a non-empty string');
+      }
+      if (hasProperty(config.pageSize, 'default') && !isPositiveInt(config.pageSize.default)) {
+        push(errors, endpoint, 'The "store.list.pageSize.default" must be an integer >= 1');
+      }
+      if (hasProperty(config.pageSize, 'max') && !isPositiveInt(config.pageSize.max)) {
+        push(errors, endpoint, 'The "store.list.pageSize.max" must be an integer >= 1');
+      }
+      if (
+        hasProperty(config.pageSize, 'default')
+        && hasProperty(config.pageSize, 'max')
+        && isPositiveInt(config.pageSize.default)
+        && isPositiveInt(config.pageSize.max)
+        && config.pageSize.default > config.pageSize.max
+      ) {
+        push(
+          errors,
+          endpoint,
+          'The "store.list.pageSize.default" must be less than or equal to "max"'
+        );
+      }
+      if (hasProperty(config.pageSize, 'aliases')) {
+        if (
+          !isArray(config.pageSize.aliases)
+          || config.pageSize.aliases.some(item => typeof item !== 'string' || item.length === 0)
+        ) {
+          push(
+            errors,
+            endpoint,
+            'The "store.list.pageSize.aliases" must be an array of non-empty strings'
+          );
+        }
+      }
+    }
+  }
+
+  if (hasProperty(config, 'offset')) {
+    if (!isObject(config.offset)) {
+      push(errors, endpoint, 'The "store.list.offset" property must be an object');
+    } else {
+      const offsetKeys = getKeys(config.offset as Record<string, unknown>);
+      for (const key of offsetKeys) {
+        if (key !== 'query' && key !== 'default') {
+          push(errors, endpoint, `The "store.list.offset" property contains unknown key "${ key }"`);
+        }
+      }
+      if (hasProperty(config.offset, 'query')
+        && (typeof config.offset.query !== 'string' || config.offset.query.length === 0)) {
+        push(errors, endpoint, 'The "store.list.offset.query" must be a non-empty string');
+      }
+      if (hasProperty(config.offset, 'default') && !isNonNegativeInt(config.offset.default)) {
+        push(errors, endpoint, 'The "store.list.offset.default" must be an integer >= 0');
+      }
+    }
+  }
+
+  if (hasProperty(config, 'limit')) {
+    if (!isObject(config.limit)) {
+      push(errors, endpoint, 'The "store.list.limit" property must be an object');
+    } else {
+      const limitKeys = getKeys(config.limit as Record<string, unknown>);
+      for (const key of limitKeys) {
+        if (!['query', 'default', 'max'].includes(key)) {
+          push(errors, endpoint, `The "store.list.limit" property contains unknown key "${ key }"`);
+        }
+      }
+      if (hasProperty(config.limit, 'query')
+        && (typeof config.limit.query !== 'string' || config.limit.query.length === 0)) {
+        push(errors, endpoint, 'The "store.list.limit.query" must be a non-empty string');
+      }
+      if (hasProperty(config.limit, 'default') && !isPositiveInt(config.limit.default)) {
+        push(errors, endpoint, 'The "store.list.limit.default" must be an integer >= 1');
+      }
+      if (hasProperty(config.limit, 'max') && !isPositiveInt(config.limit.max)) {
+        push(errors, endpoint, 'The "store.list.limit.max" must be an integer >= 1');
+      }
+      if (
+        hasProperty(config.limit, 'default')
+        && hasProperty(config.limit, 'max')
+        && isPositiveInt(config.limit.default)
+        && isPositiveInt(config.limit.max)
+        && config.limit.default > config.limit.max
+      ) {
+        push(
+          errors,
+          endpoint,
+          'The "store.list.limit.default" must be less than or equal to "max"'
+        );
+      }
+    }
+  }
+
+  if (hasProperty(config, 'sort')) {
+    if (!isObject(config.sort)) {
+      push(errors, endpoint, 'The "store.list.sort" property must be an object');
+    } else {
+      const sortKeys = getKeys(config.sort as Record<string, unknown>);
+      for (const key of sortKeys) {
+        if (!['query', 'default', 'fields'].includes(key)) {
+          push(errors, endpoint, `The "store.list.sort" property contains unknown key "${ key }"`);
+        }
+      }
+      if (hasProperty(config.sort, 'query')
+        && (typeof config.sort.query !== 'string' || config.sort.query.length === 0)) {
+        push(errors, endpoint, 'The "store.list.sort.query" must be a non-empty string');
+      }
+      if (hasProperty(config.sort, 'default')
+        && (typeof config.sort.default !== 'string' || config.sort.default.length === 0)) {
+        push(errors, endpoint, 'The "store.list.sort.default" must be a non-empty string');
+      }
+      if (hasProperty(config.sort, 'fields')) {
+        if (
+          !isArray(config.sort.fields)
+          || isEmpty(config.sort.fields)
+          || config.sort.fields.some(item => typeof item !== 'string' || item.length === 0)
+        ) {
+          push(
+            errors,
+            endpoint,
+            'The "store.list.sort.fields" must be a non-empty array of strings'
+          );
+        }
+      }
+    }
+  }
+
+  if (hasProperty(config, 'order')) {
+    if (!isObject(config.order)) {
+      push(errors, endpoint, 'The "store.list.order" property must be an object');
+    } else {
+      const orderKeys = getKeys(config.order as Record<string, unknown>);
+      for (const key of orderKeys) {
+        if (key !== 'query' && key !== 'default') {
+          push(errors, endpoint, `The "store.list.order" property contains unknown key "${ key }"`);
+        }
+      }
+      if (hasProperty(config.order, 'query')
+        && (typeof config.order.query !== 'string' || config.order.query.length === 0)) {
+        push(errors, endpoint, 'The "store.list.order.query" must be a non-empty string');
+      }
+      if (hasProperty(config.order, 'default')) {
+        if (typeof config.order.default !== 'string') {
+          push(errors, endpoint, 'The "store.list.order.default" must be "asc" or "desc"');
+        } else {
+          const normalized = config.order.default.toLowerCase();
+          if (normalized !== 'asc' && normalized !== 'desc') {
+            push(errors, endpoint, 'The "store.list.order.default" must be "asc" or "desc"');
+          }
+        }
+      }
+    }
+  }
+
+  if (hasProperty(config, 'cursor')) {
+    if (typeof config.cursor !== 'boolean' && !isObject(config.cursor)) {
+      push(errors, endpoint, 'The "store.list.cursor" property must be a boolean or an object');
+    } else if (isObject(config.cursor)) {
+      const cursorKeys = getKeys(config.cursor as unknown as Record<string, unknown>);
+      for (const key of cursorKeys) {
+        if (key !== 'query' && key !== 'limit') {
+          push(
+            errors,
+            endpoint,
+            `The "store.list.cursor" property contains unknown key "${ key }"`
+          );
+        }
+      }
+      if (hasProperty(config.cursor, 'query')
+        && (typeof config.cursor.query !== 'string' || config.cursor.query.length === 0)) {
+        push(errors, endpoint, 'The "store.list.cursor.query" must be a non-empty string');
+      }
+      if (hasProperty(config.cursor, 'limit')) {
+        if (!isObject(config.cursor.limit)) {
+          push(errors, endpoint, 'The "store.list.cursor.limit" property must be an object');
+        } else {
+          const limitKeys = getKeys(config.cursor.limit as unknown as Record<string, unknown>);
+          for (const key of limitKeys) {
+            if (!['query', 'default', 'max'].includes(key)) {
+              push(
+                errors,
+                endpoint,
+                `The "store.list.cursor.limit" property contains unknown key "${ key }"`
+              );
+            }
+          }
+          if (hasProperty(config.cursor.limit, 'query')
+            && (typeof config.cursor.limit.query !== 'string'
+              || config.cursor.limit.query.length === 0)) {
+            push(
+              errors,
+              endpoint,
+              'The "store.list.cursor.limit.query" must be a non-empty string'
+            );
+          }
+          if (hasProperty(config.cursor.limit, 'default')
+            && !isPositiveInt(config.cursor.limit.default)) {
+            push(
+              errors,
+              endpoint,
+              'The "store.list.cursor.limit.default" must be an integer >= 1'
+            );
+          }
+          if (hasProperty(config.cursor.limit, 'max')
+            && !isPositiveInt(config.cursor.limit.max)) {
+            push(errors, endpoint, 'The "store.list.cursor.limit.max" must be an integer >= 1');
+          }
+        }
+      }
+    }
+  }
+
+  if (hasProperty(config, 'filter')) {
+    if (isArray(config.filter)) {
+      if (
+        isEmpty(config.filter)
+        || config.filter.some(item => typeof item !== 'string' || item.length === 0)
+      ) {
+        push(
+          errors,
+          endpoint,
+          'The "store.list.filter" array must be a non-empty array of strings'
+        );
+      }
+    } else if (!isObject(config.filter)) {
+      push(
+        errors,
+        endpoint,
+        'The "store.list.filter" property must be an array or an object'
+      );
+    } else {
+      const filterKeys = getKeys(config.filter as Record<string, unknown>);
+      for (const key of filterKeys) {
+        if (key !== 'fields' && key !== 'or' && key !== 'search') {
+          push(
+            errors,
+            endpoint,
+            `The "store.list.filter" property contains unknown key "${ key }"`
+          );
+        }
+      }
+      if (hasProperty(config.filter, 'fields')) {
+        validateFilterFieldEntries(
+          errors,
+          endpoint,
+          'store.list.filter.fields',
+          config.filter.fields
+        );
+      }
+      if (hasProperty(config.filter, 'or')) {
+        validateFilterFieldEntries(
+          errors,
+          endpoint,
+          'store.list.filter.or',
+          config.filter.or
+        );
+      }
+      if (hasProperty(config.filter, 'search')) {
+        if (!isObject(config.filter.search)) {
+          push(errors, endpoint, 'The "store.list.filter.search" property must be an object');
+        } else {
+          const searchKeys = getKeys(config.filter.search as unknown as Record<string, unknown>);
+          for (const key of searchKeys) {
+            if (key !== 'query' && key !== 'fields') {
+              push(
+                errors,
+                endpoint,
+                `The "store.list.filter.search" property contains unknown key "${ key }"`
+              );
+            }
+          }
+          if (hasProperty(config.filter.search, 'query')
+            && (typeof config.filter.search.query !== 'string'
+              || config.filter.search.query.length === 0)) {
+            push(
+              errors,
+              endpoint,
+              'The "store.list.filter.search.query" must be a non-empty string'
+            );
+          }
+          if (
+            !hasProperty(config.filter.search, 'fields')
+            || !isArray(config.filter.search.fields)
+            || isEmpty(config.filter.search.fields)
+            || config.filter.search.fields.some(
+              item => typeof item !== 'string' || item.length === 0
+            )
+          ) {
+            push(
+              errors,
+              endpoint,
+              'The "store.list.filter.search.fields" must be a non-empty array of strings'
+            );
+          }
+        }
+      }
+      const hasFields = hasProperty(config.filter, 'fields')
+        && isArray(config.filter.fields)
+        && !isEmpty(config.filter.fields);
+      const hasOr = hasProperty(config.filter, 'or')
+        && isArray(config.filter.or)
+        && !isEmpty(config.filter.or);
+      const hasSearch = hasProperty(config.filter, 'search');
+      if (!hasFields && !hasOr && !hasSearch) {
+        push(
+          errors,
+          endpoint,
+          'The "store.list.filter" object must include "fields", "or", and/or "search"'
+        );
+      }
+    }
+  }
+};
+
 const validatePersist = (
   errors: LocalIssue[],
   endpoint: string,
@@ -318,7 +781,7 @@ export const validateStore = (
 
   const keys = getKeys(config as unknown as Record<string, unknown>);
   for (const key of keys) {
-    if (!['id', 'key', 'seed', 'template', 'unique', 'persist'].includes(key)) {
+    if (!['id', 'key', 'seed', 'template', 'unique', 'persist', 'list'].includes(key)) {
       push(errors, endpoint, `The "store" property contains unknown key "${ key }"`);
     }
   }
@@ -349,6 +812,10 @@ export const validateStore = (
 
   if (hasProperty(config, 'persist')) {
     validatePersist(errors, endpoint, config.persist as RawStorePersist, mocksDir);
+  }
+
+  if (hasProperty(config, 'list')) {
+    validateList(errors, endpoint, config.list as RawStoreList);
   }
 
   if (!isEmpty(errors)) {

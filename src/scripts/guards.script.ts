@@ -36,3 +36,11 @@ export const hasItems = <T>(array: T[]): boolean => {
   return array.length > 0;
 };
 
+export const isPositiveInt = (value: unknown): value is number => (
+  typeof value === 'number' && Number.isInteger(value) && value >= 1
+);
+
+export const isNonNegativeInt = (value: unknown): value is number => (
+  typeof value === 'number' && Number.isInteger(value) && value >= 0
+);
+

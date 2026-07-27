@@ -21,9 +21,12 @@
 - [Advanced examples](#advanced-examples)
 - [Real-world projects](#real-world-projects-)
 - [Mutable store (CRUD in memory)](#mutable-store-crud-in-memory-)
+  - [Capability map (build complex mocks)](#capability-map-build-complex-mocks)
   - [How it works](#how-it-works)
   - [Actions](#actions)
   - [Schema](#schema-definition-vs-reference)
+  - [List sort and pagination](#list-sort-and-pagination-storelist)
+    - [Filters / search](#filters--search)
   - [Key generation on create](#key-generation-on-create)
   - [Conflicts](#conflicts-409)
   - [Persist and restart](#persist-and-restart-behavior)
@@ -33,6 +36,9 @@
   - [Example B — Complex](#example-b--complex-multi-tenant-users)
   - [Example C — Todo app](#example-c--real-project-todo--notes-app)
   - [Example D — SaaS projects](#example-d--real-project-saas-projects-board)
+  - [Example E — E-commerce catalog](#example-e--real-project-e-commerce-catalog)
+  - [Example F — Helpdesk](#example-f--real-project-multi-tenant-helpdesk)
+  - [Example G — HR directory](#example-g--real-project-hr-employee-directory)
 - [Troubleshooting](#troubleshooting-)
 - [License](#license-)
 
@@ -46,7 +52,7 @@
 - **Multiple Responses** - Simulate different scenarios (success, error, etc.) for the same endpoint
 - **Request Matching** - Select responses by route params, query params and/or request body
 - **Request Validation** - Validate request `body`/`query` shape with rules (`type`, `minLength`, `format`, nested objects, etc.)
-- **Mutable Store** - Opt-in in-memory CRUD (`store` + `action`) with `seed`, `template`, unique/key conflicts, optional disk `persist`, and `--reset-store`
+- **Mutable Store** - Opt-in in-memory CRUD (`store` + `action`) with `seed`, `template`, unique/key conflicts, optional disk `persist`, `--reset-store`, and `store.list` (sort/multi-sort, page/offset/cursor, filters with `eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in` + nested + `or` + search, response templates). Start with the [capability map](#capability-map-build-complex-mocks) to compose complex APIs from the docs.
 - **Response Delay** - Simulate latency per method or per response
 - **Type Safe** - Built with TypeScript for better developer experience
 - **RESTful Support** - Full support for GET, POST, PUT, PATCH, DELETE methods
@@ -137,6 +143,7 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | store.template | ❌     | object         | `{ "active": true }`                     | Base object merged on `create` / `update` (not on `patch`). Key placeholders ignored unless client sends them |
    | store.unique | ❌       | array/object   | `["email"]` or `{ "fields": [...], "conflict": {...} }` | Unique fields + customizable `409` conflict response |
    | store.persist| ❌       | boolean/object | `true` or `{ "enabled": true, "file": "state.json" }` | Persist to disk under the mock files root (default `.store/<id>.json`). Custom `file` must be relative (no `..`) |
+   | store.list   | ❌       | boolean/object | `true` / `{ page, pageSize, offset, limit, cursor, sort, order, filter }` | Opt-in list engine for `action: "list"`: multi-sort, page/offset/cursor, filters (`eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in`, nested, `or`) + search. Response `body`/`headers` use placeholders (`{{items}}`, `{{next}}`, `{{nextCursor}}`, …) |
    | HTTP Method  | ✅       | string         | `GET`, `POST`, `PUT`, `PATCH`, `DELETE`  | HTTP verb (must be uppercase)                                              |
    | nameResponse | ✅       | string         | `success`, `error`, `error-401`          | Fallback response when no `match` applies (must exist in responses array) |
    | request      | ❌       | object         | `{ "body": { "email": "string" } }`      | Validate incoming `body` and/or `query` before selecting a response        |
@@ -153,7 +160,7 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | statusCode   | ✅*      | string/number  | `200`, `"200"`, `404`, `"404"`          | Required unless the response uses `proxy`                                  |
    | headers      | ❌       | object         | `{ "Content-Type": "application/json" }`  | Headers in json format (optional)                                          |
    | body         | ✅*      | any            |                                          | Required unless the response uses `proxy` or `action`                      |
-   | action       | ❌       | string         | `"list"`, `"get"`, `"create"`, `"update"`, `"patch"`, `"delete"` | Run a store operation instead of a fixed `body` (requires `store`; incompatible with `proxy`). `body` ignored (warning). `delete` always `204` |
+   | action       | ❌       | string         | `"list"`, `"get"`, `"create"`, `"update"`, `"patch"`, `"delete"` | Run a store operation instead of a fixed `body` (requires `store`; incompatible with `proxy`). `body` ignored except for `list` templates. `delete` always `204` |
    | match        | ❌       | object         | `{ "params": { "id": "1" } }`            | Request matching rules (`params`, `query` and/or `body`). First match wins |
    | match.params | ❌       | object         | `{ "id": "1" }`                          | Partial match against route params (e.g. `/users/:id`)                     |
    | match.query  | ❌       | object         | `{ "page": "1" }`                        | Partial match against request query params                                 |
@@ -1062,16 +1069,213 @@ Proxy values:
 
 Opt-in collections that mutate while the server runs. Declare `store` on the endpoint and mark responses with `action`.
 
-See the full guide (schema, persist, conflicts, simple/complex/real-project examples):  
-**[Mutable store (CRUD in memory)](#mutable-store-crud-in-memory-)**
+See the full guide (capability map, schema, persist, conflicts, recipes, examples A–G):  
+**[Mutable store (CRUD in memory)](#mutable-store-crud-in-memory-)** · **[Capability map](#capability-map-build-complex-mocks)**
 
 ---
 
 ## Mutable store (CRUD in memory) 🗄️
 
-Opt-in feature (≥ `1.11.0`). Without `store` + `action`, mocks stay 100% static.
+Opt-in feature (≥ `1.11.0`; advanced list filters ≥ `1.12.0`). Without `store` + `action`, mocks stay 100% static.
 
 Use it when the frontend needs **real CRUD flows**: create an item, list it, edit it, delete it — without a backend. Data lives in memory for the process lifetime; optionally survive restarts with `persist`.
+
+The sections below are the reference. Use the **capability map** to pick pieces, then copy a recipe or a ready-made example (A–G) and adapt routes/fields to your app.
+
+### Capability map (build complex mocks)
+
+Goal: from this README alone you can compose multi-tenant APIs with validation, business errors, filtered/paginated lists, and persistence.
+
+#### 1. Pick building blocks
+
+| You need… | Use | Query / config sketch | Deep dive |
+|-----------|-----|----------------------|-----------|
+| Collection + CRUD | `store` + `action` | `"action": "list" \| "get" \| "create" \| "update" \| "patch" \| "delete"` | [Actions](#actions), [Schema](#schema-definition-vs-reference) |
+| Auto ids / defaults | `key`, `template` | `"key": "id"` or `{ "fields": ["tenantId", "id"] }` | [Key generation](#key-generation-on-create) |
+| Seed data | `seed` | `"seed": [{ "id": 1, ... }]` | [Schema](#schema-definition-vs-reference) |
+| Business uniqueness | `unique` + `409` responses | `"unique": ["email"]` or field-level `conflict` | [Conflicts](#conflicts-409) |
+| Survive restart | `persist` / `--reset-store` | `"persist": true` | [Persist and restart](#persist-and-restart-behavior) |
+| Validate payload/query | `request` | `"body": { "email": { "type": "string", "format": "email" } }` | [Request validation](#example-8-request-validation) |
+| Branch by params/query/body | `match` | `"match": { "params": { "orgId": "blocked" } }` | [Example 5–7](#example-5-match-by-route-params) |
+| Latency / headers | `delay`, `headers` | `"delay": 120`, `"Retry-After": "30"` | [Example 6](#example-6-match-by-query-params-and-delay) |
+| Page tables | `store.list` **page** | `?page=2&pageSize=10` | [Page mode](#page-mode) |
+| Offset APIs | `store.list` **offset** | `?offset=20&limit=10` | [Offset mode](#offset-mode) |
+| Infinite scroll / feeds | `store.list` **cursor** | `?starting_after=<token>&limit=10` | [Cursor mode](#cursor--keyset-mode-stripe-style) |
+| Equality filter | `filter` `eq` | `?status=active` | [Filters / search](#filters--search) |
+| Exclude value | `op: "ne"` | `?excludeStatus=draft` | same |
+| Numeric range | `gte`/`lte`/`gt`/`lt` | `?minPrice=10&maxPrice=50` | same |
+| Multi-value | `op: "in"` | `?roles=a,b` or `?roles=a&roles=b` | same |
+| Nested field | `a.b` in filter / search / sort | `?region=eu` or `?sort=meta.region` | same |
+| OR facets | `filter.or` | `?anyDept=x&anyCity=y` → match either | same |
+| Text box | `filter.search` | `?q=tea` | same |
+| Multi-sort | `sort` | `?sort=price:desc,name:asc` | [Multi-sort](#multi-sort) |
+| Custom list JSON | list placeholders | `"data": "{{items}}"`, `"Link": "{{linkHeader}}"` | [Response templates](#response-templates-fully-customizable) |
+| Forward to real API | `proxy` (**not** with `action`) | `"proxy": true` or URL | [Proxy](#example-9-proxy-to-a-real-backend) |
+
+Pipeline reminder (every request): `request` → `match` → `delay` → `proxy` **or** `action` → else static `body`.  
+List pipeline (inside `action: "list"` + `store.list`): key params → `fields` (AND) → `or` → `search` → sort → page/offset/cursor → templates.
+
+#### 2. Compose a complex endpoint (recipe)
+
+Copy this skeleton and fill the `‹…›` slots. One file can define several endpoints; share data with `"store": { "id": "‹same-id›" }` on item routes.
+
+```json
+{
+  "api/‹tenants›/:tenantId/‹resources›": {
+    "store": {
+      "id": "‹resources›",
+      "key": { "fields": ["tenantId", "id"] },
+      "seed": [],
+      "template": {
+        "tenantId": "",
+        "id": 0,
+        "status": "active",
+        "meta": { "region": "" }
+      },
+      "unique": {
+        "fields": [
+          {
+            "field": "‹slug-or-email›",
+            "conflict": { "response": "‹conflict-name›" }
+          }
+        ]
+      },
+      "persist": true,
+      "list": {
+        "page": { "query": "page", "default": 1 },
+        "pageSize": {
+          "query": "pageSize",
+          "default": 10,
+          "max": 50,
+          "aliases": ["limit"]
+        },
+        "sort": {
+          "query": "sort",
+          "default": "-id",
+          "fields": ["id", "status", "‹price-or-createdAt›"]
+        },
+        "filter": {
+          "fields": [
+            "status",
+            { "field": "‹price›", "op": "gte", "query": "minPrice" },
+            { "field": "‹price›", "op": "lte", "query": "maxPrice" },
+            { "field": "status", "op": "ne", "query": "excludeStatus" },
+            { "field": "‹tag›", "op": "in", "query": "tags" },
+            { "field": "meta.region", "op": "eq", "query": "region" }
+          ],
+          "or": [
+            { "field": "status", "op": "eq", "query": "anyStatus" },
+            { "field": "meta.region", "op": "eq", "query": "anyRegion" }
+          ],
+          "search": {
+            "query": "q",
+            "fields": ["‹name›", "meta.region"]
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "forbidden",
+          "statusCode": 403,
+          "match": { "params": { "tenantId": "blocked" } },
+          "body": { "code": "FORBIDDEN" }
+        },
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list",
+          "headers": {
+            "X-Total-Count": "{{total}}",
+            "Link": "{{linkHeader}}"
+          },
+          "body": {
+            "data": "{{items}}",
+            "page": "{{page}}",
+            "pageSize": "{{pageSize}}",
+            "total": "{{total}}",
+            "next": "{{next}}",
+            "previous": "{{previous}}",
+            "hasNext": "{{hasNext}}",
+            "hasPrevious": "{{hasPrevious}}"
+          }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "body": {
+          "‹name›": { "type": "string", "minLength": 2 },
+          "‹slug-or-email›": { "type": "string", "minLength": 2 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid payload", "errors": [] }
+        },
+        {
+          "name": "‹conflict-name›",
+          "statusCode": 409,
+          "body": { "code": "CONFLICT", "conflicts": "{{conflicts}}" }
+        },
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  },
+  "api/‹tenants›/:tenantId/‹resources›/:id": {
+    "store": { "id": "‹resources›" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [{ "name": "get", "statusCode": 200, "action": "get" }]
+    },
+    "PATCH": {
+      "nameResponse": "patch",
+      "responses": [
+        {
+          "name": "‹conflict-name›",
+          "statusCode": 409,
+          "body": { "code": "CONFLICT", "conflicts": "{{conflicts}}" }
+        },
+        { "name": "patch", "statusCode": 200, "action": "patch" }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [{ "name": "remove", "statusCode": 204, "action": "delete" }]
+    }
+  }
+}
+```
+
+Checklist when wiring a new domain:
+
+1. **Identity** — `store.id` + `key` (simple or composite with route params).  
+2. **Shape** — `template` + `seed` (+ nested objects if you filter on `a.b`).  
+3. **List UX** — choose page **or** offset **or** cursor; add `filter` / `sort` / placeholders.  
+4. **Writes** — `request` for shape; `unique` + named `409` responses for clashes.  
+5. **Branches** — `match` for `401`/`403`/`503` before `action`.  
+6. **Item routes** — reference the same `store.id`; include the same conflict response names on mutating methods.  
+7. **Persist** — `"persist": true` if the UI must survive reload; document `--reset-store` for clean demos.
+
+#### 3. Which ready-made example to copy
+
+| Frontend you are building | Start from | What to steal |
+|---------------------------|------------|---------------|
+| Simple CRUD list | [Example A](#example-a--simple-notes-crud) | Minimal `list`/`create`/`get`/`delete` |
+| Multi-tenant users | [Example B](#example-b--complex-multi-tenant-users) | Composite key + `request` + conflicts |
+| Todo / notes app | [Example C](#example-c--real-project-todo--notes-app) | Persist + toggle-style `patch` |
+| Org projects / board | [Example D](#example-d--real-project-saas-projects-board) | Slug unique + forbidden org `match` |
+| Admin catalog + checkout | [Example E](#example-e--real-project-e-commerce-catalog) | Price/stock/`in`/warehouse/`or` + `402`/`429` |
+| Support inbox + activity | [Example F](#example-f--real-project-multi-tenant-helpdesk) | Page + cursor + date/channel filters |
+| People directory / HR | [Example G](#example-g--real-project-hr-employee-directory) | All filter ops + nested + combined query |
+
+More product scenarios (auth, RBAC, webhooks, proxy) live under [Real-world projects](#real-world-projects-).
 
 ### How it works
 
@@ -1092,7 +1296,7 @@ Request pipeline (fixed order):
 
 | Action | Behavior | Success status | Common errors |
 |--------|----------|----------------|---------------|
-| `list` | Returns all items (array). If route params overlap `key` fields, filters by those params | response `statusCode` | — |
+| `list` | Returns items. Filters by route `key` params. With `store.list`: filter (`fields`/`or`/`search`) → multi-sort → page/offset/cursor. Optional `body`/`headers` templates | response `statusCode` | `400` (invalid page/sort/order/cursor/filter query) |
 | `get` | Loads one item; all `key` fields must come from route params | response `statusCode` | `404` `{ "message": "Not found" }` |
 | `create` | Inserts; merges `template` + body; auto-generates missing numeric key fields; route params override key fields | typically `201` | `400` (body not object), `409` (conflict) |
 | `update` | Full replace (`template` + body), preserves existing key | response `statusCode` | `404` / `400` / `409` |
@@ -1103,7 +1307,8 @@ Rules for `action`:
 
 - Requires `store` on the endpoint  
 - Cannot be combined with `proxy` on the same response  
-- `body` is optional and ignored (warning)  
+- `body` is optional; ignored with warning for actions other than `list`  
+- For `list`, `body` and `headers` may be templates with placeholders (see below)  
 - Returned items are **clones** (mutating the HTTP response does not mutate the store)
 
 ### Schema (definition vs reference)
@@ -1117,11 +1322,12 @@ Rules for `action`:
   "seed": [],
   "template": { "id": 0, "title": "", "done": false },
   "unique": ["title"],
-  "persist": true
+  "persist": true,
+  "list": true
 }
 ```
 
-**Reference** (other endpoints sharing the same collection — **only** `id`; any other property makes it a full definition):
+**Reference** (other endpoints sharing the same collection — **only** `id`; any other property makes it a full definition). `list` is configured on the full definition and shared by all endpoints with that `store.id`:
 
 ```json
 "store": { "id": "notes" }
@@ -1135,6 +1341,7 @@ Rules for `action`:
 | `template` | — | Defaults for `create` / `update`. Values on key fields are placeholders unless the client sends them |
 | `unique` | — | `["email"]` or `{ "fields": [...], "conflict": { "response", "detail" } }` |
 | `persist` | off | `true` / `{ "enabled": true, "file?": "relative/path.json" }` |
+| `list` | off | `true` / `{}` / object — sort (multi), page/offset/cursor, filters/search for `action: "list"` (see [Filters / search](#filters--search) and [List sort and pagination](#list-sort-and-pagination-storelist)) |
 
 Rules:
 
@@ -1306,11 +1513,524 @@ Implications of the pipeline:
 | `proxy` | Incompatible with `action` on the same response |
 | Watch / restart | Without persist → back to `seed`. With persist → reload snapshot (unless `--reset-store` on initial start) |
 
+### List sort and pagination (`store.list`)
+
+Opt-in on the **full store definition** only (not on `{ "id": "..." }` references).  
+Requires `action: "list"`. Without `store.list`, `list` still returns a plain array (optionally filtered by route params that overlap `key`).
+
+Static mocks (`match` + fixed `body`) are unrelated: they do **not** use this engine.
+
+#### Pipeline
+
+1. Filter by route params that match `store.key` fields (e.g. `:tenantId`)
+2. Apply `store.list.filter`: `fields` (AND) → `or` → `search` (if configured)
+3. Multi-sort
+4. Paginate: **page** | **offset** | **cursor**
+5. If the response has `body` and/or `headers`, apply list placeholders; otherwise return the items array
+
+#### Shortcuts
+
+```json
+"list": true
+"list": {}
+"list": false
+```
+
+`true` and `{}` enable **page mode** with defaults. `false` disables the list engine (same as omitting `list`).
+
+| Option | Default |
+|--------|---------|
+| `page` query | `page`, default `1` |
+| `pageSize` query | `pageSize`, default `10`, max `100`, alias `limit` |
+| `sort` query | `sort`, default `"id"` (no field whitelist) |
+| `order` query | `order`, default `"asc"` |
+
+#### Config fields
+
+| Key | Type | Meaning |
+|-----|------|---------|
+| `page` | `{ query?, default? }` | 1-based page (`default` ≥ 1) |
+| `pageSize` | `{ query?, default?, max?, aliases? }` | Page size (`default`/`max` ≥ 1; `aliases` e.g. `["limit"]`) |
+| `offset` | `{ query?, default? }` | 0-based offset (`default` ≥ 0) |
+| `limit` | `{ query?, default?, max? }` | Offset-mode page size |
+| `cursor` | `true` \| `{ query?, limit? }` | Cursor/keyset mode (see below) |
+| `sort` | `{ query?, default?, fields? }` | Sort query name, default expression, optional whitelist |
+| `order` | `{ query?, default? }` | `"asc"` \| `"desc"` — default direction for unsigned sort fields |
+| `filter` | `string[]` \| `{ fields?, or?, search? }` | `eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in`, nested paths, OR group, search |
+
+Unknown keys under `store.list` → startup error.
+
+#### Page mode
+
+```json
+"list": {
+  "page": { "query": "page", "default": 1 },
+  "pageSize": {
+    "query": "pageSize",
+    "default": 10,
+    "max": 100,
+    "aliases": ["limit"]
+  },
+  "sort": { "query": "sort", "default": "id", "fields": ["id", "name", "price"] },
+  "order": { "query": "order", "default": "asc" }
+}
+```
+
+`offset` used internally = `(page - 1) * pageSize`.
+
+#### Offset mode
+
+Declare `offset` / `limit` **without** `page` / `pageSize` (unless you intentionally combine modes — see priority):
+
+```json
+"list": {
+  "offset": { "query": "offset", "default": 0 },
+  "limit": { "query": "limit", "default": 10, "max": 100 },
+  "sort": { "query": "sort", "default": "id" },
+  "order": { "query": "order", "default": "asc" }
+}
+```
+
+#### Cursor / keyset mode (Stripe-style)
+
+A **cursor** is an opaque bookmark (“continue after this item”), not a page number.
+
+```json
+"list": {
+  "cursor": {
+    "query": "starting_after",
+    "limit": { "query": "limit", "default": 10, "max": 100 }
+  },
+  "sort": { "query": "sort", "default": "-meta.score", "fields": ["meta.score", "id"] }
+}
+```
+
+| Form | Effect |
+|------|--------|
+| `"cursor": true` | Query name `cursor`; limit query `limit` (default `10`, max `100`) |
+| `"cursor": { "query", "limit" }` | Custom query names / defaults |
+
+- Token is **base64url** JSON of sort values + primary `key` values (stable tie-break). Nested sort paths (e.g. `meta.score`) are included the same way as top-level fields.
+- Request: `?starting_after=<token>&limit=10` (names from config).
+- Response placeholders: `{{nextCursor}}`, `{{hasMore}}`, and `{{next}}` (URL with the next cursor).
+- There is no `ending_before` (forward-only).
+- Invalid / empty / mismatched cursor → `400`.
+
+#### Which pagination mode runs?
+
+When several styles are configured:
+
+1. **Page** if `page` / `pageSize` (or a `pageSize` alias) appear in the query, **or** neither offset nor cursor params are present and page config exists (page is the default when configured).
+2. Else **offset** if `offset` / `limit` appear, **or** offset is configured and cursor is not.
+3. Else **cursor** if `store.list.cursor` is configured.
+4. If only `cursor` is configured (no page/offset), cursor mode is used (page defaults are **not** injected).
+
+Example config with **all three** modes (use distinct limit query names so they do not collide):
+
+```json
+"list": {
+  "page": { "query": "page", "default": 1 },
+  "pageSize": { "query": "pageSize", "default": 2, "max": 10 },
+  "offset": { "query": "offset", "default": 0 },
+  "limit": { "query": "limit", "default": 2, "max": 10 },
+  "cursor": {
+    "query": "starting_after",
+    "limit": { "query": "cursorLimit", "default": 2, "max": 10 }
+  },
+  "sort": { "query": "sort", "default": "id", "fields": ["id"] }
+}
+```
+
+| Request | Mode that runs | Why |
+|---------|----------------|-----|
+| `(none)` | **page** | No offset/cursor params → page default |
+| `?offset=2` | **offset** | Offset param present; no page params |
+| `?page=2&offset=0` | **page** | Page wins over offset |
+| `?starting_after=<token>` | **cursor** | Cursor param present; no page/offset |
+| `?offset=1&starting_after=<token>` | **offset** | Offset wins over cursor |
+| `?starting_after=%%%` | **400** | Invalid cursor token |
+
+Try:
+
+```bash
+# Default → page (look for page= / {{page}} in the envelope)
+curl -s 'http://localhost:3000/api/mixed'
+
+# Offset mode
+curl -s 'http://localhost:3000/api/mixed?offset=2'
+
+# Page wins when both are present
+curl -s 'http://localhost:3000/api/mixed?page=2&offset=0'
+
+# Cursor mode (token from a previous {{nextCursor}} / keyset bookmark)
+curl -s "http://localhost:3000/api/mixed?starting_after=${TOKEN}"
+
+# Offset wins over cursor
+curl -s "http://localhost:3000/api/mixed?offset=1&starting_after=${TOKEN}"
+
+# Bad cursor → 400
+curl -si 'http://localhost:3000/api/mixed?starting_after=placeholder'
+```
+
+Tip: avoid giving `pageSize` the alias `limit` if the same store also defines offset `limit` — prefer `pageSize` + `limit` + `cursorLimit` as separate names.
+
+#### Filters / search
+
+Opt-in under `store.list.filter`. Only runs for `action: "list"`.  
+Rules read **query params**; if a rule’s query param is omitted, that rule is skipped (no error).
+
+**Shapes**
+
+| Shape | Example | Meaning |
+|-------|---------|---------|
+| String array | `"filter": ["status", "role"]` | AND equality; each string = `{ field, op: "eq", query: <same name> }` |
+| Object | `"filter": { "fields?", "or?", "search?" }` | Full control; must include at least one of `fields`, `or`, `search` |
+
+**Rule object**
+
+```json
+{ "field": "price", "op": "gte", "query": "minPrice" }
+```
+
+| Property | Required | Default | Meaning |
+|----------|----------|---------|---------|
+| `field` | yes | — | Item path (supports dots: `meta.region`) |
+| `op` | no | `"eq"` | Operator (see table below) |
+| `query` | no | same as `field` | Query param name that supplies the compare value |
+
+String shorthand inside `fields` / `or`:
+
+```json
+"status"
+```
+
+is equivalent to:
+
+```json
+{ "field": "status", "op": "eq", "query": "status" }
+```
+
+**Operators (`op`)**
+
+| `op` | Query example | Keeps item when… | Notes |
+|------|---------------|------------------|--------|
+| `eq` | `?status=active` | `String(value) === query` | Default; missing/`null` field → drop |
+| `ne` | `?excludeStatus=draft` | value ≠ query | Missing/`null` field → **keep** |
+| `gt` | `?gtPrice=20` | value > N | Query must be a number → else `400` |
+| `gte` | `?minPrice=10` | value ≥ N | Same |
+| `lt` | `?ltPrice=10` | value < N | Same |
+| `lte` | `?maxPrice=30` | value ≤ N | Same |
+| `in` | `?tag=a,b` or `?tag=a&tag=b` | `String(value)` ∈ list | CSV and/or repeated params; empty list → `400` |
+
+Numeric ops coerce the query with `Number(...)`. Item values use the same compare rules as sort (numbers, numeric strings, then locale string compare).
+
+**Nested paths**
+
+`field` (and `search.fields`, and `sort` fields) may use `.` to walk objects:
+
+```json
+{ "id": 1, "meta": { "region": "eu" } }
+```
+
+```json
+{ "field": "meta.region", "op": "eq", "query": "region" }
+```
+
+`?region=eu` keeps that item. Missing intermediate keys → value is `undefined` (fails `eq` / range / `in`; passes `ne`).
+
+The same dotted paths work in `?sort=meta.region` and in cursor bookmarks when the active sort uses them.
+
+**`fields` (AND)**
+
+Every rule whose query param is present must match.
+
+```json
+"fields": [
+  "status",
+  { "field": "price", "op": "gte", "query": "minPrice" },
+  { "field": "price", "op": "lte", "query": "maxPrice" }
+]
+```
+
+`?status=active&minPrice=10&maxPrice=30` → active **and** `10 ≤ price ≤ 30`.
+
+**`or` (OR among present params)**
+
+Same rule shape as `fields`. After AND rules:
+
+1. Collect `or` rules whose query param is present (and valid).
+2. If that set is empty → skip OR (no extra filtering).
+3. Else keep items that match **at least one** of those rules.
+
+```json
+"or": [
+  { "field": "status", "op": "eq", "query": "anyStatus" },
+  { "field": "meta.region", "op": "eq", "query": "anyRegion" }
+]
+```
+
+| Request | Effect |
+|---------|--------|
+| (neither param) | OR ignored |
+| `?anyStatus=draft` | status is `draft` |
+| `?anyRegion=latam` | `meta.region` is `latam` |
+| `?anyStatus=draft&anyRegion=latam` | draft **or** latam |
+
+**`search` (text)**
+
+```json
+"search": { "query": "q", "fields": ["name", "meta.region"] }
+```
+
+| Option | Default | Behavior |
+|--------|---------|----------|
+| `query` | `"q"` | Query param with the search term |
+| `fields` | required | Case-insensitive **substring** match; item kept if **any** field matches |
+
+Empty / omitted search term → search skipped. Nested paths allowed in `fields`.
+
+**Full example**
+
+```json
+"list": {
+  "page": { "query": "page", "default": 1 },
+  "pageSize": { "query": "pageSize", "default": 10, "max": 50, "aliases": ["limit"] },
+  "sort": { "query": "sort", "default": "id", "fields": ["id", "name", "price", "meta.region"] },
+  "filter": {
+    "fields": [
+      "status",
+      { "field": "price", "op": "gte", "query": "minPrice" },
+      { "field": "price", "op": "lte", "query": "maxPrice" },
+      { "field": "price", "op": "gt", "query": "gtPrice" },
+      { "field": "price", "op": "lt", "query": "ltPrice" },
+      { "field": "status", "op": "ne", "query": "excludeStatus" },
+      { "field": "name", "op": "in", "query": "name" },
+      { "field": "meta.region", "op": "eq", "query": "region" }
+    ],
+    "or": [
+      { "field": "status", "op": "eq", "query": "anyStatus" },
+      { "field": "meta.region", "op": "eq", "query": "anyRegion" }
+    ],
+    "search": { "query": "q", "fields": ["name", "meta.region"] }
+  }
+}
+```
+
+Try (happy path):
+
+```bash
+# AND equality + range
+curl -s 'http://localhost:3000/api/products?status=active&minPrice=10&maxPrice=30'
+
+# Exclusive bounds
+curl -s 'http://localhost:3000/api/products?gtPrice=20&ltPrice=40'
+
+# Not equal
+curl -s 'http://localhost:3000/api/products?excludeStatus=draft'
+
+# Membership (CSV or repeated)
+curl -s 'http://localhost:3000/api/products?name=Alpha,Charlie'
+curl -s 'http://localhost:3000/api/products?name=Alpha&name=Echo'
+
+# Nested path (match)
+curl -s 'http://localhost:3000/api/products?region=eu'
+
+# Nested sort
+curl -s 'http://localhost:3000/api/products?sort=meta.region&order=asc&pageSize=10'
+
+# Nested path (no match) → empty page, total 0 (not an error)
+curl -s 'http://localhost:3000/api/products?region=antarctica'
+
+# OR omitted → no OR filtering (full list subject to other rules)
+curl -s 'http://localhost:3000/api/products?pageSize=10'
+
+# OR single / multi
+curl -s 'http://localhost:3000/api/products?anyRegion=eu'
+curl -s 'http://localhost:3000/api/products?anyStatus=draft&anyRegion=latam'
+
+# Text search
+curl -s 'http://localhost:3000/api/products?q=cha'
+```
+
+Try (sad path → `400`):
+
+```bash
+# Non-numeric compare ops
+curl -si 'http://localhost:3000/api/products?minPrice=abc'
+curl -si 'http://localhost:3000/api/products?maxPrice=nan'
+curl -si 'http://localhost:3000/api/products?gtPrice=x'
+
+# Present but empty string
+curl -si 'http://localhost:3000/api/products?ltPrice='
+curl -si 'http://localhost:3000/api/products?status='
+
+# in with no values after split/trim
+curl -si 'http://localhost:3000/api/products?name='
+
+# Example bodies:
+# { "message": "Query \"minPrice\" must be a number" }
+# { "message": "Query \"status\" must not be empty" }
+# { "message": "Query \"name\" must not be empty" }
+```
+
+**Filter evaluation order**
+
+1. Route `key` params (outside `filter`, always on)
+2. `fields` — AND of present rules
+3. `or` — if any OR query present, OR of those rules
+4. `search` — if term non-empty
+5. Then sort → pagination
+
+`{{total}}` (and `X-Total-Count` if you template it) is the count **after** all filters, **before** pagination.
+
+**Runtime `400` from filters**
+
+| Condition | Try | Example message |
+|-----------|-----|-----------------|
+| `gt` / `gte` / `lt` / `lte` not a number | `?minPrice=abc` | `Query "minPrice" must be a number` |
+| Present but empty string | `?status=` | `Query "status" must not be empty` |
+| `in` present but no values after split/trim | `?name=` | `Query "name" must not be empty` |
+
+Omitted params are **not** errors (rule skipped). Unknown region / no matches → `200` with empty `items` and `total: 0`.
+
+**Startup validation (filter)**
+
+- Top-level `filter` must be a non-empty string array **or** an object.
+- Object keys only: `fields`, `or`, `search`.
+- `fields` / `or`: non-empty array of strings or `{ field, op?, query? }`.
+- `op` must be one of: `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, `in`.
+- Object must include at least one of `fields`, `or`, `search`.
+
+Invalid shapes (server refuses to start):
+
+```json
+"filter": { "fields": [{ "field": "price", "op": "between" }] }
+```
+
+→ `The "store.list.filter.fields[0].op" must be one of: eq, ne, gt, gte, lt, lte, in`
+
+```json
+"filter": { "or": [] }
+```
+
+→ `The "store.list.filter.or" must be a non-empty array of strings or field objects`
+
+```json
+"filter": { "or": [{ "op": "eq", "query": "status" }] }
+```
+
+→ `The "store.list.filter.or[0].field" must be a non-empty string`
+
+#### Multi-sort
+
+`sort` accepts one or more comma-separated fields (including nested paths like `meta.region`). If `sort.fields` is set, every field must be in that whitelist.
+
+| Form | Example | Effect |
+|------|---------|--------|
+| Field + `order` | `?sort=name&order=desc` | Single field; direction from `order` |
+| Signed prefix | `?sort=-price,+name` | `price` desc, then `name` asc (`+` optional for asc) |
+| Explicit | `?sort=price:desc,name:asc` | Same, per-field direction |
+| Nested | `?sort=meta.region&order=asc` | Sort by dotted path |
+| Default expression | `"default": "-meta.score"` in config | Used when the client omits `sort` |
+
+`{{sort}}` echoes the active sort string. `{{order}}` is the direction of the **first** sort field.
+
+#### Runtime errors (`400`)
+
+Invalid integers / out of range for `page`, `pageSize`, `offset`, `limit`; invalid `order`; sort field outside whitelist; invalid cursor; non-numeric `gt`/`gte`/`lt`/`lte`; empty `in` / empty filter query →:
+
+```json
+{ "message": "Query \"sort\" field must be one of: id, name, price, meta.region" }
+```
+
+(Exact message depends on the failing query.)
+
+#### Response templates (fully customizable)
+
+On `action: "list"`, `body` and header **values** are templates.  
+Exact string `"{{items}}"` / `"{{total}}"` / … is replaced by the typed value (`array` / `number` / `null` / …).  
+Placeholders embedded in a longer string are stringified.
+
+| Placeholder | Type | Meaning |
+|-------------|------|---------|
+| `{{items}}` | array | Current page/slice |
+| `{{total}}` | number | Count after filters |
+| `{{page}}` / `{{pageSize}}` | number | Page mode meta |
+| `{{offset}}` / `{{limit}}` | number | Offset (and cursor limit) meta |
+| `{{totalPages}}` | number | `ceil(total / pageSize)` (page mode) |
+| `{{sort}}` / `{{order}}` | string | Active sort string / first direction |
+| `{{self}}` | string | Absolute URL of the current request |
+| `{{next}}` / `{{previous}}` | string \| `null` | Absolute URLs for neighbors |
+| `{{hasNext}}` / `{{hasPrevious}}` | boolean | Neighbor flags |
+| `{{linkHeader}}` | string | RFC 5988 `Link` (`rel="next"` / `rel="prev"`) |
+| `{{nextCursor}}` | string \| `null` | Opaque cursor for the next page (cursor mode) |
+| `{{hasMore}}` | boolean | Same as `hasNext` (handy alias for cursor-style envelopes) |
+
+Without a `body` template → JSON array of items (already filtered/sorted/paginated).  
+`body` on `list` does **not** emit the “body ignored” warning (unlike other actions).
+
+**Page envelope + `Link` header**
+
+```json
+{
+  "name": "list",
+  "statusCode": 200,
+  "action": "list",
+  "headers": {
+    "X-Total-Count": "{{total}}",
+    "Link": "{{linkHeader}}"
+  },
+  "body": {
+    "data": "{{items}}",
+    "page": "{{page}}",
+    "pageSize": "{{pageSize}}",
+    "total": "{{total}}",
+    "next": "{{next}}",
+    "previous": "{{previous}}"
+  }
+}
+```
+
+**Offset / Django-like**
+
+```json
+{
+  "name": "list",
+  "statusCode": 200,
+  "action": "list",
+  "body": {
+    "results": "{{items}}",
+    "next": "{{next}}",
+    "previous": "{{previous}}",
+    "meta": {
+      "count": "{{total}}",
+      "offset": "{{offset}}",
+      "limit": "{{limit}}"
+    }
+  }
+}
+```
+
+**Cursor / Stripe-like**
+
+```json
+{
+  "name": "list",
+  "statusCode": 200,
+  "action": "list",
+  "body": {
+    "data": "{{items}}",
+    "has_more": "{{hasMore}}",
+    "next_cursor": "{{nextCursor}}",
+    "next": "{{next}}"
+  }
+}
+```
+
 ### Out of scope
 
 Not implemented (do not expect these):
 
-- Pagination, sort, or filters on `list` beyond filtering by key fields present in route params  
 - Composite unique constraints other than the primary `key` (e.g. unique on `email + tenantId` as a pair)  
 - Case-insensitive / trimmed unique comparison  
 - Soft delete  
@@ -1729,6 +2449,1049 @@ Org-scoped projects with slug uniqueness, forbidden org via `match`, persist acr
 - `GET /api/orgs/org_blocked/projects` → static `403` via `match` (no store)  
 - Duplicate `slug` alone → `slug-taken`; other unique clashes → `duplicate-fields`
 
+### Example E — Real project: E-commerce catalog
+
+Admin catalog + checkout resilience: `store` + `store.list` (page, multi-sort, **advanced filters**, search, `Link`) + `request` + `unique` SKU + `persist` + `match` (featured / maintenance / archive) + `delay` + custom headers.
+
+Filter permutation focus: `eq` / `ne` / `gt` / `lt` / `gte` / `lte` / `in` + nested `warehouse.code` + `or` (warehouse **or** category) + search.
+
+```json
+{
+  "api/catalog/products": {
+    "store": {
+      "id": "catalog-products",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1,
+          "sku": "SKU-TEA-001",
+          "name": "Green Tea",
+          "category": "beverages",
+          "price": 12.5,
+          "stock": 40,
+          "status": "active",
+          "warehouse": { "code": "WH-EU", "zone": "A" }
+        },
+        {
+          "id": 2,
+          "sku": "SKU-MUG-010",
+          "name": "Ceramic Mug",
+          "category": "home",
+          "price": 18,
+          "stock": 12,
+          "status": "active",
+          "warehouse": { "code": "WH-US", "zone": "B" }
+        }
+      ],
+      "template": {
+        "id": 0,
+        "sku": "",
+        "name": "",
+        "category": "home",
+        "price": 0,
+        "stock": 0,
+        "status": "draft",
+        "warehouse": { "code": "", "zone": "" }
+      },
+      "unique": {
+        "fields": [
+          {
+            "field": "sku",
+            "conflict": {
+              "response": "sku-taken",
+              "detail": { "field": "{{field}}", "value": "{{value}}" }
+            }
+          }
+        ],
+        "conflict": {
+          "response": "duplicate-fields",
+          "detail": { "field": "{{field}}", "value": "{{value}}" }
+        }
+      },
+      "persist": true,
+      "list": {
+        "page": { "query": "page", "default": 1 },
+        "pageSize": {
+          "query": "pageSize",
+          "default": 3,
+          "max": 50,
+          "aliases": ["limit"]
+        },
+        "sort": {
+          "query": "sort",
+          "default": "id",
+          "fields": ["id", "name", "price", "stock"]
+        },
+        "order": { "query": "order", "default": "asc" },
+        "filter": {
+          "fields": [
+            "status",
+            "category",
+            { "field": "price", "op": "gte", "query": "minPrice" },
+            { "field": "price", "op": "lte", "query": "maxPrice" },
+            { "field": "stock", "op": "gt", "query": "minStock" },
+            { "field": "stock", "op": "lt", "query": "maxStock" },
+            { "field": "status", "op": "ne", "query": "excludeStatus" },
+            { "field": "category", "op": "in", "query": "categories" },
+            { "field": "warehouse.code", "op": "eq", "query": "warehouse" }
+          ],
+          "or": [
+            { "field": "warehouse.code", "op": "eq", "query": "anyWarehouse" },
+            { "field": "category", "op": "eq", "query": "anyCategory" }
+          ],
+          "search": {
+            "query": "q",
+            "fields": ["name", "sku", "warehouse.code"]
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "maintenance",
+          "statusCode": 503,
+          "match": { "query": { "mode": "maintenance" } },
+          "delay": 200,
+          "headers": { "Retry-After": "30", "X-Catalog": "down" },
+          "body": {
+            "code": "CATALOG_MAINTENANCE",
+            "message": "Catalog temporarily unavailable"
+          }
+        },
+        {
+          "name": "featured-static",
+          "statusCode": 200,
+          "match": { "query": { "view": "featured" } },
+          "headers": {
+            "X-View": "featured",
+            "Cache-Control": "public, max-age=60"
+          },
+          "body": {
+            "view": "featured",
+            "items": [
+              { "sku": "SKU-TEA-001", "badge": "bestseller" }
+            ]
+          }
+        },
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list",
+          "delay": 80,
+          "headers": {
+            "X-Total-Count": "{{total}}",
+            "Link": "{{linkHeader}}",
+            "X-Catalog": "store"
+          },
+          "body": {
+            "data": "{{items}}",
+            "page": "{{page}}",
+            "pageSize": "{{pageSize}}",
+            "total": "{{total}}",
+            "totalPages": "{{totalPages}}",
+            "sort": "{{sort}}",
+            "order": "{{order}}",
+            "next": "{{next}}",
+            "previous": "{{previous}}",
+            "hasNext": "{{hasNext}}",
+            "hasPrevious": "{{hasPrevious}}"
+          }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "body": {
+          "sku": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 32,
+            "pattern": "^SKU-[A-Z0-9]+-[0-9]{3}$"
+          },
+          "name": { "type": "string", "minLength": 2, "maxLength": 80 },
+          "category": {
+            "type": "string",
+            "enum": ["beverages", "home", "grocery"]
+          },
+          "price": { "type": "number", "min": 0.01, "max": 9999 },
+          "stock?": { "type": "number", "min": 0, "max": 100000 },
+          "status?": { "type": "string", "enum": ["active", "draft"] }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid product payload",
+            "errors": []
+          }
+        },
+        {
+          "name": "sku-taken",
+          "statusCode": 409,
+          "body": { "code": "SKU_TAKEN", "conflicts": "{{conflicts}}" }
+        },
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE", "conflicts": "{{conflicts}}" }
+        },
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  },
+  "api/catalog/products/:id": {
+    "store": { "id": "catalog-products" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [{ "name": "get", "statusCode": 200, "action": "get" }]
+    },
+    "PATCH": {
+      "nameResponse": "patch",
+      "request": {
+        "body": {
+          "name?": { "type": "string", "minLength": 2, "maxLength": 80 },
+          "price?": { "type": "number", "min": 0.01, "max": 9999 },
+          "stock?": { "type": "number", "min": 0, "max": 100000 },
+          "status?": {
+            "type": "string",
+            "enum": ["active", "draft", "archived"]
+          }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid product patch",
+            "errors": []
+          }
+        },
+        {
+          "name": "discontinued-static",
+          "statusCode": 409,
+          "match": { "body": { "status": "archived" } },
+          "body": {
+            "code": "USE_ARCHIVE_ENDPOINT",
+            "message": "Archive products via DELETE, not PATCH status=archived"
+          }
+        },
+        {
+          "name": "sku-taken",
+          "statusCode": 409,
+          "body": { "code": "SKU_TAKEN", "conflicts": "{{conflicts}}" }
+        },
+        { "name": "patch", "statusCode": 200, "action": "patch" }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [{ "name": "remove", "statusCode": 204, "action": "delete" }]
+    }
+  },
+  "api/catalog/checkout": {
+    "POST": {
+      "nameResponse": "paid",
+      "request": {
+        "body": {
+          "sku": { "type": "string", "minLength": 5 },
+          "quantity": { "type": "number", "min": 1, "max": 20 },
+          "cardLast4": { "type": "string", "pattern": "^[0-9]{4}$" }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid checkout",
+            "errors": []
+          }
+        },
+        {
+          "name": "payment-required",
+          "statusCode": 402,
+          "match": { "body": { "cardLast4": "0000" } },
+          "delay": 150,
+          "body": { "code": "PAYMENT_REQUIRED", "message": "Card declined" }
+        },
+        {
+          "name": "rate-limited",
+          "statusCode": 429,
+          "match": { "body": { "cardLast4": "4290" } },
+          "headers": { "Retry-After": "5" },
+          "body": {
+            "code": "RATE_LIMITED",
+            "message": "Too many checkout attempts"
+          }
+        },
+        {
+          "name": "paid",
+          "statusCode": 201,
+          "delay": 120,
+          "body": { "orderId": "ord_demo_1", "status": "paid" }
+        }
+      ]
+    }
+  }
+}
+```
+
+Try:
+
+```bash
+# Paginated catalog (Link + X-Total-Count)
+curl -si 'http://localhost:3000/api/catalog/products?page=1&pageSize=3'
+
+# Filters + search + multi-sort
+curl -s 'http://localhost:3000/api/catalog/products?status=active&category=home&q=mug&sort=price:desc,name:asc'
+
+# Range + ne + in + nested warehouse
+curl -s 'http://localhost:3000/api/catalog/products?minPrice=12&maxPrice=22&excludeStatus=draft&pageSize=10'
+curl -s 'http://localhost:3000/api/catalog/products?minStock=0&categories=home,grocery&pageSize=10'
+curl -s 'http://localhost:3000/api/catalog/products?warehouse=WH-EU&status=active&pageSize=10'
+
+# OR: warehouse OR category
+curl -s 'http://localhost:3000/api/catalog/products?anyWarehouse=WH-LATAM&anyCategory=grocery&pageSize=10'
+
+# Static branches via match
+curl -si 'http://localhost:3000/api/catalog/products?view=featured'
+curl -si 'http://localhost:3000/api/catalog/products?mode=maintenance'
+
+# Create (422 invalid / 409 SKU / 201 ok)
+curl -s -X POST http://localhost:3000/api/catalog/products \
+  -H 'Content-Type: application/json' \
+  -d '{"sku":"SKU-NEW-099","name":"Matcha Kit","category":"beverages","price":15,"status":"active"}'
+
+# Checkout resilience
+curl -si -X POST http://localhost:3000/api/catalog/checkout \
+  -H 'Content-Type: application/json' \
+  -d '{"sku":"SKU-TEA-001","quantity":1,"cardLast4":"0000"}'
+```
+
+| Feature | Where it shows up |
+|---------|-------------------|
+| `store` + `action` | CRUD on `/api/catalog/products` |
+| `store.list` | Page envelope, multi-sort, `{{linkHeader}}` |
+| Filter ops | `gte`/`lte` price, `gt`/`lt` stock, `ne`, `in` categories, nested `warehouse.code` |
+| `or` | `anyWarehouse` **or** `anyCategory` |
+| `search` | `q` over name / sku / warehouse code |
+| `request` | POST/PATCH product + checkout body rules |
+| `unique` | Duplicate `sku` → `409 SKU_TAKEN` |
+| `persist` | Catalog survives restart (`--reset-store` to wipe) |
+| `match` + `delay` | Featured view, maintenance `503`, archive guard, checkout `402`/`429` |
+
+### Example F — Real project: Multi-tenant helpdesk
+
+Tenant-scoped tickets (page list) + activity feed (cursor): composite keys, `store.list`, **advanced filters**, `request`, `unique`, `persist`, `match` (`403` / `401`), `delay`.
+
+Filter permutation focus: date range on `createdAt`, nested `channel.source` / `channel.sla`, `ne` / `in`, `or` (assignee **or** priority), search.
+
+```json
+{
+  "api/tenants/:tenantId/tickets": {
+    "store": {
+      "id": "helpdesk-tickets",
+      "key": {
+        "fields": ["tenantId", "id"],
+        "conflict": { "response": "duplicate-key" }
+      },
+      "seed": [
+        {
+          "tenantId": "acme",
+          "id": 1,
+          "subject": "Cannot login",
+          "priority": "high",
+          "status": "open",
+          "assignee": "alice@acme.com",
+          "createdAt": 1700000001,
+          "channel": { "source": "email", "sla": 4 }
+        },
+        {
+          "tenantId": "acme",
+          "id": 2,
+          "subject": "Invoice PDF broken",
+          "priority": "medium",
+          "status": "pending",
+          "assignee": "bob@acme.com",
+          "createdAt": 1700000002,
+          "channel": { "source": "chat", "sla": 8 }
+        },
+        {
+          "tenantId": "globex",
+          "id": 1,
+          "subject": "API key rotation",
+          "priority": "high",
+          "status": "open",
+          "assignee": "dan@globex.com",
+          "createdAt": 1700000101,
+          "channel": { "source": "email", "sla": 4 }
+        }
+      ],
+      "template": {
+        "tenantId": "",
+        "id": 0,
+        "subject": "",
+        "priority": "medium",
+        "status": "open",
+        "assignee": "",
+        "createdAt": 0,
+        "channel": { "source": "email", "sla": 8 }
+      },
+      "unique": {
+        "fields": [
+          {
+            "field": "subject",
+            "conflict": {
+              "response": "subject-taken",
+              "detail": { "field": "{{field}}", "value": "{{value}}" }
+            }
+          }
+        ],
+        "conflict": {
+          "response": "duplicate-fields",
+          "detail": { "field": "{{field}}", "value": "{{value}}" }
+        }
+      },
+      "persist": true,
+      "list": {
+        "page": { "query": "page", "default": 1 },
+        "pageSize": {
+          "query": "pageSize",
+          "default": 2,
+          "max": 25,
+          "aliases": ["limit"]
+        },
+        "sort": {
+          "query": "sort",
+          "default": "-createdAt",
+          "fields": ["id", "priority", "createdAt", "status"]
+        },
+        "order": { "query": "order", "default": "desc" },
+        "filter": {
+          "fields": [
+            "status",
+            "priority",
+            "assignee",
+            { "field": "createdAt", "op": "gte", "query": "since" },
+            { "field": "createdAt", "op": "lte", "query": "until" },
+            { "field": "channel.sla", "op": "lt", "query": "maxSla" },
+            { "field": "status", "op": "ne", "query": "excludeStatus" },
+            { "field": "priority", "op": "in", "query": "priorities" },
+            { "field": "channel.source", "op": "eq", "query": "channel" }
+          ],
+          "or": [
+            { "field": "assignee", "op": "eq", "query": "anyAssignee" },
+            { "field": "priority", "op": "eq", "query": "anyPriority" }
+          ],
+          "search": {
+            "query": "q",
+            "fields": ["subject", "assignee", "channel.source"]
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "inbox",
+      "responses": [
+        {
+          "name": "forbidden-tenant",
+          "statusCode": 403,
+          "match": { "params": { "tenantId": "blocked" } },
+          "body": {
+            "code": "TENANT_FORBIDDEN",
+            "message": "Your account cannot access this tenant"
+          }
+        },
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "match": { "query": { "auth": "missing" } },
+          "headers": { "WWW-Authenticate": "Bearer" },
+          "body": { "code": "UNAUTHORIZED", "message": "Login required" }
+        },
+        {
+          "name": "inbox",
+          "statusCode": 200,
+          "action": "list",
+          "delay": 60,
+          "headers": {
+            "X-Total-Count": "{{total}}",
+            "Link": "{{linkHeader}}",
+            "X-Tenant-Scope": "tickets"
+          },
+          "body": {
+            "tickets": "{{items}}",
+            "page": "{{page}}",
+            "pageSize": "{{pageSize}}",
+            "total": "{{total}}",
+            "totalPages": "{{totalPages}}",
+            "sort": "{{sort}}",
+            "next": "{{next}}",
+            "previous": "{{previous}}",
+            "hasNext": "{{hasNext}}",
+            "hasPrevious": "{{hasPrevious}}"
+          }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "body": {
+          "subject": { "type": "string", "minLength": 5, "maxLength": 120 },
+          "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+          "assignee": { "type": "string", "format": "email" },
+          "status?": {
+            "type": "string",
+            "enum": ["open", "pending", "closed"]
+          },
+          "createdAt?": { "type": "number", "min": 1 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "forbidden-tenant",
+          "statusCode": 403,
+          "match": { "params": { "tenantId": "blocked" } },
+          "body": { "code": "TENANT_FORBIDDEN" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid ticket",
+            "errors": []
+          }
+        },
+        {
+          "name": "subject-taken",
+          "statusCode": 409,
+          "body": { "code": "SUBJECT_TAKEN", "conflicts": "{{conflicts}}" }
+        },
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE_KEY" }
+        },
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  },
+  "api/tenants/:tenantId/tickets/:id": {
+    "store": { "id": "helpdesk-tickets" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        {
+          "name": "forbidden-tenant",
+          "statusCode": 403,
+          "match": { "params": { "tenantId": "blocked" } },
+          "body": { "code": "TENANT_FORBIDDEN" }
+        },
+        { "name": "get", "statusCode": 200, "action": "get" }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "patch",
+      "request": {
+        "body": {
+          "status?": {
+            "type": "string",
+            "enum": ["open", "pending", "closed"]
+          },
+          "priority?": {
+            "type": "string",
+            "enum": ["low", "medium", "high"]
+          },
+          "assignee?": { "type": "string", "format": "email" }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid ticket patch",
+            "errors": []
+          }
+        },
+        { "name": "patch", "statusCode": 200, "action": "patch" }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        {
+          "name": "forbidden-tenant",
+          "statusCode": 403,
+          "match": { "params": { "tenantId": "blocked" } },
+          "body": { "code": "TENANT_FORBIDDEN" }
+        },
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    }
+  },
+  "api/tenants/:tenantId/activity": {
+    "store": {
+      "id": "helpdesk-activity",
+      "key": { "fields": ["tenantId", "id"] },
+      "seed": [
+        {
+          "tenantId": "acme",
+          "id": 1,
+          "type": "comment",
+          "message": "Looking into login",
+          "score": 2,
+          "createdAt": 1700001001
+        },
+        {
+          "tenantId": "acme",
+          "id": 2,
+          "type": "status",
+          "message": "Moved to pending",
+          "score": 5,
+          "createdAt": 1700001002
+        },
+        {
+          "tenantId": "acme",
+          "id": 3,
+          "type": "comment",
+          "message": "Password reset sent",
+          "score": 8,
+          "createdAt": 1700001003
+        },
+        {
+          "tenantId": "acme",
+          "id": 4,
+          "type": "assign",
+          "message": "Assigned to alice",
+          "score": 3,
+          "createdAt": 1700001004
+        }
+      ],
+      "template": {
+        "tenantId": "",
+        "id": 0,
+        "type": "comment",
+        "message": "",
+        "score": 0,
+        "createdAt": 0
+      },
+      "list": {
+        "cursor": {
+          "query": "starting_after",
+          "limit": { "query": "limit", "default": 2, "max": 20 }
+        },
+        "sort": {
+          "query": "sort",
+          "default": "-createdAt",
+          "fields": ["id", "createdAt", "score"]
+        },
+        "order": { "query": "order", "default": "desc" },
+        "filter": {
+          "fields": ["type"],
+          "search": { "query": "q", "fields": ["message"] }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "feed",
+      "responses": [
+        {
+          "name": "forbidden-tenant",
+          "statusCode": 403,
+          "match": { "params": { "tenantId": "blocked" } },
+          "body": { "code": "TENANT_FORBIDDEN" }
+        },
+        {
+          "name": "feed",
+          "statusCode": 200,
+          "action": "list",
+          "headers": {
+            "X-Feed": "activity",
+            "X-Has-More": "{{hasMore}}"
+          },
+          "body": {
+            "data": "{{items}}",
+            "has_more": "{{hasMore}}",
+            "next_cursor": "{{nextCursor}}",
+            "next": "{{next}}",
+            "sort": "{{sort}}"
+          }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "body": {
+          "type": {
+            "type": "string",
+            "enum": ["comment", "status", "assign"]
+          },
+          "message": { "type": "string", "minLength": 3, "maxLength": 200 },
+          "score?": { "type": "number", "min": 0, "max": 100 },
+          "createdAt?": { "type": "number", "min": 1 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid activity event",
+            "errors": []
+          }
+        },
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  }
+}
+```
+
+Try:
+
+```bash
+# Tenant isolation (path key fields filter the store)
+curl -s 'http://localhost:3000/api/tenants/acme/tickets?status=open&priority=high'
+curl -s 'http://localhost:3000/api/tenants/globex/tickets'
+
+# Date range + ne + nested channel + in + sla
+curl -s 'http://localhost:3000/api/tenants/acme/tickets?since=1700000002&until=1700000004&excludeStatus=closed&pageSize=10'
+curl -s 'http://localhost:3000/api/tenants/acme/tickets?channel=email&priorities=high,low&pageSize=10'
+curl -s 'http://localhost:3000/api/tenants/acme/tickets?maxSla=5&pageSize=10'
+
+# OR: assignee OR priority
+curl -s 'http://localhost:3000/api/tenants/acme/tickets?anyAssignee=carol@acme.com&anyPriority=high&pageSize=10'
+
+# Auth / RBAC-style static branches
+curl -si 'http://localhost:3000/api/tenants/blocked/tickets'
+curl -si 'http://localhost:3000/api/tenants/acme/tickets?auth=missing'
+
+# Create + conflict
+curl -s -X POST http://localhost:3000/api/tenants/acme/tickets \
+  -H 'Content-Type: application/json' \
+  -d '{"subject":"Billing dispute","priority":"medium","assignee":"finance@acme.com"}'
+
+# Cursor activity feed (Stripe-style)
+PAGE1=$(curl -s 'http://localhost:3000/api/tenants/acme/activity')
+echo "$PAGE1"
+CURSOR=$(echo "$PAGE1" | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>console.log(JSON.parse(s).next_cursor||''))")
+curl -s "http://localhost:3000/api/tenants/acme/activity?starting_after=${CURSOR}"
+```
+
+| Feature | Where it shows up |
+|---------|-------------------|
+| Composite `key` | `tenantId` + `id` scopes tickets/activity per tenant |
+| `store.list` page | Inbox with `Link`, default `-createdAt` |
+| Filter ops | `since`/`until`, `ne`, `in` priorities, nested `channel.*`, `maxSla` |
+| `or` | `anyAssignee` **or** `anyPriority` |
+| `store.list` cursor | Activity feed with `starting_after` + `{{nextCursor}}` |
+| `request` | Ticket/activity payload validation → `422` |
+| `match` | `blocked` tenant → `403`; `auth=missing` → `401` |
+| `unique` + `persist` | Duplicate subject → `409`; data survives restart |
+
+### Example G — Real project: HR employee directory
+
+Org-scoped people directory built to **permute every filter op** in a realistic admin UI: salary bands, level ranges, hire window, role `in`, nested `profile.*`, `or` (dept / city / role), search, plus `request` / `unique` / `match` / `persist`.
+
+```json
+{
+  "api/orgs/:orgId/employees": {
+    "store": {
+      "id": "hr-employees",
+      "key": {
+        "fields": ["orgId", "id"],
+        "conflict": { "response": "duplicate-key" }
+      },
+      "seed": [
+        {
+          "orgId": "acme",
+          "id": 1,
+          "name": "Ana Ruiz",
+          "email": "ana@acme.com",
+          "role": "engineer",
+          "status": "active",
+          "salary": 72000,
+          "hiredAt": 1600000000,
+          "profile": { "dept": "platform", "level": 3, "city": "Madrid" }
+        },
+        {
+          "orgId": "acme",
+          "id": 2,
+          "name": "Bruno Díaz",
+          "email": "bruno@acme.com",
+          "role": "designer",
+          "status": "active",
+          "salary": 58000,
+          "hiredAt": 1620000000,
+          "profile": { "dept": "product", "level": 2, "city": "Barcelona" }
+        },
+        {
+          "orgId": "acme",
+          "id": 5,
+          "name": "Elena Voss",
+          "email": "elena@acme.com",
+          "role": "engineer",
+          "status": "active",
+          "salary": 64000,
+          "hiredAt": 1680000000,
+          "profile": { "dept": "data", "level": 2, "city": "Berlin" }
+        }
+      ],
+      "template": {
+        "orgId": "",
+        "id": 0,
+        "name": "",
+        "email": "",
+        "role": "engineer",
+        "status": "active",
+        "salary": 0,
+        "hiredAt": 0,
+        "profile": { "dept": "", "level": 1, "city": "" }
+      },
+      "unique": {
+        "fields": [
+          {
+            "field": "email",
+            "conflict": {
+              "response": "email-taken",
+              "detail": { "field": "{{field}}", "value": "{{value}}" }
+            }
+          }
+        ],
+        "conflict": {
+          "response": "duplicate-fields",
+          "detail": { "field": "{{field}}", "value": "{{value}}" }
+        }
+      },
+      "persist": true,
+      "list": {
+        "page": { "query": "page", "default": 1 },
+        "pageSize": {
+          "query": "pageSize",
+          "default": 3,
+          "max": 50,
+          "aliases": ["limit"]
+        },
+        "sort": {
+          "query": "sort",
+          "default": "name",
+          "fields": ["id", "name", "salary", "hiredAt", "role"]
+        },
+        "order": { "query": "order", "default": "asc" },
+        "filter": {
+          "fields": [
+            "status",
+            "role",
+            { "field": "salary", "op": "gte", "query": "minSalary" },
+            { "field": "salary", "op": "lte", "query": "maxSalary" },
+            { "field": "profile.level", "op": "gt", "query": "minLevel" },
+            { "field": "profile.level", "op": "lt", "query": "maxLevel" },
+            { "field": "hiredAt", "op": "gte", "query": "hiredAfter" },
+            { "field": "hiredAt", "op": "lte", "query": "hiredBefore" },
+            { "field": "status", "op": "ne", "query": "excludeStatus" },
+            { "field": "role", "op": "in", "query": "roles" },
+            { "field": "profile.dept", "op": "eq", "query": "dept" },
+            { "field": "profile.city", "op": "eq", "query": "city" }
+          ],
+          "or": [
+            { "field": "profile.dept", "op": "eq", "query": "anyDept" },
+            { "field": "profile.city", "op": "eq", "query": "anyCity" },
+            { "field": "role", "op": "eq", "query": "anyRole" }
+          ],
+          "search": {
+            "query": "q",
+            "fields": ["name", "email", "profile.city", "profile.dept"]
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "directory",
+      "responses": [
+        {
+          "name": "forbidden-org",
+          "statusCode": 403,
+          "match": { "params": { "orgId": "blocked" } },
+          "body": {
+            "code": "ORG_FORBIDDEN",
+            "message": "HR directory is not available for this organization"
+          }
+        },
+        {
+          "name": "directory",
+          "statusCode": 200,
+          "action": "list",
+          "headers": {
+            "X-Total-Count": "{{total}}",
+            "Link": "{{linkHeader}}"
+          },
+          "body": {
+            "employees": "{{items}}",
+            "page": "{{page}}",
+            "pageSize": "{{pageSize}}",
+            "total": "{{total}}",
+            "totalPages": "{{totalPages}}",
+            "sort": "{{sort}}",
+            "next": "{{next}}",
+            "previous": "{{previous}}",
+            "hasNext": "{{hasNext}}",
+            "hasPrevious": "{{hasPrevious}}"
+          }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "body": {
+          "name": { "type": "string", "minLength": 2, "maxLength": 80 },
+          "email": { "type": "string", "format": "email" },
+          "role": {
+            "type": "string",
+            "enum": ["engineer", "designer", "manager", "support"]
+          },
+          "salary": { "type": "number", "min": 1, "max": 500000 },
+          "hiredAt": { "type": "number", "min": 1 },
+          "profile": {
+            "type": "object",
+            "properties": {
+              "dept": { "type": "string", "minLength": 2 },
+              "level": { "type": "number", "min": 1, "max": 10 },
+              "city": { "type": "string", "minLength": 2 }
+            }
+          }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid employee payload",
+            "errors": []
+          }
+        },
+        {
+          "name": "email-taken",
+          "statusCode": 409,
+          "body": { "code": "EMAIL_TAKEN", "conflicts": "{{conflicts}}" }
+        },
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE", "conflicts": "{{conflicts}}" }
+        },
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE_KEY" }
+        },
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  },
+  "api/orgs/:orgId/employees/:id": {
+    "store": { "id": "hr-employees" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        { "name": "get", "statusCode": 200, "action": "get" }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "patch",
+      "responses": [
+        {
+          "name": "email-taken",
+          "statusCode": 409,
+          "body": { "code": "EMAIL_TAKEN", "conflicts": "{{conflicts}}" }
+        },
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE", "conflicts": "{{conflicts}}" }
+        },
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE_KEY" }
+        },
+        { "name": "patch", "statusCode": 200, "action": "patch" }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    }
+  }
+}
+```
+
+Try (filter permutations):
+
+```bash
+# eq + ne
+curl -s 'http://localhost:3000/api/orgs/acme/employees?role=engineer&excludeStatus=terminated&pageSize=20'
+
+# salary band (gte/lte) + status
+curl -s 'http://localhost:3000/api/orgs/acme/employees?minSalary=60000&maxSalary=85000&status=active&pageSize=20'
+
+# nested level gt/lt + dept
+curl -s 'http://localhost:3000/api/orgs/acme/employees?minLevel=2&maxLevel=5&dept=platform&pageSize=20'
+
+# in roles + nested city
+curl -s 'http://localhost:3000/api/orgs/acme/employees?roles=designer,manager&city=Barcelona&pageSize=20'
+
+# hire window
+curl -s 'http://localhost:3000/api/orgs/acme/employees?hiredAfter=1600000000&hiredBefore=1650000000&pageSize=20'
+
+# OR: dept OR city OR role
+curl -s 'http://localhost:3000/api/orgs/acme/employees?anyDept=people&anyCity=Berlin&anyRole=support&pageSize=20'
+
+# search + combined admin query
+curl -s 'http://localhost:3000/api/orgs/acme/employees?q=madrid&pageSize=20'
+curl -s 'http://localhost:3000/api/orgs/acme/employees?status=active&minSalary=50000&roles=engineer,designer&q=a&sort=salary:desc&pageSize=20'
+
+# 400 on bad numeric filter
+curl -si 'http://localhost:3000/api/orgs/acme/employees?minSalary=abc'
+```
+
+| Op / feature | Query in this example |
+|--------------|------------------------|
+| `eq` | `status`, `role`, `dept`, `city` |
+| `ne` | `excludeStatus` |
+| `gte` / `lte` | `minSalary` / `maxSalary`, `hiredAfter` / `hiredBefore` |
+| `gt` / `lt` | `minLevel` / `maxLevel` on `profile.level` |
+| `in` | `roles=engineer,designer` |
+| Nested | `profile.dept`, `profile.city`, `profile.level` |
+| `or` | `anyDept` / `anyCity` / `anyRole` |
+| `search` | `q` on name, email, city, dept |
+
 ---
 
 ## Real-world projects 🏢
@@ -1741,6 +3504,9 @@ The [Advanced examples](#advanced-examples) teach one feature at a time. This se
 |----------|---------------|----------------|
 | [Todo / notes app](#example-c--real-project-todo--notes-app) | `store` + `request` + `persist` | Mutable list, toggle done, survive restart |
 | [SaaS projects board](#example-d--real-project-saas-projects-board) | `store` + `match` + `unique` + `persist` | Org-scoped CRUD, slug conflicts, forbidden org |
+| [E-commerce catalog](#example-e--real-project-e-commerce-catalog) | `store` + advanced `filter` + `request` + `match` + `delay` | Admin table, price/stock/warehouse filters, checkout |
+| [Multi-tenant helpdesk](#example-f--real-project-multi-tenant-helpdesk) | `store` + page/cursor + date/channel filters + `or` | Inbox facets, SLA, activity feed |
+| [HR employee directory](#example-g--real-project-hr-employee-directory) | All filter ops + nested + `or` + search | People admin: salary, level, hire window, roles |
 | SaaS signup + org invite | `request` + `match` | Form validation vs business errors (`409`, `403`) |
 | Checkout resilience | `match` + `delay` + headers | `402` / `429` / `503`, retries, idempotency |
 | Multi-tenant RBAC | `match.params` + `match.query` | Admin vs member, `403` across orgs |
@@ -2501,6 +4267,17 @@ These errors occur when `store` or `action` configuration is invalid:
 | `The "store.persist.enabled" must be a boolean` | Missing/invalid enabled | Set `"enabled": true/false` |
 | `The "store.persist.file" must be a non-empty string` | Empty custom path | Provide a non-empty relative path under the mock files root |
 | `The "store.persist.file" must be a relative path under the mocks directory` | Absolute path or `..` escape | Use a relative path like `custom/state.json` (no `..`, not absolute) |
+| `The "store.list" property must be a boolean or an object` | Invalid `list` shape | Use `true`, `{}`, or a config object |
+| `The "store.list" property contains unknown key "X"` | Typo / unsupported key | Only `page`, `pageSize`, `offset`, `limit`, `cursor`, `sort`, `order`, `filter` |
+| `The "store.list.cursor" property must be a boolean or an object` | Invalid cursor shape | Use `true` or `{ "query", "limit" }` |
+| `The "store.list.filter" property must be an array or an object` | Invalid filter shape | Use `["status"]` or `{ "fields", "or", "search" }` |
+| `The "store.list.filter" object must include "fields", "or", and/or "search"` | Empty filter object | Add at least one of those keys |
+| `The "store.list.filter.fields[0].op" must be one of: ...` | Unknown operator | Use `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, or `in` |
+| `The "store.list.sort.fields" must be a non-empty array of strings` | Empty whitelist | List allowed sort fields or omit `fields` |
+| `Query "sort" field must be one of: ...` | Runtime: sort field not whitelisted | Use a field from `sort.fields` |
+| `Query "minPrice" must be a number` (your `gte`/`gt`/`lt`/`lte` query) | Runtime: non-numeric compare | Pass a numeric query value |
+| `Query "name" must not be empty` | Runtime: empty `in` / empty filter param | Omit the param or pass values |
+| `Query "starting_after" is invalid` (or your cursor query name) | Runtime: bad cursor token | Omit cursor or pass a token from `{{nextCursor}}` |
 
 **Example:**
 

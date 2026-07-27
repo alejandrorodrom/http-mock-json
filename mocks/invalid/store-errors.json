@@ -343,5 +343,183 @@
         { "name": "ok", "statusCode": 200, "body": {} }
       ]
     }
+  },
+  "bad-store-list-type": {
+    "store": {
+      "id": "list-type",
+      "list": "yes"
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-list-unknown": {
+    "store": {
+      "id": "list-unknown",
+      "list": {
+        "foo": true
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-list-page-default": {
+    "store": {
+      "id": "list-page-default",
+      "list": {
+        "page": { "default": 0 }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-list-sort-fields": {
+    "store": {
+      "id": "list-sort-fields",
+      "list": {
+        "sort": { "fields": [] }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-list-order-default": {
+    "store": {
+      "id": "list-order-default",
+      "list": {
+        "order": { "default": "up" }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-list-filter-type": {
+    "store": {
+      "id": "list-filter-type",
+      "list": {
+        "filter": "status"
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-list-filter-empty": {
+    "store": {
+      "id": "list-filter-empty",
+      "list": {
+        "filter": []
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-list-filter-search-fields": {
+    "store": {
+      "id": "list-filter-search",
+      "list": {
+        "filter": {
+          "search": { "fields": [] }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-list-filter-op": {
+    "store": {
+      "id": "list-filter-op",
+      "list": {
+        "filter": {
+          "fields": [
+            { "field": "price", "op": "between" }
+          ]
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-list-filter-or-empty": {
+    "store": {
+      "id": "list-filter-or-empty",
+      "list": {
+        "filter": {
+          "or": []
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-list-filter-or-field": {
+    "store": {
+      "id": "list-filter-or-field",
+      "list": {
+        "filter": {
+          "or": [
+            { "op": "eq", "query": "status" }
+          ]
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-list-cursor-type": {
+    "store": {
+      "id": "list-cursor-type",
+      "list": {
+        "cursor": "yes"
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
   }
 }

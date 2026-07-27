@@ -17,6 +17,12 @@ import { hasProperty, isObject } from './guards.script';
 import { logError } from './log.script';
 import { encodeStoreKey } from './store-items.script';
 import {
+  buildListResult,
+  filterStoreItems,
+  resolveListQuery,
+  sortStoreItems
+} from './store-list.script';
+import {
   assertPersistedItemsValid,
   readPersistedItems,
   resetPersistedStores,
@@ -310,7 +316,41 @@ export class StoreRegistry {
       items = items.filter(item => String(item[field]) === String(value));
     }
 
-    return { ok: true, body: items };
+    const listConfig = collection.definition.list;
+    if (!listConfig) {
+      return { ok: true, body: items };
+    }
+
+    const resolved = resolveListQuery(listConfig, req);
+    if (!resolved.ok) {
+      return { ok: false, kind: 'bad_request', message: resolved.message };
+    }
+
+    const filtered = filterStoreItems(items, listConfig, req);
+    if (!filtered.ok) {
+      return { ok: false, kind: 'bad_request', message: filtered.message };
+    }
+    const sorted = sortStoreItems(
+      filtered.items,
+      resolved.query.sortSpecs,
+      collection.definition.keyFields
+    );
+    const built = buildListResult(
+      sorted,
+      resolved.query,
+      req,
+      listConfig,
+      collection.definition.keyFields
+    );
+    if (!built.ok) {
+      return { ok: false, kind: 'bad_request', message: built.message };
+    }
+
+    return {
+      ok: true,
+      body: built.result.items,
+      listResult: built.result
+    };
   }
 
   private resolveKeyItem(collection: Collection, req: Request): StoreItem | null {

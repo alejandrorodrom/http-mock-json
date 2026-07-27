@@ -36,7 +36,19 @@ module.exports = {
         'The "store.persist.file" must be a non-empty string',
         'The "store.persist.file" must be a relative path under the mocks directory',
         'The "store.seed[0]" item is missing key field "id"',
-        'The store "shared-dup" is already defined'
+        'The store "shared-dup" is already defined',
+        'The "store.list" property must be a boolean or an object',
+        'The "store.list" property contains unknown key "foo"',
+        'The "store.list.page.default" must be an integer >= 1',
+        'The "store.list.sort.fields" must be a non-empty array of strings',
+        'The "store.list.order.default" must be "asc" or "desc"',
+        'The "store.list.filter" property must be an array or an object',
+        'The "store.list.filter" array must be a non-empty array of strings',
+        'The "store.list.filter.search.fields" must be a non-empty array of strings',
+        'The "store.list.filter.fields[0].op" must be one of: eq, ne, gt, gte, lt, lte, in',
+        'The "store.list.filter.or" must be a non-empty array of strings or field objects',
+        'The "store.list.filter.or[0].field" must be a non-empty string',
+        'The "store.list.cursor" property must be a boolean or an object'
       ],
       stdoutExcludes: ['Mock server is running']
     }

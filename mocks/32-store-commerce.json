@@ -1,0 +1,400 @@
+{
+  "api/catalog/products": {
+    "store": {
+      "id": "catalog-products",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1,
+          "sku": "SKU-TEA-001",
+          "name": "Green Tea",
+          "category": "beverages",
+          "price": 12.5,
+          "stock": 40,
+          "status": "active",
+          "warehouse": { "code": "WH-EU", "zone": "A" }
+        },
+        {
+          "id": 2,
+          "sku": "SKU-MUG-010",
+          "name": "Ceramic Mug",
+          "category": "home",
+          "price": 18,
+          "stock": 12,
+          "status": "active",
+          "warehouse": { "code": "WH-US", "zone": "B" }
+        },
+        {
+          "id": 3,
+          "sku": "SKU-TEA-002",
+          "name": "Black Tea",
+          "category": "beverages",
+          "price": 11,
+          "stock": 0,
+          "status": "draft",
+          "warehouse": { "code": "WH-EU", "zone": "A" }
+        },
+        {
+          "id": 4,
+          "sku": "SKU-BAG-003",
+          "name": "Cotton Tote",
+          "category": "home",
+          "price": 22,
+          "stock": 8,
+          "status": "active",
+          "warehouse": { "code": "WH-LATAM", "zone": "C" }
+        },
+        {
+          "id": 5,
+          "sku": "SKU-HNY-004",
+          "name": "Honey Jar",
+          "category": "grocery",
+          "price": 9.5,
+          "stock": 25,
+          "status": "active",
+          "warehouse": { "code": "WH-US", "zone": "A" }
+        },
+        {
+          "id": 6,
+          "sku": "SKU-CUP-005",
+          "name": "Travel Cup",
+          "category": "home",
+          "price": 28,
+          "stock": 3,
+          "status": "active",
+          "warehouse": { "code": "WH-EU", "zone": "B" }
+        }
+      ],
+      "template": {
+        "id": 0,
+        "sku": "",
+        "name": "",
+        "category": "home",
+        "price": 0,
+        "stock": 0,
+        "status": "draft",
+        "warehouse": { "code": "", "zone": "" }
+      },
+      "unique": {
+        "fields": [
+          {
+            "field": "sku",
+            "conflict": {
+              "response": "sku-taken",
+              "detail": {
+                "field": "{{field}}",
+                "value": "{{value}}"
+              }
+            }
+          }
+        ],
+        "conflict": {
+          "response": "duplicate-fields",
+          "detail": {
+            "field": "{{field}}",
+            "value": "{{value}}"
+          }
+        }
+      },
+      "persist": true,
+      "list": {
+        "page": { "query": "page", "default": 1 },
+        "pageSize": {
+          "query": "pageSize",
+          "default": 3,
+          "max": 50,
+          "aliases": ["limit"]
+        },
+        "sort": {
+          "query": "sort",
+          "default": "id",
+          "fields": ["id", "name", "price", "stock"]
+        },
+        "order": { "query": "order", "default": "asc" },
+        "filter": {
+          "fields": [
+            "status",
+            "category",
+            { "field": "price", "op": "gte", "query": "minPrice" },
+            { "field": "price", "op": "lte", "query": "maxPrice" },
+            { "field": "stock", "op": "gt", "query": "minStock" },
+            { "field": "stock", "op": "lt", "query": "maxStock" },
+            { "field": "status", "op": "ne", "query": "excludeStatus" },
+            { "field": "category", "op": "in", "query": "categories" },
+            { "field": "warehouse.code", "op": "eq", "query": "warehouse" }
+          ],
+          "or": [
+            { "field": "warehouse.code", "op": "eq", "query": "anyWarehouse" },
+            { "field": "category", "op": "eq", "query": "anyCategory" }
+          ],
+          "search": {
+            "query": "q",
+            "fields": ["name", "sku", "warehouse.code"]
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "maintenance",
+          "statusCode": 503,
+          "match": { "query": { "mode": "maintenance" } },
+          "delay": 200,
+          "headers": {
+            "Retry-After": "30",
+            "X-Catalog": "down"
+          },
+          "body": {
+            "code": "CATALOG_MAINTENANCE",
+            "message": "Catalog temporarily unavailable"
+          }
+        },
+        {
+          "name": "featured-static",
+          "statusCode": 200,
+          "match": { "query": { "view": "featured" } },
+          "headers": {
+            "X-View": "featured",
+            "Cache-Control": "public, max-age=60"
+          },
+          "body": {
+            "view": "featured",
+            "items": [
+              { "sku": "SKU-TEA-001", "badge": "bestseller" },
+              { "sku": "SKU-BAG-003", "badge": "eco" }
+            ]
+          }
+        },
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list",
+          "delay": 80,
+          "headers": {
+            "X-Total-Count": "{{total}}",
+            "Link": "{{linkHeader}}",
+            "X-Catalog": "store"
+          },
+          "body": {
+            "data": "{{items}}",
+            "page": "{{page}}",
+            "pageSize": "{{pageSize}}",
+            "total": "{{total}}",
+            "totalPages": "{{totalPages}}",
+            "sort": "{{sort}}",
+            "order": "{{order}}",
+            "next": "{{next}}",
+            "previous": "{{previous}}",
+            "hasNext": "{{hasNext}}",
+            "hasPrevious": "{{hasPrevious}}"
+          }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "body": {
+          "sku": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 32,
+            "pattern": "^SKU-[A-Z0-9]+-[0-9]{3}$"
+          },
+          "name": { "type": "string", "minLength": 2, "maxLength": 80 },
+          "category": {
+            "type": "string",
+            "enum": ["beverages", "home", "grocery"]
+          },
+          "price": { "type": "number", "min": 0.01, "max": 9999 },
+          "stock?": { "type": "number", "min": 0, "max": 100000 },
+          "status?": { "type": "string", "enum": ["active", "draft"] }
+        },
+        "invalidResponse": "validation-error",
+        "errorFormat": "array",
+        "errorDetail": {
+          "field": "{{path}}",
+          "message": "{{message}}"
+        }
+      },
+      "responses": [
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid product payload",
+            "errors": []
+          }
+        },
+        {
+          "name": "sku-taken",
+          "statusCode": 409,
+          "body": {
+            "code": "SKU_TAKEN",
+            "conflicts": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE",
+            "conflicts": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create",
+          "headers": {
+            "X-Store-Action": "create"
+          }
+        }
+      ]
+    }
+  },
+  "api/catalog/products/:id": {
+    "store": { "id": "catalog-products" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get",
+          "headers": {
+            "X-Store-Action": "get"
+          }
+        }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "patch",
+      "request": {
+        "body": {
+          "name?": { "type": "string", "minLength": 2, "maxLength": 80 },
+          "price?": { "type": "number", "min": 0.01, "max": 9999 },
+          "stock?": { "type": "number", "min": 0, "max": 100000 },
+          "status?": { "type": "string", "enum": ["active", "draft", "archived"] },
+          "category?": {
+            "type": "string",
+            "enum": ["beverages", "home", "grocery"]
+          }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid product patch",
+            "errors": []
+          }
+        },
+        {
+          "name": "discontinued-static",
+          "statusCode": 409,
+          "match": { "body": { "status": "archived" } },
+          "body": {
+            "code": "USE_ARCHIVE_ENDPOINT",
+            "message": "Archive products via DELETE, not PATCH status=archived"
+          }
+        },
+        {
+          "name": "sku-taken",
+          "statusCode": 409,
+          "body": {
+            "code": "SKU_TAKEN",
+            "conflicts": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE",
+            "conflicts": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "patch",
+          "statusCode": 200,
+          "action": "patch"
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
+      ]
+    }
+  },
+  "api/catalog/checkout": {
+    "POST": {
+      "nameResponse": "paid",
+      "request": {
+        "body": {
+          "sku": { "type": "string", "minLength": 5 },
+          "quantity": { "type": "number", "min": 1, "max": 20 },
+          "cardLast4": { "type": "string", "pattern": "^[0-9]{4}$" }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "code": "VALIDATION_ERROR",
+            "message": "Invalid checkout",
+            "errors": []
+          }
+        },
+        {
+          "name": "payment-required",
+          "statusCode": 402,
+          "match": { "body": { "cardLast4": "0000" } },
+          "delay": 150,
+          "body": {
+            "code": "PAYMENT_REQUIRED",
+            "message": "Card declined"
+          }
+        },
+        {
+          "name": "rate-limited",
+          "statusCode": 429,
+          "match": { "body": { "cardLast4": "4290" } },
+          "headers": {
+            "Retry-After": "5"
+          },
+          "body": {
+            "code": "RATE_LIMITED",
+            "message": "Too many checkout attempts"
+          }
+        },
+        {
+          "name": "paid",
+          "statusCode": 201,
+          "delay": 120,
+          "headers": {
+            "X-Idempotency-Replay": "false"
+          },
+          "body": {
+            "orderId": "ord_demo_1",
+            "status": "paid"
+          }
+        }
+      ]
+    }
+  }
+}

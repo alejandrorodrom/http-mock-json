@@ -1,0 +1,256 @@
+{
+  "api/products": {
+    "store": {
+      "id": "products",
+      "key": "id",
+      "seed": [
+        { "id": 1, "name": "Alpha", "price": 30, "status": "active", "meta": { "region": "eu" } },
+        { "id": 2, "name": "Bravo", "price": 10, "status": "draft", "meta": { "region": "us" } },
+        { "id": 3, "name": "Charlie", "price": 20, "status": "active", "meta": { "region": "eu" } },
+        { "id": 4, "name": "Delta", "price": 40, "status": "active", "meta": { "region": "latam" } },
+        { "id": 5, "name": "Echo", "price": 5, "status": "draft", "meta": { "region": "us" } }
+      ],
+      "template": {
+        "id": 0,
+        "name": "",
+        "price": 0,
+        "status": "draft",
+        "meta": { "region": "" }
+      },
+      "list": {
+        "page": { "query": "page", "default": 1 },
+        "pageSize": {
+          "query": "pageSize",
+          "default": 2,
+          "max": 10,
+          "aliases": ["limit"]
+        },
+        "sort": {
+          "query": "sort",
+          "default": "id",
+          "fields": ["id", "name", "price", "meta.region"]
+        },
+        "order": { "query": "order", "default": "asc" },
+        "filter": {
+          "fields": [
+            "status",
+            { "field": "price", "op": "gte", "query": "minPrice" },
+            { "field": "price", "op": "lte", "query": "maxPrice" },
+            { "field": "price", "op": "gt", "query": "gtPrice" },
+            { "field": "price", "op": "lt", "query": "ltPrice" },
+            { "field": "status", "op": "ne", "query": "excludeStatus" },
+            { "field": "name", "op": "in", "query": "name" },
+            { "field": "meta.region", "op": "eq", "query": "region" }
+          ],
+          "or": [
+            { "field": "status", "op": "eq", "query": "anyStatus" },
+            { "field": "meta.region", "op": "eq", "query": "anyRegion" }
+          ],
+          "search": {
+            "query": "q",
+            "fields": ["name", "meta.region"]
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list",
+          "headers": {
+            "X-Total-Count": "{{total}}",
+            "Link": "{{linkHeader}}"
+          },
+          "body": {
+            "data": "{{items}}",
+            "page": "{{page}}",
+            "pageSize": "{{pageSize}}",
+            "total": "{{total}}",
+            "totalPages": "{{totalPages}}",
+            "sort": "{{sort}}",
+            "order": "{{order}}",
+            "next": "{{next}}",
+            "previous": "{{previous}}",
+            "hasNext": "{{hasNext}}",
+            "hasPrevious": "{{hasPrevious}}"
+          }
+        }
+      ]
+    }
+  },
+  "api/events": {
+    "store": {
+      "id": "events",
+      "key": "id",
+      "seed": [
+        { "id": 1, "title": "A" },
+        { "id": 2, "title": "B" },
+        { "id": 3, "title": "C" },
+        { "id": 4, "title": "D" }
+      ],
+      "list": {
+        "offset": { "query": "offset", "default": 0 },
+        "limit": { "query": "limit", "default": 2, "max": 50 },
+        "sort": { "query": "sort", "default": "id" },
+        "order": { "query": "order", "default": "asc" }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list",
+          "body": {
+            "results": "{{items}}",
+            "next": "{{next}}",
+            "previous": "{{previous}}",
+            "meta": {
+              "count": "{{total}}",
+              "offset": "{{offset}}",
+              "limit": "{{limit}}"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "api/tags": {
+    "store": {
+      "id": "tags",
+      "key": "id",
+      "seed": [
+        { "id": 1, "label": "z" },
+        { "id": 2, "label": "a" },
+        { "id": 3, "label": "m" }
+      ],
+      "list": true
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    }
+  },
+  "api/plain": {
+    "store": {
+      "id": "plain",
+      "key": "id",
+      "seed": [
+        { "id": 1, "name": "one" },
+        { "id": 2, "name": "two" }
+      ]
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    }
+  },
+  "api/feed": {
+    "store": {
+      "id": "feed",
+      "key": "id",
+      "seed": [
+        { "id": 1, "title": "a", "meta": { "score": 10 } },
+        { "id": 2, "title": "b", "meta": { "score": 40 } },
+        { "id": 3, "title": "c", "meta": { "score": 30 } },
+        { "id": 4, "title": "d", "meta": { "score": 20 } },
+        { "id": 5, "title": "e", "meta": { "score": 50 } }
+      ],
+      "list": {
+        "cursor": {
+          "query": "starting_after",
+          "limit": { "query": "limit", "default": 2, "max": 10 }
+        },
+        "sort": {
+          "query": "sort",
+          "default": "-meta.score",
+          "fields": ["id", "title", "meta.score"]
+        },
+        "order": { "query": "order", "default": "asc" }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list",
+          "body": {
+            "data": "{{items}}",
+            "has_more": "{{hasMore}}",
+            "next_cursor": "{{nextCursor}}",
+            "next": "{{next}}"
+          }
+        }
+      ]
+    }
+  },
+  "api/mixed": {
+    "store": {
+      "id": "mixed",
+      "key": "id",
+      "seed": [
+        { "id": 1, "label": "a" },
+        { "id": 2, "label": "b" },
+        { "id": 3, "label": "c" },
+        { "id": 4, "label": "d" }
+      ],
+      "list": {
+        "page": { "query": "page", "default": 1 },
+        "pageSize": {
+          "query": "pageSize",
+          "default": 2,
+          "max": 10
+        },
+        "offset": { "query": "offset", "default": 0 },
+        "limit": { "query": "limit", "default": 2, "max": 10 },
+        "cursor": {
+          "query": "starting_after",
+          "limit": { "query": "cursorLimit", "default": 2, "max": 10 }
+        },
+        "sort": {
+          "query": "sort",
+          "default": "id",
+          "fields": ["id", "label"]
+        },
+        "order": { "query": "order", "default": "asc" }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list",
+          "body": {
+            "data": "{{items}}",
+            "page": "{{page}}",
+            "offset": "{{offset}}",
+            "has_more": "{{hasMore}}",
+            "next_cursor": "{{nextCursor}}",
+            "next": "{{next}}",
+            "previous": "{{previous}}"
+          }
+        }
+      ]
+    }
+  }
+}

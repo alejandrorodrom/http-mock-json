@@ -1,4 +1,3 @@
-import { StartMock } from '../../../interfaces/mock.interface';
 import express, { Express, Request, Response } from 'express';
 import { getMocksData } from './files';
 import { logApi, logError } from '../../../scripts/log.script';
@@ -9,15 +8,19 @@ import { resolveDelay, sleep } from '../../../scripts/delay.script';
 import { proxyRequest, resolveProxy } from '../../../scripts/proxy.script';
 import { checkRequest } from '../../../scripts/request-check.script';
 import { buildRequestError } from '../../../scripts/request-error.script';
-import { isEmpty } from '../../../scripts/guards.script';
+import { isEmpty, isExisting } from '../../../scripts/guards.script';
 import { defaultNotFoundBody, StoreRegistry } from '../../../scripts/store.script';
 import { buildStoreConflictResponse } from '../../../scripts/store-conflict.script';
+import {
+  applyListHeaderTemplate,
+  applyListTemplate
+} from '../../../scripts/store-list.script';
 import { buildPersistWatchIgnored } from '../../../scripts/store-persist.script';
 import {
   DEFAULT_NOT_FOUND_STATUS
 } from '../../../constants/store.constant';
 import { MockResponseConfig } from '../../../interfaces/data.interface';
-import { StartMockResult } from '../../../interfaces/mock.interface';
+import { StartMock, StartMockResult } from '../../../interfaces/mock.interface';
 
 export const startMock = async (
   { port, folderPath, proxy, resetStore }: StartMock
@@ -128,6 +131,22 @@ export const startMock = async (
         }
 
         const status = result.status ?? selectedResponse.status;
+
+        if (
+          selectedResponse.action === 'list'
+          && result.listResult
+        ) {
+          const headers = applyListHeaderTemplate(
+            selectedResponse.headers,
+            result.listResult
+          );
+          const body = isExisting(selectedResponse.body)
+            ? applyListTemplate(selectedResponse.body, result.listResult)
+            : result.body;
+          res.set(headers).status(status).json(body);
+          return;
+        }
+
         res.set(selectedResponse.headers).status(status).json(result.body);
         return;
       }

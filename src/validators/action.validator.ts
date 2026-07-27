@@ -43,7 +43,7 @@ export const validateAction = (
     });
   }
 
-  if (hasProperty(response, 'body')) {
+  if (hasProperty(response, 'body') && action !== 'list') {
     warnings.push({
       endpoint,
       method,

@@ -35,7 +35,11 @@ const successCases = [
   require('./success/27-store-matrix'),
   require('./success/28-store-persist-matrix'),
   require('./success/29-store-saas'),
-  require('./success/30-store-rbac')
+  require('./success/30-store-rbac'),
+  require('./success/31-store-list'),
+  require('./success/32-store-commerce'),
+  require('./success/33-store-helpdesk'),
+  require('./success/34-store-hr')
 ];
 
 const errorCases = [
@@ -89,7 +93,11 @@ const runtimeCases = [
   require('./runtime/store-persist-matrix'),
   require('./runtime/store-persist-write-failed'),
   require('./runtime/store-saas'),
-  require('./runtime/store-rbac')
+  require('./runtime/store-rbac'),
+  require('./runtime/store-list'),
+  require('./runtime/store-commerce'),
+  require('./runtime/store-helpdesk'),
+  require('./runtime/store-hr')
 ];
 
 const unitCases = [

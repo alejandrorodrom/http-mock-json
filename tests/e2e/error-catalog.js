@@ -662,6 +662,90 @@ const ERROR_CATALOG = [
     caseName: 'error/store-errors'
   },
   {
+    id: 'store.list-type',
+    message: 'The "store.list" property must be a boolean or an object',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.list-unknown-key',
+    message: 'The "store.list" property contains unknown key "foo"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.list-page-default',
+    message: 'The "store.list.page.default" must be an integer >= 1',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.list-sort-fields',
+    message: 'The "store.list.sort.fields" must be a non-empty array of strings',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.list-order-default',
+    message: 'The "store.list.order.default" must be "asc" or "desc"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.list-filter-type',
+    message: 'The "store.list.filter" property must be an array or an object',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.list-filter-empty',
+    message: 'The "store.list.filter" array must be a non-empty array of strings',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.list-filter-search-fields',
+    message: 'The "store.list.filter.search.fields" must be a non-empty array of strings',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.list-filter-op',
+    message: 'The "store.list.filter.fields[0].op" must be one of: eq, ne, gt, gte, lt, lte, in',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.list-filter-or-empty',
+    message: 'The "store.list.filter.or" must be a non-empty array of strings or field objects',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.list-filter-or-field',
+    message: 'The "store.list.filter.or[0].field" must be a non-empty string',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.list-cursor-type',
+    message: 'The "store.list.cursor" property must be a boolean or an object',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
     id: 'http.store.409.unique',
     message: 'DUPLICATE',
     source: 'src/scripts/store.script.ts',
@@ -695,6 +779,69 @@ const ERROR_CATALOG = [
     source: 'src/scripts/store-persist.script.ts',
     kind: 'http',
     caseName: 'runtime/store-persist-matrix'
+  },
+  {
+    id: 'http.store.list.sort-page',
+    message: 'X-Total-Count',
+    source: 'src/scripts/store-list.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-list'
+  },
+  {
+    id: 'http.store.list.bad-sort',
+    message: 'Query "sort" field must be one of: id, name, price',
+    source: 'src/scripts/store-list.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-list'
+  },
+  {
+    id: 'http.store.list.links-next',
+    message: 'rel="next"',
+    source: 'src/scripts/store-list.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-list'
+  },
+  {
+    id: 'http.store.list.filter-search',
+    message: 'Charlie',
+    source: 'src/scripts/store-list.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-list'
+  },
+  {
+    id: 'http.store.list.filter-ops',
+    message: 'Query "minPrice" must be a number',
+    source: 'src/scripts/store-list.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-list'
+  },
+  {
+    id: 'http.store.list.filter-empty',
+    message: 'Query "name" must not be empty',
+    source: 'src/scripts/store-list.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-list'
+  },
+  {
+    id: 'http.store.list.mode-priority',
+    message: 'mixed',
+    source: 'src/scripts/store-list.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-list'
+  },
+  {
+    id: 'http.store.list.multi-sort',
+    message: 'price:desc,name:asc',
+    source: 'src/scripts/store-list.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-list'
+  },
+  {
+    id: 'http.store.list.cursor',
+    message: 'starting_after',
+    source: 'src/scripts/store-list.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-list'
   },
   {
     id: 'store.persist.corrupt-file',
