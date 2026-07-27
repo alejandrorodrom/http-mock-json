@@ -20,7 +20,7 @@
 - [Validation System](#validation-system-)
 - [Advanced examples](#advanced-examples)
 - [Real-world projects](#real-world-projects-)
-- [Mutable store (CRUD in memory)](#mutable-store-crud-in-memory-)
+- [Mutable store](#mutable-store-)
   - [Capability map (build complex mocks)](#capability-map-build-complex-mocks)
   - [How it works](#how-it-works)
   - [Actions](#actions)
@@ -52,7 +52,7 @@
 - **Multiple Responses** - Simulate different scenarios (success, error, etc.) for the same endpoint
 - **Request Matching** - Select responses by route params, query params and/or request body
 - **Request Validation** - Validate request `body`/`query` shape with rules (`type`, `minLength`, `format`, nested objects, etc.)
-- **Mutable Store** - Opt-in in-memory CRUD (`store` + `action`) with `seed`, `template`, unique/key conflicts, optional disk `persist`, `--reset-store`, and `store.list` (sort/multi-sort, page/offset/cursor, filters with `eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in` + nested + `or` + search, response templates). Start with the [capability map](#capability-map-build-complex-mocks) to compose complex APIs from the docs.
+- **Mutable Store** - Opt-in mutable collections (`store` + `action`) with `seed`, `template`, unique/key conflicts, optional disk `persist`, `--reset-store`, and `store.list` (sort/multi-sort, page/offset/cursor, filters with `eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in` + nested + `or` + search, response templates). Start with the [capability map](#capability-map-build-complex-mocks) to compose complex APIs from the docs.
 - **Response Delay** - Simulate latency per method or per response
 - **Type Safe** - Built with TypeScript for better developer experience
 - **RESTful Support** - Full support for GET, POST, PUT, PATCH, DELETE methods
@@ -141,7 +141,7 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | store.key    | ❌       | string/array/object | `"id"`, `["tenantId","id"]`         | Primary key (default `"id"`). Composite keys + optional `conflict.response` |
    | store.seed   | ❌       | array          | `[{ "id": 1 }]`                          | Initial items (`[]` allowed). Used when there is no persist snapshot (or after `--reset-store`) |
    | store.template | ❌     | object         | `{ "active": true }`                     | Base object merged on `create` / `update` (not on `patch`). Key placeholders ignored unless client sends them |
-   | store.unique | ❌       | array/object   | `["email"]` or `{ "fields": [...], "conflict": {...} }` | Unique fields + customizable `409` conflict response |
+   | store.unique | ❌       | array/object   | `["email"]` or `{ "fields": ["email", { "fields": ["tenantId","email"] }], "conflict": {...} }` | Unique fields (simple or composite) + customizable `409` conflict response |
    | store.persist| ❌       | boolean/object | `true` or `{ "enabled": true, "file": "state.json" }` | Persist to disk under the mock files root (default `.store/<id>.json`). Custom `file` must be relative (no `..`) |
    | store.list   | ❌       | boolean/object | `true` / `{ page, pageSize, offset, limit, cursor, sort, order, filter }` | Opt-in list engine for `action: "list"`: multi-sort, page/offset/cursor, filters (`eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in`, nested, `or`) + search. Response `body`/`headers` use placeholders (`{{items}}`, `{{next}}`, `{{nextCursor}}`, …) |
    | HTTP Method  | ✅       | string         | `GET`, `POST`, `PUT`, `PATCH`, `DELETE`  | HTTP verb (must be uppercase)                                              |
@@ -327,7 +327,7 @@ When files change during watch mode:
 
 ## Recommendations 📋
 
-* Review the advanced examples and the [mutable store guide](#mutable-store-crud-in-memory-) if you need mutable CRUD.
+* Review the advanced examples and the [mutable store guide](#mutable-store-) if you need mutable CRUD.
 * A single json file can contain many mocks.
 * There can be many json files each with their respective mocks.
 * The server validates your mocks automatically - fix any errors before the server can start.
@@ -1065,18 +1065,18 @@ Proxy values:
 | `{ "target": "https://api.com", "path": "/v2/users" }` | Rewrite path to `/v2/users`; keep the original query |
 | `true` | Use method-level `proxy`, or `--proxy` if method has none |
 
-### Example 10: Mutable store (in-memory CRUD)
+### Example 10: Mutable store
 
 Opt-in collections that mutate while the server runs. Declare `store` on the endpoint and mark responses with `action`.
 
 See the full guide (capability map, schema, persist, conflicts, recipes, examples A–G):  
-**[Mutable store (CRUD in memory)](#mutable-store-crud-in-memory-)** · **[Capability map](#capability-map-build-complex-mocks)**
+**[Mutable store](#mutable-store-)** · **[Capability map](#capability-map-build-complex-mocks)**
 
 ---
 
-## Mutable store (CRUD in memory) 🗄️
+## Mutable store 🗄️
 
-Opt-in feature (≥ `1.11.0`; advanced list filters ≥ `1.12.0`). Without `store` + `action`, mocks stay 100% static.
+Opt-in feature (≥ `1.11.0`; advanced list filters ≥ `1.12.0`; composite unique ≥ `1.13.0`). Without `store` + `action`, mocks stay 100% static.
 
 Use it when the frontend needs **real CRUD flows**: create an item, list it, edit it, delete it — without a backend. Data lives in memory for the process lifetime; optionally survive restarts with `persist`.
 
@@ -1350,10 +1350,11 @@ Rules:
 3. Several endpoints may share the same `store.id`; the full definition can appear only once.
 4. A reference to an undefined `id` → startup error.
 5. `seed` must be an array of objects (when present). `[]` or omitted → empty collection at start (unless a persist snapshot loads).
-6. `unique.fields` must be non-empty. Each entry is a non-empty string or `{ "field", "conflict?" }`.
+6. `unique.fields` must be non-empty. Each entry is a non-empty string, `{ "field", "conflict?" }`, or `{ "fields": ["a","b"], "conflict?" }` (composite unique).
 7. `conflict` objects only allow `response` and `detail`.
 8. `conflict.detail` is a non-empty string **or** a non-empty object whose values are strings (templates).
 9. Named `conflict.response` values must exist in `responses` of every method that uses mutating actions (`create` / `update` / `patch`) for that store.
+10. In a unique entry object, `field` and `fields` are mutually exclusive.
 
 `key` shapes:
 
@@ -1371,15 +1372,20 @@ Rules:
 "unique": {
   "fields": [
     "email",
-    { "field": "username", "conflict": { "response": "duplicate-username" } }
+    { "field": "username", "conflict": { "response": "duplicate-username" } },
+    {
+      "fields": ["tenantId", "email"],
+      "conflict": { "response": "duplicate-tenant-email" }
+    }
   ],
   "conflict": {
     "response": "duplicate-fields",
-    "detail": { "campo": "{{field}}", "valor": "{{value}}" }
+    "detail": { "campo": "{{field}}", "campos": "{{fields}}", "valor": "{{value}}" }
   }
 }
 ```
 
+Composite unique (`{ "fields": ["tenantId", "email"] }`) requires **all** listed fields to be present on the item to evaluate. Same email under another `tenantId` is allowed. `{{field}}` becomes `"tenantId+email"`; `{{fields}}` is `["tenantId","email"]`; `{{value}}` is the JSON array of values.
 ### Key generation on `create`
 
 Merge order, then key resolution for each key field:
@@ -1440,6 +1446,7 @@ Placeholders in the **named** conflict response `body` (deep replace):
 | `{{conflicts}}` as the **entire** property value | Replaced by an array shaped by `conflict.detail` (not a JSON string) |
 | `{{conflicts}}` inside a larger string | Replaced by `JSON.stringify(...)` of that array |
 | `{{field}}` / `{{value}}` / `{{message}}` | First conflict only |
+| `{{fields}}` | JSON array of field names for the first conflict (`["email"]` or `["tenantId","email"]`) |
 
 `conflict.detail` shaping of each conflict entry:
 
@@ -4258,7 +4265,13 @@ These errors occur when `store` or `action` configuration is invalid:
 | `The store "X" is already defined` | Duplicate full store definition | Define seed/key/unique once; other routes use `{ "id": "X" }` |
 | `The store "X" is referenced but not defined` | Reference without definition | Add a full `store` with that `id` somewhere |
 | `The "store.seed" contains duplicate key (...)` | Seed PK collision | Make seed keys unique |
-| `The "store.seed" contains duplicate unique field "X"` | Seed unique collision | Make unique values unique in seed |
+| `The "store.seed" contains duplicate unique field "X"` | Seed unique collision | Make unique values unique in seed (`X` may be `tenantId+email` for composites) |
+| `The "store.unique.fields[0]" object cannot include both "field" and "fields"` | Mixed simple/composite shape | Use either `field` or `fields`, not both |
+| `The "store.unique.fields[0].fields" must be a non-empty array of strings` | Empty/invalid composite (incl. non-strings) | Provide `["a","b"]` |
+| `The "store.unique.fields[0]" object must include "field" or "fields"` | Incomplete unique entry | Add `field` or `fields` |
+| `The "store.unique.fields[0]" property contains unknown key "X"` | Typo in unique entry | Only `field`, `fields`, `conflict` |
+| `The "store.unique.fields[1]" duplicates the unique constraint "email"` | Same unique twice | Keep one entry per constraint |
+| `The "store.unique.fields[0]" matches the store key and is redundant` (warning) | Unique equals PK | Remove the redundant unique or keep intentionally |
 | `The "action" must be one of: list, get, create, update, patch, delete` | Unknown action | Use a supported action |
 | `The "action" property requires a "store" on the endpoint` | Action without store | Add `store` to the endpoint |
 | `The "action" property cannot be used together with "proxy"` | Action + proxy | Remove one of them |

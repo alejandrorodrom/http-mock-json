@@ -43,7 +43,7 @@ export const getMocksData = (folderPath: string): MocksData => {
   }
 
   for (const [file, data] of parsed) {
-    collectStoresFromData(file, data, errorsByFile, stores, folderPath);
+    collectStoresFromData(file, data, errorsByFile, warningsByFile, stores, folderPath);
   }
 
   for (const [file, data] of parsed) {

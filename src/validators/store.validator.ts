@@ -1,4 +1,5 @@
 import {
+  DEFAULT_STORE_KEY,
   STORE_LIST_FILTER_OPS_LABEL,
   STORE_LIST_FILTER_OP_SET,
   STORE_PROPERTY
@@ -27,13 +28,15 @@ import {
 import { getKeys } from '../scripts/objects.script';
 import {
   isStoreReference,
+  normalizeKey,
   normalizeStoreDefinition
 } from '../scripts/store-normalize.script';
 import { isPersistFileInsideMocks } from '../scripts/store-persist.script';
-import { validateStoreItems } from '../scripts/store-items.script';
+import { validateStoreItems, uniqueConstraintLabel } from '../scripts/store-items.script';
 
 export interface StoreValidationResult {
   errors: LocalIssue[];
+  warnings: LocalIssue[];
   definition: StoreDefinition | null;
   isReference: boolean;
 }
@@ -97,15 +100,104 @@ const validateConflict = (
   }
 };
 
-const validateUniqueFieldEntry = (
+const warnIfUniqueMatchesKey = (
+  warnings: LocalIssue[],
+  endpoint: string,
+  path: string,
+  fields: string[],
+  keyFields: string[]
+): void => {
+  if (
+    fields.length === keyFields.length
+    && fields.every((field, i) => field === keyFields[i])
+  ) {
+    warnings.push({
+      endpoint,
+      message: `The "${ path }" matches the store key and is redundant`
+    });
+  }
+};
+
+const uniqueEntryFields = (entry: StoreUniqueField): string[] | null => {
+  if (typeof entry === 'string') {
+    return entry.length > 0 ? [entry] : null;
+  }
+
+  if (!isObject(entry)) {
+    return null;
+  }
+
+  const hasField = hasProperty(entry, 'field');
+  const hasFields = hasProperty(entry, 'fields');
+
+  if (hasField && hasFields) {
+    return null;
+  }
+
+  if (hasFields) {
+    if (
+      !isArray(entry.fields)
+      || isEmpty(entry.fields)
+      || entry.fields.some(item => typeof item !== 'string' || item.length === 0)
+    ) {
+      return null;
+    }
+    return entry.fields;
+  }
+
+  if (hasField && typeof entry.field === 'string' && entry.field.length > 0) {
+    return [entry.field];
+  }
+
+  return null;
+};
+
+const assertNoDuplicateUniqueConstraints = (
   errors: LocalIssue[],
   endpoint: string,
+  entries: StoreUniqueField[]
+): void => {
+  const seen = new Set<string>();
+
+  entries.forEach((entry, index) => {
+    const fields = uniqueEntryFields(entry);
+    if (!fields) {
+      return;
+    }
+
+    const label = uniqueConstraintLabel(fields);
+    if (seen.has(label)) {
+      push(
+        errors,
+        endpoint,
+        `The "store.unique.fields[${ index }]" duplicates the unique constraint "${ label }"`
+      );
+      return;
+    }
+
+    seen.add(label);
+  });
+};
+
+const validateUniqueFieldEntry = (
+  errors: LocalIssue[],
+  warnings: LocalIssue[],
+  endpoint: string,
   entry: StoreUniqueField,
-  index: number
+  index: number,
+  keyFields: string[]
 ): void => {
   if (typeof entry === 'string') {
     if (entry.length === 0) {
       push(errors, endpoint, `The "store.unique.fields[${ index }]" must be a non-empty string`);
+    } else {
+      warnIfUniqueMatchesKey(
+        warnings,
+        endpoint,
+        `store.unique.fields[${ index }]`,
+        [entry],
+        keyFields
+      );
     }
     return;
   }
@@ -114,16 +206,72 @@ const validateUniqueFieldEntry = (
     push(
       errors,
       endpoint,
-      `The "store.unique.fields[${ index }]" must be a string or an object with "field"`
+      `The "store.unique.fields[${ index }]" must be a string or an object with "field" or "fields"`
     );
     return;
   }
 
-  if (typeof entry.field !== 'string' || entry.field.length === 0) {
+  const entryKeys = getKeys(entry as unknown as Record<string, unknown>);
+  for (const key of entryKeys) {
+    if (key !== 'field' && key !== 'fields' && key !== 'conflict') {
+      push(
+        errors,
+        endpoint,
+        `The "store.unique.fields[${ index }]" property contains unknown key "${ key }"`
+      );
+    }
+  }
+
+  const hasField = hasProperty(entry, 'field');
+  const hasFields = hasProperty(entry, 'fields');
+
+  if (hasField && hasFields) {
     push(
       errors,
       endpoint,
-      `The "store.unique.fields[${ index }].field" must be a non-empty string`
+      `The "store.unique.fields[${ index }]" object cannot include both "field" and "fields"`
+    );
+    return;
+  }
+
+  if (hasFields) {
+    if (!isArray(entry.fields) || isEmpty(entry.fields)
+      || entry.fields.some(item => typeof item !== 'string' || item.length === 0)) {
+      push(
+        errors,
+        endpoint,
+        `The "store.unique.fields[${ index }].fields" must be a non-empty array of strings`
+      );
+    } else {
+      warnIfUniqueMatchesKey(
+        warnings,
+        endpoint,
+        `store.unique.fields[${ index }].fields`,
+        entry.fields,
+        keyFields
+      );
+    }
+  } else if (hasField) {
+    if (typeof entry.field !== 'string' || entry.field.length === 0) {
+      push(
+        errors,
+        endpoint,
+        `The "store.unique.fields[${ index }].field" must be a non-empty string`
+      );
+    } else {
+      warnIfUniqueMatchesKey(
+        warnings,
+        endpoint,
+        `store.unique.fields[${ index }].field`,
+        [entry.field],
+        keyFields
+      );
+    }
+  } else {
+    push(
+      errors,
+      endpoint,
+      `The "store.unique.fields[${ index }]" object must include "field" or "fields"`
     );
   }
 
@@ -132,8 +280,10 @@ const validateUniqueFieldEntry = (
 
 const validateUnique = (
   errors: LocalIssue[],
+  warnings: LocalIssue[],
   endpoint: string,
-  unique: RawStoreUnique
+  unique: RawStoreUnique,
+  keyFields: string[]
 ): void => {
   if (isArray(unique)) {
     if (isEmpty(unique)) {
@@ -142,8 +292,16 @@ const validateUnique = (
     }
 
     unique.forEach((entry, index) => {
-      validateUniqueFieldEntry(errors, endpoint, entry as StoreUniqueField, index);
+      validateUniqueFieldEntry(
+        errors,
+        warnings,
+        endpoint,
+        entry as StoreUniqueField,
+        index,
+        keyFields
+      );
     });
+    assertNoDuplicateUniqueConstraints(errors, endpoint, unique as StoreUniqueField[]);
     return;
   }
 
@@ -175,9 +333,17 @@ const validateUnique = (
   }
 
   unique.fields.forEach((entry, index) => {
-    validateUniqueFieldEntry(errors, endpoint, entry as StoreUniqueField, index);
+    validateUniqueFieldEntry(
+      errors,
+      warnings,
+      endpoint,
+      entry as StoreUniqueField,
+      index,
+      keyFields
+    );
   });
 
+  assertNoDuplicateUniqueConstraints(errors, endpoint, unique.fields as StoreUniqueField[]);
   validateConflict(errors, endpoint, 'store.unique.conflict', unique.conflict);
 };
 
@@ -762,21 +928,22 @@ export const validateStore = (
   mocksDir: string
 ): StoreValidationResult => {
   const errors: LocalIssue[] = [];
+  const warnings: LocalIssue[] = [];
 
   if (!isObject(store)) {
     push(errors, endpoint, `The "${ STORE_PROPERTY }" property must be an object`);
-    return { errors, definition: null, isReference: false };
+    return { errors, warnings, definition: null, isReference: false };
   }
 
   const config = store as RawStoreConfig;
 
   if (!hasProperty(config, 'id') || typeof config.id !== 'string' || config.id.length === 0) {
     push(errors, endpoint, 'The "store.id" must be a non-empty string');
-    return { errors, definition: null, isReference: false };
+    return { errors, warnings, definition: null, isReference: false };
   }
 
   if (isStoreReference(config)) {
-    return { errors, definition: null, isReference: true };
+    return { errors, warnings, definition: null, isReference: true };
   }
 
   const keys = getKeys(config as unknown as Record<string, unknown>);
@@ -806,8 +973,17 @@ export const validateStore = (
     push(errors, endpoint, 'The "store.template" property must be an object');
   }
 
+  const normalizedKey = normalizeKey(config.key);
+  const keyFields = normalizedKey?.fields ?? [DEFAULT_STORE_KEY];
+
   if (hasProperty(config, 'unique')) {
-    validateUnique(errors, endpoint, config.unique as RawStoreUnique);
+    validateUnique(
+      errors,
+      warnings,
+      endpoint,
+      config.unique as RawStoreUnique,
+      keyFields
+    );
   }
 
   if (hasProperty(config, 'persist')) {
@@ -819,19 +995,19 @@ export const validateStore = (
   }
 
   if (!isEmpty(errors)) {
-    return { errors, definition: null, isReference: false };
+    return { errors, warnings, definition: null, isReference: false };
   }
 
   const definition = normalizeStoreDefinition(config);
   if (!definition) {
     push(errors, endpoint, 'The "store" configuration is invalid');
-    return { errors, definition: null, isReference: false };
+    return { errors, warnings, definition: null, isReference: false };
   }
 
   validateSeedUniqueness(errors, endpoint, definition);
   if (!isEmpty(errors)) {
-    return { errors, definition: null, isReference: false };
+    return { errors, warnings, definition: null, isReference: false };
   }
 
-  return { errors, definition, isReference: false };
+  return { errors, warnings, definition, isReference: false };
 };

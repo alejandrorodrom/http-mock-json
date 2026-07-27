@@ -48,7 +48,13 @@ module.exports = {
         'The "store.list.filter.fields[0].op" must be one of: eq, ne, gt, gte, lt, lte, in',
         'The "store.list.filter.or" must be a non-empty array of strings or field objects',
         'The "store.list.filter.or[0].field" must be a non-empty string',
-        'The "store.list.cursor" property must be a boolean or an object'
+        'The "store.list.cursor" property must be a boolean or an object',
+        'The "store.unique.fields[0]" object cannot include both "field" and "fields"',
+        'The "store.unique.fields[0].fields" must be a non-empty array of strings',
+        'The "store.unique.fields[0]" object must include "field" or "fields"',
+        'The "store.seed" contains duplicate unique field "tenantId+email"',
+        'The "store.unique.fields[0]" property contains unknown key "foo"',
+        'The "store.unique.fields[1]" duplicates the unique constraint "email"'
       ],
       stdoutExcludes: ['Mock server is running']
     }

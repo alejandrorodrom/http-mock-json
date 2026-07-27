@@ -1,0 +1,54 @@
+{
+  "api/items": {
+    "store": {
+      "id": "items",
+      "key": "id",
+      "seed": [{ "id": 1 }],
+      "unique": ["id"]
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "action": "list" }
+      ]
+    }
+  },
+  "api/items-field": {
+    "store": {
+      "id": "items-field",
+      "key": "id",
+      "seed": [{ "id": 1 }],
+      "unique": {
+        "fields": [
+          { "field": "id" }
+        ]
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "action": "list" }
+      ]
+    }
+  },
+  "api/pairs": {
+    "store": {
+      "id": "pairs",
+      "key": {
+        "fields": ["a", "b"]
+      },
+      "seed": [{ "a": "x", "b": "y" }],
+      "unique": {
+        "fields": [
+          { "fields": ["a", "b"] }
+        ]
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "action": "list" }
+      ]
+    }
+  }
+}

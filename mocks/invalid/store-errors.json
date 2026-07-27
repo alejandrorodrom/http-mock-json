@@ -521,5 +521,124 @@
         { "name": "ok", "statusCode": 200, "body": {} }
       ]
     }
+  },
+  "bad-store-unique-both-field-fields": {
+    "store": {
+      "id": "unique-both",
+      "unique": {
+        "fields": [
+          { "field": "email", "fields": ["tenantId", "email"] }
+        ]
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-unique-fields-empty": {
+    "store": {
+      "id": "unique-fields-empty",
+      "unique": {
+        "fields": [
+          { "fields": [] }
+        ]
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-unique-missing-field-or-fields": {
+    "store": {
+      "id": "unique-missing-shape",
+      "unique": {
+        "fields": [
+          { "conflict": { "response": "x" } }
+        ]
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-seed-duplicate-unique-composite": {
+    "store": {
+      "id": "dup-unique-composite",
+      "key": "id",
+      "unique": {
+        "fields": [
+          { "fields": ["tenantId", "email"] }
+        ]
+      },
+      "seed": [
+        { "id": 1, "tenantId": "acme", "email": "a@a.com" },
+        { "id": 2, "tenantId": "acme", "email": "a@a.com" }
+      ]
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-unique-fields-non-string": {
+    "store": {
+      "id": "unique-fields-non-string",
+      "unique": {
+        "fields": [
+          { "fields": [1, "email"] }
+        ]
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-unique-unknown-key": {
+    "store": {
+      "id": "unique-unknown-key",
+      "unique": {
+        "fields": [
+          { "fields": ["tenantId", "email"], "foo": 1 }
+        ]
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-store-unique-duplicate-constraint": {
+    "store": {
+      "id": "unique-duplicate-constraint",
+      "key": "id",
+      "unique": {
+        "fields": [
+          "email",
+          { "field": "email" }
+        ]
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
   }
 }

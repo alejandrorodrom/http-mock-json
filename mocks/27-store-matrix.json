@@ -5,7 +5,12 @@
       "key": {
         "fields": ["tenantId", "id"],
         "conflict": {
-          "response": "duplicate-key"
+          "response": "duplicate-key",
+          "detail": {
+            "field": "{{field}}",
+            "fields": "{{fields}}",
+            "value": "{{value}}"
+          }
         }
       },
       "seed": [
@@ -70,7 +75,8 @@
           "statusCode": 409,
           "body": {
             "code": "DUPLICATE_KEY",
-            "message": "Key already exists"
+            "message": "Key already exists",
+            "errors": "{{conflicts}}"
           }
         },
         {

@@ -1,0 +1,180 @@
+{
+  "api/:tenantId/members": {
+    "store": {
+      "id": "members",
+      "key": {
+        "fields": ["tenantId", "id"]
+      },
+      "seed": [
+        {
+          "id": 1,
+          "tenantId": "acme",
+          "email": "juan@acme.com",
+          "username": "juan"
+        },
+        {
+          "id": 2,
+          "tenantId": "globex",
+          "email": "juan@acme.com",
+          "username": "juan.globex"
+        }
+      ],
+      "template": {
+        "id": 0,
+        "tenantId": "",
+        "email": "",
+        "username": ""
+      },
+      "unique": {
+        "fields": [
+          "username",
+          {
+            "fields": ["tenantId", "email"],
+            "conflict": {
+              "response": "duplicate-tenant-email",
+              "detail": {
+                "campo": "{{field}}",
+                "campos": "{{fields}}",
+                "valor": "{{value}}"
+              }
+            }
+          }
+        ],
+        "conflict": {
+          "response": "duplicate-fields",
+          "detail": {
+            "campo": "{{field}}",
+            "valor": "{{value}}"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        {
+          "name": "duplicate-tenant-email",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE_TENANT_EMAIL",
+            "errores": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE",
+            "errores": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
+      ]
+    }
+  },
+  "api/:tenantId/members/:id": {
+    "store": { "id": "members" },
+    "PATCH": {
+      "nameResponse": "patch",
+      "responses": [
+        {
+          "name": "duplicate-tenant-email",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE_TENANT_EMAIL",
+            "errores": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE",
+            "errores": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "patch",
+          "statusCode": 200,
+          "action": "patch"
+        }
+      ]
+    },
+    "PUT": {
+      "nameResponse": "update",
+      "responses": [
+        {
+          "name": "duplicate-tenant-email",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE_TENANT_EMAIL",
+            "errores": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "duplicate-fields",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE",
+            "errores": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "update",
+          "statusCode": 200,
+          "action": "update"
+        }
+      ]
+    }
+  },
+  "api/slots": {
+    "store": {
+      "id": "slots",
+      "key": "id",
+      "seed": [
+        { "id": 1, "code": "A", "region": "us" },
+        { "id": 2, "code": "A", "region": "eu" }
+      ],
+      "template": {
+        "id": 0,
+        "code": ""
+      },
+      "unique": {
+        "fields": [
+          { "fields": ["code", "region"] }
+        ]
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  },
+  "api/slots/:id": {
+    "store": { "id": "slots" },
+    "PUT": {
+      "nameResponse": "update",
+      "responses": [
+        { "name": "update", "statusCode": 200, "action": "update" }
+      ]
+    }
+  }
+}

@@ -13,9 +13,13 @@ import {
   StoreOperationResult,
   StoreResetOption
 } from '../types/store.type';
-import { hasProperty, isObject } from './guards.script';
+import { isObject } from './guards.script';
 import { logError } from './log.script';
-import { encodeStoreKey } from './store-items.script';
+import {
+  encodeFieldTuple,
+  itemHasAllFields,
+  uniqueConstraintLabel
+} from './store-items.script';
 import {
   buildListResult,
   filterStoreItems,
@@ -119,28 +123,34 @@ const findConflicts = (
   const conflicts: StoreConflictItem[] = [];
   const uniqueConflicts: StoreConflictItem[] = [];
 
-  const keyValue = encodeStoreKey(collection.definition.keyFields, item);
+  const keyFields = collection.definition.keyFields;
+  const keyValue = encodeFieldTuple(keyFields, item);
   if (collection.items.has(keyValue) && keyValue !== ignoreKey) {
     conflicts.push({
-      field: collection.definition.keyFields.join('+'),
-      value: collection.definition.keyFields.length === 1
-        ? item[collection.definition.keyFields[0]]
-        : collection.definition.keyFields.map(field => item[field]),
+      field: uniqueConstraintLabel(keyFields),
+      fields: keyFields,
+      value: keyFields.length === 1
+        ? item[keyFields[0]]
+        : keyFields.map(field => item[field]),
       message: DEFAULT_CONFLICT_MESSAGE
     });
   }
 
   for (const uniqueField of collection.definition.uniqueFields) {
-    if (!hasProperty(item, uniqueField.field)) {
+    if (!itemHasAllFields(item, uniqueField.fields)) {
       continue;
     }
 
-    const value = item[uniqueField.field];
+    const label = uniqueConstraintLabel(uniqueField.fields);
+    const tuple = encodeFieldTuple(uniqueField.fields, item);
     const duplicate = [...collection.items.entries()].some(([mapKey, existing]) => {
       if (ignoreKey !== undefined && mapKey === ignoreKey) {
         return false;
       }
-      return String(existing[uniqueField.field]) === String(value);
+      if (!itemHasAllFields(existing, uniqueField.fields)) {
+        return false;
+      }
+      return encodeFieldTuple(uniqueField.fields, existing) === tuple;
     });
 
     if (!duplicate) {
@@ -148,9 +158,14 @@ const findConflicts = (
     }
 
     uniqueConflicts.push({
-      field: uniqueField.field,
-      value,
-      message: `Duplicate value for unique field "${ uniqueField.field }"`
+      field: label,
+      fields: uniqueField.fields,
+      value: uniqueField.fields.length === 1
+        ? item[uniqueField.fields[0]]
+        : uniqueField.fields.map(field => item[field]),
+      message: uniqueField.fields.length === 1
+        ? `Duplicate value for unique field "${ label }"`
+        : `Duplicate value for unique fields "${ label }"`
     });
   }
 
@@ -170,7 +185,7 @@ const findConflicts = (
 
   if (uniqueConflicts.length === 1 && conflicts.length === 1) {
     const fieldConfig = collection.definition.uniqueFields.find(
-      entry => entry.field === uniqueConflicts[0].field
+      entry => uniqueConstraintLabel(entry.fields) === uniqueConflicts[0].field
     );
 
     return {
@@ -236,7 +251,7 @@ export class StoreRegistry {
     }
 
     for (const seedItem of sourceItems) {
-      items.set(encodeStoreKey(definition.keyFields, seedItem), cloneItem(seedItem));
+      items.set(encodeFieldTuple(definition.keyFields, seedItem), cloneItem(seedItem));
     }
 
     this.collections.set(definition.id, { definition, items });
@@ -371,7 +386,7 @@ export class StoreRegistry {
       return { ok: false, kind: 'not_found' };
     }
 
-    const key = encodeStoreKey(collection.definition.keyFields, keyItem);
+    const key = encodeFieldTuple(collection.definition.keyFields, keyItem);
     const item = collection.items.get(key);
     if (!item) {
       return { ok: false, kind: 'not_found' };
@@ -403,7 +418,7 @@ export class StoreRegistry {
       };
     }
 
-    const key = encodeStoreKey(collection.definition.keyFields, merged);
+    const key = encodeFieldTuple(collection.definition.keyFields, merged);
     collection.items.set(key, cloneItem(merged));
     this.persistCollection(collection);
     return { ok: true, body: cloneItem(merged) };
@@ -419,7 +434,7 @@ export class StoreRegistry {
       return { ok: false, kind: 'not_found' };
     }
 
-    const key = encodeStoreKey(collection.definition.keyFields, keyItem);
+    const key = encodeFieldTuple(collection.definition.keyFields, keyItem);
     const existing = collection.items.get(key);
     if (!existing) {
       return { ok: false, kind: 'not_found' };
@@ -465,7 +480,7 @@ export class StoreRegistry {
       return { ok: false, kind: 'not_found' };
     }
 
-    const key = encodeStoreKey(collection.definition.keyFields, keyItem);
+    const key = encodeFieldTuple(collection.definition.keyFields, keyItem);
     const existing = collection.items.get(key);
     if (!existing) {
       return { ok: false, kind: 'not_found' };

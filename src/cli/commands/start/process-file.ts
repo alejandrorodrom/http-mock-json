@@ -80,6 +80,7 @@ export const collectStoresFromData = (
   file: string,
   data: RawMockFile,
   errorsByFile: Record<string, LocalIssue[]>,
+  warningsByFile: Record<string, LocalIssue[]>,
   stores: Map<string, StoreDefinition>,
   mocksDir: string
 ): void => {
@@ -89,8 +90,13 @@ export const collectStoresFromData = (
     }
 
     const rawStore = (endpointData as Record<string, unknown>)[STORE_PROPERTY];
-    const { errors, definition, isReference } = validateStore(route, rawStore, mocksDir);
+    const { errors, warnings, definition, isReference } = validateStore(
+      route,
+      rawStore,
+      mocksDir
+    );
     addIssues(errorsByFile, file, errors);
+    addIssues(warningsByFile, file, warnings);
 
     if (isReference || !definition) {
       continue;

@@ -571,6 +571,97 @@ const ERROR_CATALOG = [
     caseName: 'error/store-errors'
   },
   {
+    id: 'store.unique-both-field-fields',
+    message: 'The "store.unique.fields[0]" object cannot include both "field" and "fields"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.unique-composite-empty',
+    message: 'The "store.unique.fields[0].fields" must be a non-empty array of strings',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.unique-missing-field-or-fields',
+    message: 'The "store.unique.fields[0]" object must include "field" or "fields"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.seed-duplicate-unique-composite',
+    message: 'The "store.seed" contains duplicate unique field "tenantId+email"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.unique-fields-non-string',
+    message: 'The "store.unique.fields[0].fields" must be a non-empty array of strings',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.unique-unknown-key',
+    message: 'The "store.unique.fields[0]" property contains unknown key "foo"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.unique-duplicate-constraint',
+    message: 'The "store.unique.fields[1]" duplicates the unique constraint "email"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.unique-redundant-string',
+    message: 'The "store.unique.fields[0]" matches the store key and is redundant',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'success/36-store-unique-redundant'
+  },
+  {
+    id: 'store.unique-redundant-field',
+    message: 'The "store.unique.fields[0].field" matches the store key and is redundant',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'success/36-store-unique-redundant'
+  },
+  {
+    id: 'store.unique-redundant-fields',
+    message: 'The "store.unique.fields[0].fields" matches the store key and is redundant',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'success/36-store-unique-redundant'
+  },
+  {
+    id: 'http.store.409.unique-composite',
+    message: 'DUPLICATE_TENANT_EMAIL',
+    source: 'src/scripts/store.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-unique-composite'
+  },
+  {
+    id: 'http.store.409.unique-composite-default',
+    message: 'Duplicate value for unique fields "code+region"',
+    source: 'src/scripts/store.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-unique-composite'
+  },
+  {
+    id: 'http.store.409.unique-multi',
+    message: 'DUPLICATE',
+    source: 'src/scripts/store.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-unique-composite'
+  },
+  {
     id: 'store.action-requires-store',
     message: 'The "action" property requires a "store" on the endpoint',
     source: 'src/validators/action.validator.ts',

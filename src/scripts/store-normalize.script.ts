@@ -395,17 +395,42 @@ const normalizeConflict = (value: unknown): StoreConflictConfig | undefined => {
 
 const normalizeUniqueField = (entry: StoreUniqueField): NormalizedUniqueField | null => {
   if (typeof entry === 'string') {
-    return entry.length > 0 ? { field: entry } : null;
+    return entry.length > 0 ? { fields: [entry] } : null;
   }
 
-  if (!isObject(entry) || typeof entry.field !== 'string' || entry.field.length === 0) {
+  if (!isObject(entry)) {
     return null;
   }
 
-  return {
-    field: entry.field,
-    conflict: normalizeConflict(entry.conflict)
-  };
+  const hasField = typeof entry.field === 'string';
+  const hasFields = isArray(entry.fields);
+
+  if (hasField && hasFields) {
+    return null;
+  }
+
+  if (hasFields) {
+    const fields = (entry.fields as unknown[])
+      .filter((item): item is string => typeof item === 'string' && item.length > 0);
+
+    if (fields.length === 0 || fields.length !== (entry.fields as unknown[]).length) {
+      return null;
+    }
+
+    return {
+      fields,
+      conflict: normalizeConflict(entry.conflict)
+    };
+  }
+
+  if (hasField && entry.field!.length > 0) {
+    return {
+      fields: [entry.field as string],
+      conflict: normalizeConflict(entry.conflict)
+    };
+  }
+
+  return null;
 };
 
 export const normalizeUnique = (

@@ -6,11 +6,22 @@ export type StoreItemIssue =
   | { type: 'duplicate_key' }
   | { type: 'duplicate_unique'; field: string };
 
-export const encodeStoreKey = (
+export const encodeFieldTuple = (
   fields: string[],
   item: StoreItem
 ): string => {
   return fields.map(field => String(item[field])).join('\0');
+};
+
+export const uniqueConstraintLabel = (fields: string[]): string => {
+  return fields.join('+');
+};
+
+export const itemHasAllFields = (
+  item: StoreItem,
+  fields: string[]
+): boolean => {
+  return fields.every(field => hasProperty(item, field));
 };
 
 export const validateStoreItems = (
@@ -21,8 +32,8 @@ export const validateStoreItems = (
   const seenKeys = new Set<string>();
   const seenUnique = new Map<string, Set<string>>();
 
-  for (const field of definition.uniqueFields) {
-    seenUnique.set(field.field, new Set());
+  for (const uniqueField of definition.uniqueFields) {
+    seenUnique.set(uniqueConstraintLabel(uniqueField.fields), new Set());
   }
 
   items.forEach((item, index) => {
@@ -32,21 +43,22 @@ export const validateStoreItems = (
       }
     }
 
-    const keyValue = encodeStoreKey(definition.keyFields, item);
+    const keyValue = encodeFieldTuple(definition.keyFields, item);
     if (seenKeys.has(keyValue)) {
       onIssue({ type: 'duplicate_key' });
     }
     seenKeys.add(keyValue);
 
     for (const uniqueField of definition.uniqueFields) {
-      if (!hasProperty(item, uniqueField.field)) {
+      if (!itemHasAllFields(item, uniqueField.fields)) {
         continue;
       }
 
-      const value = String(item[uniqueField.field]);
-      const bucket = seenUnique.get(uniqueField.field)!;
+      const label = uniqueConstraintLabel(uniqueField.fields);
+      const value = encodeFieldTuple(uniqueField.fields, item);
+      const bucket = seenUnique.get(label)!;
       if (bucket.has(value)) {
-        onIssue({ type: 'duplicate_unique', field: uniqueField.field });
+        onIssue({ type: 'duplicate_unique', field: label });
       }
       bucket.add(value);
     }

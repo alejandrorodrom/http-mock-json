@@ -10,7 +10,8 @@ export interface StoreConflictConfig {
 }
 
 export interface StoreUniqueFieldObject {
-  field: string;
+  field?: string;
+  fields?: string[];
   conflict?: StoreConflictConfig;
 }
 
@@ -231,7 +232,8 @@ export interface RawStoreConfig {
 }
 
 export interface NormalizedUniqueField {
-  field: string;
+  /** One or more fields that form a unique constraint together. */
+  fields: string[];
   conflict?: StoreConflictConfig;
 }
 
@@ -253,6 +255,7 @@ export interface StoreConflictItem {
   field: string;
   value: JsonValue;
   message: string;
+  fields?: string[];
 }
 
 export type StoreOperationResult =

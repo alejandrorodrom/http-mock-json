@@ -38,6 +38,11 @@ module.exports = {
       const conflictElapsed = Date.now() - conflictStarted;
       failures.push(...expectStatus(keyConflict.status, 409, 'duplicate key'));
       failures.push(...expectEqual(keyConflict.body.code, 'DUPLICATE_KEY', 'duplicate key code'));
+      failures.push(...expectEqual(
+        keyConflict.body.errors?.[0]?.fields,
+        '["tenantId","id"]',
+        'composite key conflict includes fields'
+      ));
       failures.push(...expectMinDelay(conflictElapsed, 150, 'delay before conflict'));
       if (conflictElapsed >= 350) {
         failures.push(`Conflict must not double-apply delay; got ${ conflictElapsed }ms`);

@@ -7,13 +7,23 @@ import { JsonValue } from '../types/json.type';
 import { StoreConflictConfig, StoreConflictItem } from '../types/store.type';
 import { isObject } from './guards.script';
 
+const formatConflictValue = (value: JsonValue): string => {
+  if (Array.isArray(value) || (value !== null && typeof value === 'object')) {
+    return JSON.stringify(value);
+  }
+  return String(value);
+};
+
 const applyConflictTemplate = (
   template: string,
   conflict: StoreConflictItem
 ): string => {
+  const fields = conflict.fields ?? [conflict.field];
+
   return template
     .replace(/\{\{field\}\}/g, String(conflict.field))
-    .replace(/\{\{value\}\}/g, String(conflict.value))
+    .replace(/\{\{fields\}\}/g, JSON.stringify(fields))
+    .replace(/\{\{value\}\}/g, formatConflictValue(conflict.value))
     .replace(/\{\{message\}\}/g, String(conflict.message));
 };
 
@@ -35,11 +45,19 @@ const toConflictDetails = (
     });
   }
 
-  return conflicts.map(conflict => ({
-    field: conflict.field,
-    value: conflict.value,
-    message: conflict.message
-  }));
+  return conflicts.map(conflict => {
+    const detailItem: Record<string, JsonValue> = {
+      field: conflict.field,
+      value: conflict.value,
+      message: conflict.message
+    };
+
+    if (conflict.fields && conflict.fields.length > 1) {
+      detailItem.fields = conflict.fields;
+    }
+
+    return detailItem;
+  });
 };
 
 const replacePlaceholders = (
