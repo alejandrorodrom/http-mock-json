@@ -1473,6 +1473,34 @@ const validateSoftDelete = (
   }
 };
 
+const validateNotFound = (
+  errors: LocalIssue[],
+  endpoint: string,
+  notFound: unknown
+): void => {
+  if (!isObject(notFound)) {
+    push(errors, endpoint, 'The "store.notFound" property must be an object');
+    return;
+  }
+
+  const keys = getKeys(notFound as Record<string, unknown>);
+  for (const key of keys) {
+    if (key !== 'response') {
+      push(errors, endpoint, `The "store.notFound" property contains unknown key "${ key }"`);
+    }
+  }
+
+  if (!hasProperty(notFound as object, 'response')) {
+    push(errors, endpoint, 'The "store.notFound" object must include "response"');
+    return;
+  }
+
+  const response = (notFound as { response?: unknown }).response;
+  if (typeof response !== 'string' || response.length === 0) {
+    push(errors, endpoint, 'The "store.notFound.response" must be a non-empty string');
+  }
+};
+
 export const validateStore = (
   endpoint: string,
   store: unknown,
@@ -1499,7 +1527,7 @@ export const validateStore = (
 
   const keys = getKeys(config as unknown as Record<string, unknown>);
   for (const key of keys) {
-    if (!['id', 'key', 'seed', 'template', 'unique', 'persist', 'list', 'softDelete', 'relations'].includes(key)) {
+    if (!['id', 'key', 'seed', 'template', 'unique', 'persist', 'list', 'softDelete', 'relations', 'notFound'].includes(key)) {
       push(errors, endpoint, `The "store" property contains unknown key "${ key }"`);
     }
   }
@@ -1569,6 +1597,10 @@ export const validateStore = (
         ? normalizeSoftDelete(config.softDelete as RawStoreSoftDelete)
         : undefined
     );
+  }
+
+  if (hasProperty(config, 'notFound')) {
+    validateNotFound(errors, endpoint, config.notFound);
   }
 
   if (!isEmpty(errors)) {

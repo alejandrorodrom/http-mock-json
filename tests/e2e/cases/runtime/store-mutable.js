@@ -81,6 +81,19 @@ module.exports = {
 
       const missing = await request(`${ baseUrl }/api/acme/users/${ created.body.id }`);
       failures.push(...expectStatus(missing.status, 404, 'get after delete'));
+      failures.push(...expectEqual(missing.body, {
+        code: 'USER_NOT_FOUND',
+        message: `User ${ created.body.id } was not found in tenant acme`,
+        key: `acme+${ created.body.id }`
+      }, 'custom notFound body'));
+
+      const patchMissing = await request(`${ baseUrl }/api/acme/users/999`, {
+        method: 'PATCH',
+        json: { active: true }
+      });
+      failures.push(...expectStatus(patchMissing.status, 404, 'patch missing'));
+      failures.push(...expectEqual(patchMissing.body.code, 'USER_NOT_FOUND', 'patch notFound code'));
+      failures.push(...expectEqual(patchMissing.body.key, 'acme+999', 'patch notFound key'));
 
       const notesEmpty = await request(`${ baseUrl }/api/notes`);
       failures.push(...expectStatus(notesEmpty.status, 200, 'notes empty list'));
@@ -99,6 +112,14 @@ module.exports = {
         json: { title: 'Primera' }
       });
       failures.push(...expectStatus(noteDup.status, 409, 'notes unique default'));
+
+      const noteMissing = await request(`${ baseUrl }/api/notes/999`);
+      failures.push(...expectStatus(noteMissing.status, 404, 'notes default notFound'));
+      failures.push(...expectEqual(
+        noteMissing.body,
+        { message: 'Not found' },
+        'notes default notFound body'
+      ));
 
       return failures;
     }

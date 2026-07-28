@@ -49,6 +49,7 @@ import {
   StoreListFilterFieldConfig,
   StoreListFilterOp,
   StoreListOrder,
+  StoreNotFoundConfig,
   StorePersistConfig,
   StoreRelationConfig,
   StoreRelationOnDelete,
@@ -813,6 +814,25 @@ export const normalizeSoftDelete = (
   return { field: softDelete.field };
 };
 
+export const normalizeNotFound = (
+  notFound: unknown
+): StoreNotFoundConfig | null | undefined => {
+  if (notFound === undefined) {
+    return undefined;
+  }
+
+  if (!isObject(notFound)) {
+    return null;
+  }
+
+  const config = notFound as Record<string, unknown>;
+  if (typeof config.response !== 'string' || config.response.length === 0) {
+    return null;
+  }
+
+  return { response: config.response };
+};
+
 export const normalizeStoreDefinition = (store: RawStoreConfig): StoreDefinition | null => {
   if (typeof store.id !== 'string' || store.id.length === 0) {
     return null;
@@ -877,6 +897,11 @@ export const normalizeStoreDefinition = (store: RawStoreConfig): StoreDefinition
     return null;
   }
 
+  const notFound = normalizeNotFound(store.notFound);
+  if (notFound === null) {
+    return null;
+  }
+
   return {
     id: store.id,
     keyFields: key.fields,
@@ -888,6 +913,7 @@ export const normalizeStoreDefinition = (store: RawStoreConfig): StoreDefinition
     persist: persist?.enabled ? persist : undefined,
     list,
     softDelete,
-    relations
+    relations,
+    notFound
   };
 };

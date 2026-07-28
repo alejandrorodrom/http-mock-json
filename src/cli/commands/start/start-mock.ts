@@ -9,16 +9,14 @@ import { proxyRequest, resolveProxy } from '../../../scripts/proxy.script';
 import { checkRequest } from '../../../scripts/request-check.script';
 import { buildRequestError } from '../../../scripts/request-error.script';
 import { isEmpty, isExisting } from '../../../scripts/guards.script';
-import { defaultNotFoundBody, StoreRegistry } from '../../../scripts/store.script';
+import { StoreRegistry } from '../../../scripts/store.script';
 import { buildStoreConflictResponse } from '../../../scripts/store-conflict.script';
+import { buildStoreNotFoundResponse } from '../../../scripts/store-not-found.script';
 import {
   applyListHeaderTemplate,
   applyListTemplate
 } from '../../../scripts/store-list.script';
 import { buildPersistWatchIgnored } from '../../../scripts/store-persist.script';
-import {
-  DEFAULT_NOT_FOUND_STATUS
-} from '../../../constants/store.constant';
 import { MockResponseConfig } from '../../../interfaces/data.interface';
 import { StartMock, StartMockResult } from '../../../interfaces/mock.interface';
 
@@ -122,7 +120,14 @@ export const startMock = async (
           }
 
           if (result.kind === 'not_found') {
-            res.status(DEFAULT_NOT_FOUND_STATUS).json(defaultNotFoundBody());
+            const notFoundResponse = buildStoreNotFoundResponse(
+              result.keyContext,
+              value.responses,
+              result.responseName
+            );
+            res.set(notFoundResponse.headers)
+              .status(notFoundResponse.status)
+              .json(notFoundResponse.body);
             return;
           }
 

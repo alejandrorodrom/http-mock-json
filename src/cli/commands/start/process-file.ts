@@ -43,6 +43,14 @@ const collectConflictResponseNames = (definition: StoreDefinition): string[] => 
   return [...names];
 };
 
+const NOT_FOUND_ACTIONS = new Set([
+  'get',
+  'update',
+  'patch',
+  'delete',
+  'restore'
+]);
+
 const collectRestrictConflictResponseNames = (
   targetStoreId: string,
   stores: Map<string, StoreDefinition>
@@ -262,6 +270,23 @@ export const processMockData = (
               }]);
               hasResponseErrors = true;
             }
+          }
+        }
+
+        const notFoundName = storeDefinition.notFound?.response;
+        if (notFoundName) {
+          const hasNotFoundAction = typedMethod.responses.some(response => {
+            return typeof response.action === 'string'
+              && NOT_FOUND_ACTIONS.has(response.action);
+          });
+
+          if (hasNotFoundAction && !responseNames.has(notFoundName)) {
+            addIssues(errorsByFile, file, [{
+              endpoint: route,
+              method,
+              message: `The store notFound response "${ notFoundName }" does not exist in responses`
+            }]);
+            hasResponseErrors = true;
           }
         }
       }

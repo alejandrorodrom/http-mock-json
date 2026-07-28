@@ -29,6 +29,7 @@
     - [Filters / search](#filters--search)
   - [Key generation on create](#key-generation-on-create)
   - [Conflicts](#conflicts-409)
+  - [Not found](#not-found-404)
   - [Soft delete](#soft-delete)
   - [Relations](#relations)
   - [Persist and restart](#persist-and-restart-behavior)
@@ -56,7 +57,7 @@
 - **Multiple Responses** - Simulate different scenarios (success, error, etc.) for the same endpoint
 - **Request Matching** - Select responses by route params, query params and/or request body
 - **Request Validation** - Validate request `body`/`query` shape with rules (`type`, `minLength`, `format`, nested objects, etc.)
-- **Mutable Store** - Opt-in mutable collections (`store` + `action`) with `seed`, `template`, unique/key conflicts, optional soft delete (`softDelete` + `restore` + `includeDeleted`), cross-store `relations` (FK + `expand` + `onDelete`), disk `persist`, `--reset-store`, and `store.list` (sort/multi-sort, page/offset/cursor, filters with `eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in` + nested + `or` + search, response templates). Start with the [capability map](#capability-map-build-complex-mocks) to compose complex APIs from the docs.
+- **Mutable Store** - Opt-in mutable collections (`store` + `action`) with `seed`, `template`, unique/key conflicts, customizable `notFound` (`404`), optional soft delete (`softDelete` + `restore` + `includeDeleted`), cross-store `relations` (FK + `expand` + `onDelete`), disk `persist`, `--reset-store`, and `store.list` (sort/multi-sort, page/offset/cursor, filters with `eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in` + nested + `or` + search, response templates). Start with the [capability map](#capability-map-build-complex-mocks) to compose complex APIs from the docs.
 - **Response Delay** - Simulate latency per method or per response
 - **Type Safe** - Built with TypeScript for better developer experience
 - **RESTful Support** - Full support for GET, POST, PUT, PATCH, DELETE methods
@@ -150,6 +151,7 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | store.list   | ❌       | boolean/object | `true` / `{ page, pageSize, offset, limit, cursor, sort, order, filter }` | Opt-in list engine for `action: "list"`: multi-sort, page/offset/cursor, filters (`eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in`, nested, `or`) + search. Response `body`/`headers` use placeholders (`{{items}}`, `{{next}}`, `{{nextCursor}}`, …) |
    | store.softDelete | ❌   | boolean/object | `true` or `{ "field": "deletedAt" }`     | Soft delete: `action: "delete"` sets the field (ISO); `list`/`get` hide items unless `?includeDeleted=true`; `action: "restore"` clears it |
    | store.relations | ❌  | object         | `{ "userId": "users" }` / `{ "orderRef": { "join": { "from", "to" } } }` / `{ "posts": { "type": "many", "join": { "from": "userId" } } }` | FK (`one`) + reverse embed (`many`); `join.from`/`join.to`; `?expand=` incl. nested (max depth 3) |
+   | store.notFound | ❌    | object         | `{ "response": "missing-user" }`         | Named `404` response for missing / soft-deleted items (`get` / `update` / `patch` / `delete` / `restore`). Placeholders: `{{key}}`, `{{message}}`, each key field |
    | HTTP Method  | ✅       | string         | `GET`, `POST`, `PUT`, `PATCH`, `DELETE`  | HTTP verb (must be uppercase)                                              |
    | nameResponse | ✅       | string         | `success`, `error`, `error-401`          | Fallback response when no `match` applies (must exist in responses array) |
    | request      | ❌       | object         | `{ "body": { "email": "string" } }`      | Validate incoming `body` and/or `query` before selecting a response        |
@@ -1082,7 +1084,7 @@ See the full guide (capability map, schema, persist, conflicts, recipes, example
 
 ## Mutable store 🗄️
 
-Opt-in feature (≥ `1.11.0`; advanced list filters ≥ `1.12.0`; composite unique ≥ `1.13.0`; soft delete ≥ `1.14.0`; relations ≥ `1.15.0`). Without `store` + `action`, mocks stay 100% static.
+Opt-in feature (≥ `1.11.0`; advanced list filters ≥ `1.12.0`; composite unique ≥ `1.13.0`; soft delete ≥ `1.14.0`; relations ≥ `1.15.0`; customizable `notFound` ≥ `1.16.0`). Without `store` + `action`, mocks stay 100% static.
 
 Use it when the frontend needs **real CRUD flows**: create an item, list it, edit it, delete it — without a backend. Data lives in memory for the process lifetime; optionally survive restarts with `persist`.
 
@@ -1102,6 +1104,7 @@ Goal: from this README alone you can compose multi-tenant APIs with validation, 
 | Auto ids / defaults | `key`, `template` | `"key": "id"` or `{ "fields": ["tenantId", "id"] }` | [Key generation](#key-generation-on-create) |
 | Seed data | `seed` | `"seed": [{ "id": 1, ... }]` | [Schema](#schema-definition-vs-reference) |
 | Business uniqueness | `unique` + `409` responses | `"unique": ["email"]` or field-level `conflict` | [Conflicts](#conflicts-409) |
+| Custom missing item | `store.notFound` | `"notFound": { "response": "missing-user" }` | [Not found](#not-found-404) |
 | Survive restart | `persist` / `--reset-store` | `"persist": true` | [Persist and restart](#persist-and-restart-behavior) |
 | Validate payload/query | `request` | `"body": { "email": { "type": "string", "format": "email" } }` | [Request validation](#example-8-request-validation) |
 | Branch by params/query/body | `match` | `"match": { "params": { "orgId": "blocked" } }` | [Example 5–7](#example-5-match-by-route-params) |
@@ -1307,7 +1310,7 @@ Request pipeline (fixed order):
 | Action | Behavior | Success status | Common errors |
 |--------|----------|----------------|---------------|
 | `list` | Returns items. Filters by route `key` params. With `store.list`: filter (`fields`/`or`/`search`) → multi-sort → page/offset/cursor. Optional `body`/`headers` templates. Soft-deleted items omitted unless `?includeDeleted=true` | response `statusCode` | `400` (invalid page/sort/order/cursor/filter query) |
-| `get` | Loads one item; all `key` fields must come from route params. Soft-deleted → `404` unless `?includeDeleted=true` | response `statusCode` | `404` `{ "message": "Not found" }` |
+| `get` | Loads one item; all `key` fields must come from route params. Soft-deleted → `404` unless `?includeDeleted=true` | response `statusCode` | `404` (default or `store.notFound`) |
 | `create` | Inserts; merges `template` + body; auto-generates missing numeric key fields; route params override key fields. Soft-deleted rows do not count toward `unique`/`key` | typically `201` | `400` (body not object), `409` (conflict) |
 | `update` | Full replace (`template` + body), preserves existing key. Soft-deleted → `404` | response `statusCode` | `404` / `400` / `409` |
 | `patch` | Partial merge on existing item (no template), preserves key. Soft-deleted → `404` | response `statusCode` | `404` / `400` / `409` |
@@ -1549,12 +1552,13 @@ Also fine: put the **entire** full definition on `api/notes/:id` and use `{ "id"
 | `list` | off | `true` / `{}` / object — sort (multi), page/offset/cursor, filters/search for `action: "list"` (see [Filters / search](#filters--search) and [List sort and pagination](#list-sort-and-pagination-storelist)) |
 | `softDelete` | off | `true` / `{ "field": "deletedAt" }` — on the full definition only; see [Soft delete](#soft-delete) |
 | `relations` | off | `{ "userId": "users" }` or object map — FK / reverse embed; see [Relations](#relations) |
+| `notFound` | off | `{ "response": "missing-user" }` — named `404` for missing / soft-deleted items; see [Not found](#not-found-404) |
 
 Rules:
 
 1. `store` is **not** an HTTP method; the endpoint still needs at least one verb (`GET`, `POST`, …).
 2. Unknown keys inside `store` → startup error.
-3. Several endpoints may share the same `store.id`; the full definition can appear only once. All of `key` / `seed` / `template` / `unique` / `persist` / `list` / `softDelete` / `relations` belong on that one definition.
+3. Several endpoints may share the same `store.id`; the full definition can appear only once. All of `key` / `seed` / `template` / `unique` / `persist` / `list` / `softDelete` / `relations` / `notFound` belong on that one definition.
 4. A reference is **only** `{ "id": "..." }`. Any other property = full definition (and will conflict if that `id` is already defined).
 5. A reference to an undefined `id` → startup error.
 6. `seed` must be an array of objects (when present). `[]` or omitted → empty collection at start (unless a persist snapshot loads).
@@ -1563,6 +1567,7 @@ Rules:
 9. `conflict.detail` is a non-empty string **or** a non-empty object whose values are strings (templates).
 10. Named `conflict.response` values must exist in `responses` of every method that uses mutating actions (`create` / `update` / `patch` / `restore`) for that store (includes relation `conflict`). Named `onDelete.conflict.response` (or relation `conflict` when used as restrict fallback) must exist on every method with `action: "delete"` of the **target** store.
 11. In a unique entry object, `field` and `fields` are mutually exclusive.
+12. Named `notFound.response` must exist in `responses` of every method that uses `get` / `update` / `patch` / `delete` / `restore` for that store.
 
 `key` shapes:
 
@@ -1666,6 +1671,48 @@ Placeholders in the **named** conflict response `body` (deep replace):
 
 Headers from the selected conflict response are applied. `delay` already ran once before the action (including when the result is a conflict).
 
+### Not found (`404`)
+
+Optional. Without `store.notFound`, missing items (and soft-deleted items treated as missing) keep the default:
+
+```json
+{ "message": "Not found" }
+```
+
+Status `404`.
+
+With config:
+
+```json
+"notFound": {
+  "response": "missing-user"
+}
+```
+
+```json
+{
+  "name": "missing-user",
+  "statusCode": 404,
+  "body": {
+    "code": "USER_NOT_FOUND",
+    "message": "User {{id}} was not found in tenant {{tenantId}}",
+    "key": "{{key}}"
+  }
+}
+```
+
+Applies to `get` / `update` / `patch` / `delete` / `restore` when the item is missing or soft-deleted (and not requested with `?includeDeleted=true` for `get`). Soft-deleted “missing” paths use the same named response.
+
+Placeholders in the named notFound response `body` / `headers` (deep replace):
+
+| Placeholder | Meaning |
+|-------------|---------|
+| `{{<keyField>}}` | Value of each `store.key` field from route params (e.g. `{{id}}`, `{{tenantId}}`) |
+| `{{key}}` | Full key as fields joined with `+` (e.g. `"acme+42"`) |
+| `{{message}}` | Default message (`"Not found"`) |
+
+`notFound` only allows `response` (no `detail` — the response body is the template). The named response must exist on every method that can return store `404` for that store.
+
 ### Persist and restart behavior
 
 | Mode | On `mock-server start` / watch reload |
@@ -1705,7 +1752,7 @@ You can also delete `.store/<id>.json` (or your custom file) manually before sta
 |------|--------|------|
 | `list` / `get` / `create` / `update` / `patch` success | Response `statusCode` (use `201` for create if you want) | Cloned item or array; response `headers` applied |
 | `delete` success | Always `204` | Empty (`null`); JSON `statusCode` ignored |
-| Item not found (`get` / `update` / `patch` / `delete`) | `404` | `{ "message": "Not found" }` — **not** customizable in this version |
+| Item not found (`get` / `update` / `patch` / `delete` / `restore`) | `404` or status of `store.notFound.response` | Default `{ "message": "Not found" }` or named body (see [Not found](#not-found-404)) |
 | Body of `create` / `update` / `patch` is not a JSON object | `400` | `{ "message": "Request body must be a JSON object" }` |
 | Key / unique conflict | `409` or status of the named conflict response | Default or named conflict body (see above) |
 | Invalid relation FK | status of `relations.*.conflict.response` (else `409`) | Named body + `{{conflicts}}` / `detail` templates |
@@ -1726,7 +1773,7 @@ Implications of the pipeline:
 |---------|--------------|
 | `request` | Validates input **before** the store. Use it for types/format/`minLength`; use `unique` for business uniqueness |
 | `match` | Chooses which response runs; may skip `action` entirely |
-| `delay` / `headers` | Applied to action success and to named conflict responses |
+| `delay` / `headers` | Applied to action success, named conflict responses, and named notFound responses |
 | `proxy` | Incompatible with `action` on the same response |
 | Watch / restart | Without persist → back to `seed`. With persist → reload snapshot (unless `--reset-store` on initial start) |
 
@@ -2250,7 +2297,6 @@ Not implemented (do not expect these):
 
 - Case-insensitive / trimmed unique comparison  
 - Expand deeper than 3 hops / GraphQL-style field selection on embeds  
-- Customizable `404` / `not_found` response body  
 - HTTP admin routes to reset stores (use `--reset-store` or delete the snapshot file)  
 - Re-implementing `request` rules inside `store`
 
@@ -5121,6 +5167,11 @@ These errors occur when `store` or `action` configuration is invalid:
 | `The store relation "A.X" requires store "B" to declare a type "one" relation…` | `type: "many"` without reverse FK on child | Add the matching `one` relation on B |
 | `The store "A" seed[n] relation "X" references missing or soft-deleted "B" record` | Bad seed FK | Fix seed ids or seed the target first |
 | `The store conflict response "X" does not exist in responses` | Named FK/`onDelete.conflict` response missing on mutate or parent delete | Add that `name` to the method’s `responses` |
+| `The "store.notFound" property must be an object` | Invalid notFound shape | Use `{ "response": "missing" }` |
+| `The "store.notFound" property contains unknown key "X"` | Typo / unsupported key | Only `response` is allowed |
+| `The "store.notFound" object must include "response"` | Missing response name | Add `"response": "…"` |
+| `The "store.notFound.response" must be a non-empty string` | Empty/invalid response | Provide a non-empty name |
+| `The store notFound response "X" does not exist in responses` | Named notFound response missing on get/update/patch/delete/restore | Add that `name` to the method’s `responses` |
 | `The "action" property requires a "store" on the endpoint` | Action without store | Add `store` to the endpoint |
 | `The "action" property cannot be used together with "proxy"` | Action + proxy | Remove one of them |
 | `The store conflict response "X" does not exist in responses` | Missing conflict response name | Add a response with that `name` on mutating methods |

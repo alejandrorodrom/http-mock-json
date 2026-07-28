@@ -285,6 +285,103 @@
       ]
     }
   },
+  "bad-store-notFound-type": {
+    "store": {
+      "id": "notfound-type",
+      "seed": [],
+      "notFound": "missing"
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-store-notFound-unknown-key": {
+    "store": {
+      "id": "notfound-unknown",
+      "seed": [],
+      "notFound": {
+        "response": "missing",
+        "foo": true
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-store-notFound-missing-response": {
+    "store": {
+      "id": "notfound-missing-response",
+      "seed": [],
+      "notFound": {}
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-store-notFound-empty-response": {
+    "store": {
+      "id": "notfound-empty-response",
+      "seed": [],
+      "notFound": {
+        "response": ""
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "missing-notFound-response": {
+    "store": {
+      "id": "missing-notfound",
+      "seed": [
+        {
+          "id": 1,
+          "title": "A"
+        }
+      ],
+      "notFound": {
+        "response": "missing-item"
+      }
+    },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
+    }
+  },
   "store-reference-missing": {
     "store": {
       "id": "does-not-exist"

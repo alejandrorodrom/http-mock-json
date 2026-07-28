@@ -466,23 +466,42 @@ export class StoreRegistry {
     return item;
   }
 
+  private notFound(
+    collection: Collection,
+    keyItem: StoreItem | null
+  ): StoreOperationResult {
+    const fields = collection.definition.keyFields;
+    return {
+      ok: false,
+      kind: 'not_found',
+      responseName: collection.definition.notFound?.response,
+      keyContext: {
+        fields,
+        values: keyItem ?? {},
+        key: keyItem
+          ? fields.map(field => String(keyItem[field])).join('+')
+          : null
+      }
+    };
+  }
+
   private get(collection: Collection, req: Request): StoreOperationResult {
     const keyItem = this.resolveKeyItem(collection, req);
     if (!keyItem) {
-      return { ok: false, kind: 'not_found' };
+      return this.notFound(collection, null);
     }
 
     const key = encodeFieldTuple(collection.definition.keyFields, keyItem);
     const item = collection.items.get(key);
     if (!item) {
-      return { ok: false, kind: 'not_found' };
+      return this.notFound(collection, keyItem);
     }
 
     if (
       isSoftDeleted(item, collection.definition.softDelete)
       && !isIncludeDeletedRequested(req)
     ) {
-      return { ok: false, kind: 'not_found' };
+      return this.notFound(collection, keyItem);
     }
 
     return {
@@ -546,17 +565,17 @@ export class StoreRegistry {
   ): StoreOperationResult {
     const keyItem = this.resolveKeyItem(collection, req);
     if (!keyItem) {
-      return { ok: false, kind: 'not_found' };
+      return this.notFound(collection, null);
     }
 
     const key = encodeFieldTuple(collection.definition.keyFields, keyItem);
     const existing = collection.items.get(key);
     if (!existing) {
-      return { ok: false, kind: 'not_found' };
+      return this.notFound(collection, keyItem);
     }
 
     if (isSoftDeleted(existing, collection.definition.softDelete)) {
-      return { ok: false, kind: 'not_found' };
+      return this.notFound(collection, keyItem);
     }
 
     const body = asItem(req.body);
@@ -610,18 +629,18 @@ export class StoreRegistry {
   private remove(collection: Collection, req: Request): StoreOperationResult {
     const keyItem = this.resolveKeyItem(collection, req);
     if (!keyItem) {
-      return { ok: false, kind: 'not_found' };
+      return this.notFound(collection, null);
     }
 
     const key = encodeFieldTuple(collection.definition.keyFields, keyItem);
     const existing = collection.items.get(key);
     if (!existing) {
-      return { ok: false, kind: 'not_found' };
+      return this.notFound(collection, keyItem);
     }
 
     const softDelete = collection.definition.softDelete;
     if (softDelete && isSoftDeleted(existing, softDelete)) {
-      return { ok: false, kind: 'not_found' };
+      return this.notFound(collection, keyItem);
     }
 
     const onDeleteResult = applyOnDelete(this.relationLookup(), collection, existing);
@@ -658,13 +677,13 @@ export class StoreRegistry {
 
     const keyItem = this.resolveKeyItem(collection, req);
     if (!keyItem) {
-      return { ok: false, kind: 'not_found' };
+      return this.notFound(collection, null);
     }
 
     const key = encodeFieldTuple(collection.definition.keyFields, keyItem);
     const existing = collection.items.get(key);
     if (!existing || !isSoftDeleted(existing, softDelete)) {
-      return { ok: false, kind: 'not_found' };
+      return this.notFound(collection, keyItem);
     }
 
     const restored = clearSoftDeleted(existing, softDelete);

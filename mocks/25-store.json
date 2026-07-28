@@ -38,6 +38,9 @@
             "valor": "{{value}}"
           }
         }
+      },
+      "notFound": {
+        "response": "missing-user"
       }
     },
     "GET": {
@@ -100,6 +103,15 @@
       "nameResponse": "get",
       "responses": [
         {
+          "name": "missing-user",
+          "statusCode": 404,
+          "body": {
+            "code": "USER_NOT_FOUND",
+            "message": "User {{id}} was not found in tenant {{tenantId}}",
+            "key": "{{key}}"
+          }
+        },
+        {
           "name": "get",
           "statusCode": 200,
           "action": "get"
@@ -109,6 +121,15 @@
     "PATCH": {
       "nameResponse": "patch",
       "responses": [
+        {
+          "name": "missing-user",
+          "statusCode": 404,
+          "body": {
+            "code": "USER_NOT_FOUND",
+            "message": "User {{id}} was not found in tenant {{tenantId}}",
+            "key": "{{key}}"
+          }
+        },
         {
           "name": "duplicate-fields",
           "statusCode": 409,
@@ -136,6 +157,15 @@
     "DELETE": {
       "nameResponse": "remove",
       "responses": [
+        {
+          "name": "missing-user",
+          "statusCode": 404,
+          "body": {
+            "code": "USER_NOT_FOUND",
+            "message": "User {{id}} was not found in tenant {{tenantId}}",
+            "key": "{{key}}"
+          }
+        },
         {
           "name": "remove",
           "statusCode": 204,
@@ -173,6 +203,19 @@
           "name": "create",
           "statusCode": 201,
           "action": "create"
+        }
+      ]
+    }
+  },
+  "api/notes/:id": {
+    "store": { "id": "notes" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
         }
       ]
     }

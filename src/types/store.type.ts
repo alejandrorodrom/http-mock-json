@@ -9,6 +9,16 @@ export interface StoreConflictConfig {
   detail?: Record<string, string> | string;
 }
 
+export interface StoreNotFoundConfig {
+  response: string;
+}
+
+export interface StoreNotFoundContext {
+  fields: string[];
+  values: StoreItem;
+  key: string | null;
+}
+
 export interface StoreUniqueFieldObject {
   field?: string;
   fields?: string[];
@@ -299,6 +309,7 @@ export interface RawStoreConfig {
   list?: RawStoreList;
   softDelete?: RawStoreSoftDelete;
   relations?: RawStoreRelations;
+  notFound?: StoreNotFoundConfig | Record<string, unknown>;
 }
 
 export interface NormalizedUniqueField {
@@ -319,6 +330,7 @@ export interface StoreDefinition {
   list?: StoreListConfig;
   softDelete?: StoreSoftDeleteConfig;
   relations: StoreRelationConfig[];
+  notFound?: StoreNotFoundConfig;
 }
 
 export type StoreResetOption = true | string[];
@@ -347,6 +359,8 @@ export type StoreOperationResult =
   | {
     ok: false;
     kind: 'not_found';
+    responseName?: string;
+    keyContext: StoreNotFoundContext;
   }
   | {
     ok: false;

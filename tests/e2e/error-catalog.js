@@ -1131,6 +1131,41 @@ const ERROR_CATALOG = [
     caseName: 'error/store-errors'
   },
   {
+    id: 'store.notFound-type',
+    message: 'The "store.notFound" property must be an object',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.notFound-unknown-key',
+    message: 'The "store.notFound" property contains unknown key "foo"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.notFound-missing-response',
+    message: 'The "store.notFound" object must include "response"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.notFound-empty-response',
+    message: 'The "store.notFound.response" must be a non-empty string',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.notFound-response-missing',
+    message: 'The store notFound response "missing-item" does not exist in responses',
+    source: 'src/cli/commands/start/process-file.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
     id: 'store.reference-missing',
     message: 'The store "does-not-exist" is referenced but not defined',
     source: 'src/cli/commands/start/process-file.ts',
