@@ -9,7 +9,9 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)
 ![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen?style=flat-square)
 
-> Allows to create a mock server and test the frontend without depending on the backend.
+> Mock your real API in JSON — status codes, errors, validation, latency, and mutable data — so the frontend can develop and test without waiting on a backend.
+
+Define the same endpoints your app will call. Switch success and failure scenarios, validate request shapes, persist collections, or proxy selected routes to a live server. One mock server stands in for the backend until it is ready (or when it is down).
 
 ## Table of Contents
 
