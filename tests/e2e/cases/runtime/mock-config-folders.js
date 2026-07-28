@@ -1,10 +1,9 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
 const {
   createWorkspace,
-  startMockServer
+  startMockServer,
+  MOCK_CONFIG_FIXTURE
 } = require('../../lib/server-harness');
 const {
   request,
@@ -16,53 +15,13 @@ const {
 
 module.exports = {
   name: 'runtime/mock-config-folders',
-  description: 'HTTP: folder prefix, delay and headers from mock.config.json',
+  description: 'HTTP: folder prefix, delay and headers from mocks/mock-config',
   async run() {
     const startedAt = Date.now();
     const failures = [];
-    const { workspaceDir, cleanup } = createWorkspace(null, { emptyMocksDir: true });
-    const mocksDir = path.join(workspaceDir, 'mocks');
-
-    fs.mkdirSync(path.join(mocksDir, 'users'), { recursive: true });
-
-    fs.writeFileSync(
-      path.join(mocksDir, 'mock.config.json'),
-      `${ JSON.stringify({
-        headers: {
-          'X-Mock-Env': 'local'
-        },
-        folders: {
-          users: {
-            prefix: '/api/users',
-            delay: 120,
-            headers: {
-              'X-Service': 'users'
-            }
-          }
-        }
-      }, null, 2) }\n`,
-      'utf8'
-    );
-
-    fs.writeFileSync(
-      path.join(mocksDir, 'users', 'auth.json'),
-      `${ JSON.stringify({
-        login: {
-          POST: {
-            nameResponse: 'ok',
-            responses: [
-              {
-                name: 'ok',
-                statusCode: 200,
-                headers: { 'X-Request-Id': 'req-1' },
-                body: { token: 'folder-ok' }
-              }
-            ]
-          }
-        }
-      }, null, 2) }\n`,
-      'utf8'
-    );
+    const { workspaceDir, cleanup } = createWorkspace(null, {
+      copyTree: MOCK_CONFIG_FIXTURE
+    });
 
     let server;
 
@@ -71,26 +30,27 @@ module.exports = {
         workspaceDir,
         cleanup,
         cleanupOnStop: false,
+        cliPath: MOCK_CONFIG_FIXTURE,
         timeoutMs: 20000
       });
 
-      if (!server.stdout.includes('[POST] /api/users/login')) {
-        failures.push('Expected registered route [POST] /api/users/login in stdout');
+      if (!server.stdout.includes('[POST] /api/auth/login')) {
+        failures.push('Expected registered route [POST] /api/auth/login in stdout');
       }
 
       const started = Date.now();
-      const response = await request(`${ server.baseUrl }/api/users/login`, {
+      const response = await request(`${ server.baseUrl }/api/auth/login`, {
         method: 'POST',
-        json: {}
+        json: { email: 'a@b.com', password: 'secret1' }
       });
       const elapsed = Date.now() - started;
 
-      failures.push(...expectStatus(response.status, 200, 'POST /api/users/login'));
-      failures.push(...expectEqual(response.body, { token: 'folder-ok' }, 'login body'));
-      failures.push(...expectMinDelay(elapsed, 80, 'folder delay (~120ms)'));
-      failures.push(...expectHeader(response.headers, 'x-mock-env', 'local', 'root default header'));
-      failures.push(...expectHeader(response.headers, 'x-service', 'users', 'folder default header'));
-      failures.push(...expectHeader(response.headers, 'x-request-id', 'req-1', 'response header'));
+      failures.push(...expectStatus(response.status, 200, 'POST /api/auth/login'));
+      failures.push(...expectEqual(response.body, { token: 'tok_demo' }, 'login body'));
+      failures.push(...expectMinDelay(elapsed, 60, 'folder delay (~90ms)'));
+      failures.push(...expectHeader(response.headers, 'x-mock-app', 'food-delivery', 'root default header'));
+      failures.push(...expectHeader(response.headers, 'x-service', 'auth', 'folder default header'));
+      failures.push(...expectHeader(response.headers, 'x-request-id', 'login-1', 'response header'));
     } catch (error) {
       failures.push(error instanceof Error ? error.message : String(error));
     } finally {
@@ -102,7 +62,7 @@ module.exports = {
 
     return {
       name: 'runtime/mock-config-folders',
-      description: 'HTTP: folder prefix, delay and headers from mock.config.json',
+      description: 'HTTP: folder prefix, delay and headers from mocks/mock-config',
       passed: failures.length === 0,
       failures,
       durationMs: Date.now() - startedAt,

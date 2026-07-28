@@ -1,0 +1,16 @@
+{
+  "health": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "ok": true
+          }
+        }
+      ]
+    }
+  }
+}

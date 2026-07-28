@@ -1,13 +1,15 @@
 'use strict';
 
-const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const {
   createWorkspace,
   startMockServer,
   getFreePort,
-  runCli
+  runCli,
+  readJson,
+  writeJson,
+  MOCK_CONFIG_FIXTURE
 } = require('../../lib/server-harness');
 const {
   request,
@@ -16,10 +18,6 @@ const {
   expectHeader,
   expectMinDelay
 } = require('../../lib/http-assert');
-
-const writeJson = (filePath, value) => {
-  fs.writeFileSync(filePath, `${ JSON.stringify(value, null, 2) }\n`, 'utf8');
-};
 
 const startUpstream = () => new Promise((resolve, reject) => {
   const hits = [];
@@ -48,175 +46,15 @@ module.exports = {
     const startedAt = Date.now();
     const failures = [];
     const upstream = await startUpstream();
-    const { workspaceDir, cleanup } = createWorkspace(null, { emptyMocksDir: true });
-    const mocksDir = path.join(workspaceDir, 'mocks');
-
-    fs.mkdirSync(path.join(mocksDir, 'auth'), { recursive: true });
-    fs.mkdirSync(path.join(mocksDir, 'orders'), { recursive: true });
-    fs.mkdirSync(path.join(mocksDir, 'payments'), { recursive: true });
-    fs.mkdirSync(path.join(mocksDir, 'payments-v2'), { recursive: true });
-
-    writeJson(path.join(mocksDir, 'mock.config.json'), {
-      headers: { 'X-Mock-App': 'food-delivery' },
-      delay: 40,
-      strictDuplicates: true,
-      folders: {
-        auth: {
-          prefix: '/api/auth',
-          delay: 90,
-          headers: { 'X-Service': 'auth' }
-        },
-        orders: {
-          prefix: '/api/orders',
-          storeNamespace: 'orders',
-          exclude: ['*-draft.json'],
-          headers: { 'X-Service': 'orders' }
-        },
-        payments: {
-          prefix: '/api/payments',
-          stripPrefix: true,
-          proxy: upstream.baseUrl,
-          proxyUnmatched: upstream.baseUrl,
-          include: ['intent.json'],
-          headers: { 'X-Service': 'payments' }
-        },
-        'payments-v2': {
-          prefix: '/api/payments',
-          enabled: false
-        }
-      }
+    const { workspaceDir, mocksDir, cleanup } = createWorkspace(null, {
+      copyTree: MOCK_CONFIG_FIXTURE
     });
 
-    writeJson(path.join(mocksDir, 'root-health.json'), {
-      health: {
-        GET: {
-          nameResponse: 'ok',
-          responses: [
-            { name: 'ok', statusCode: 200, body: { ok: true } }
-          ]
-        }
-      }
-    });
-
-    writeJson(path.join(mocksDir, 'auth', 'login.json'), {
-      login: {
-        POST: {
-          nameResponse: 'ok',
-          request: {
-            body: {
-              email: { type: 'string', format: 'email' },
-              password: { type: 'string', minLength: 6 }
-            },
-            invalidResponse: 'invalid'
-          },
-          responses: [
-            {
-              name: 'ok',
-              statusCode: 200,
-              headers: { 'X-Request-Id': 'login-1' },
-              body: { token: 'tok_demo' }
-            },
-            {
-              name: 'invalid',
-              statusCode: 422,
-              body: { message: 'Invalid login', errors: [] }
-            }
-          ]
-        }
-      }
-    });
-
-    writeJson(path.join(mocksDir, 'orders', 'cart.json'), {
-      'cart/items': {
-        store: {
-          id: 'cart',
-          key: 'id',
-          persist: true,
-          unique: {
-            fields: ['menuItemId'],
-            conflict: { response: 'duplicate' }
-          },
-          seed: [
-            { id: 1, menuItemId: 'm_pasta', qty: 1, name: 'Carbonara' }
-          ]
-        },
-        GET: {
-          nameResponse: 'ok',
-          responses: [
-            { name: 'ok', statusCode: 200, action: 'list', body: [] }
-          ]
-        },
-        POST: {
-          nameResponse: 'created',
-          request: {
-            body: {
-              menuItemId: { type: 'string', minLength: 1 },
-              qty: { type: 'number', min: 1, max: 20 },
-              name: { type: 'string', minLength: 1 }
-            },
-            invalidResponse: 'invalid'
-          },
-          responses: [
-            { name: 'created', statusCode: 201, action: 'create', body: {} },
-            { name: 'duplicate', statusCode: 409, body: { code: 'ITEM_ALREADY_IN_CART' } },
-            { name: 'invalid', statusCode: 422, body: { message: 'Invalid cart item', errors: [] } }
-          ]
-        }
-      }
-    });
-
-    writeJson(path.join(mocksDir, 'orders', 'cart-draft.json'), {
-      ignored: {
-        GET: {
-          nameResponse: 'ok',
-          responses: [{ name: 'ok', statusCode: 200, body: { ignored: true } }]
-        }
-      }
-    });
-
-    writeJson(path.join(mocksDir, 'payments', 'intent.json'), {
-      intents: {
-        POST: {
-          nameResponse: 'created',
-          responses: [
-            {
-              name: 'card-declined',
-              statusCode: 402,
-              match: { body: { orderId: 'ord_declined' } },
-              body: { code: 'CARD_DECLINED' }
-            },
-            {
-              name: 'live',
-              proxy: true,
-              match: { query: { mode: 'live' } }
-            },
-            {
-              name: 'created',
-              statusCode: 201,
-              body: { intentId: 'pi_mock_1', status: 'requires_confirmation' }
-            }
-          ]
-        }
-      }
-    });
-
-    writeJson(path.join(mocksDir, 'payments', 'intent-draft.json'), {
-      draft: {
-        GET: {
-          nameResponse: 'ok',
-          responses: [{ name: 'ok', statusCode: 200, body: { draft: true } }]
-        }
-      }
-    });
-
-    writeJson(path.join(mocksDir, 'payments-v2', 'intent.json'), {
-      intents: {
-        POST: {
-          nameResponse: 'ok',
-          responses: [{ name: 'ok', statusCode: 200, body: { v2: true } }]
-        }
-      }
-    });
+    const configPath = path.join(mocksDir, 'mock.config.json');
+    const config = readJson(configPath);
+    config.folders.payments.proxy = upstream.baseUrl;
+    config.folders.payments.proxyUnmatched = upstream.baseUrl;
+    writeJson(configPath, config);
 
     let server;
 
@@ -225,6 +63,7 @@ module.exports = {
         workspaceDir,
         cleanup,
         cleanupOnStop: false,
+        cliPath: MOCK_CONFIG_FIXTURE,
         timeoutMs: 25000
       });
 
@@ -327,7 +166,7 @@ module.exports = {
       server = null;
 
       const configPort = await getFreePort();
-      writeJson(path.join(mocksDir, 'mock.config.json'), {
+      writeJson(configPath, {
         port: configPort,
         folders: {
           auth: { prefix: '/api/auth' }
@@ -344,7 +183,7 @@ module.exports = {
 
       const cli = await runCli({
         cwd: workspaceDir,
-        args: ['start', '-f', 'mocks'],
+        args: ['start', '-f', MOCK_CONFIG_FIXTURE],
         timeoutMs: 15000,
         resolveWhen: (stdout) => stdout.includes('Mock server is running')
       });

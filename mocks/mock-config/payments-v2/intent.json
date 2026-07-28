@@ -1,0 +1,16 @@
+{
+  "intents": {
+    "POST": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "v2": true
+          }
+        }
+      ]
+    }
+  }
+}

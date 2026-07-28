@@ -1,0 +1,40 @@
+{
+  "login": {
+    "POST": {
+      "nameResponse": "ok",
+      "request": {
+        "body": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6
+          }
+        },
+        "invalidResponse": "invalid"
+      },
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "headers": {
+            "X-Request-Id": "login-1"
+          },
+          "body": {
+            "token": "tok_demo"
+          }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 422,
+          "body": {
+            "message": "Invalid login",
+            "errors": []
+          }
+        }
+      ]
+    }
+  }
+}

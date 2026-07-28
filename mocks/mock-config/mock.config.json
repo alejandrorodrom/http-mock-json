@@ -1,0 +1,38 @@
+{
+  "headers": {
+    "X-Mock-App": "food-delivery"
+  },
+  "delay": 40,
+  "strictDuplicates": true,
+  "folders": {
+    "auth": {
+      "prefix": "/api/auth",
+      "delay": 90,
+      "headers": {
+        "X-Service": "auth"
+      }
+    },
+    "orders": {
+      "prefix": "/api/orders",
+      "storeNamespace": "orders",
+      "exclude": ["*-draft.json"],
+      "headers": {
+        "X-Service": "orders"
+      }
+    },
+    "payments": {
+      "prefix": "/api/payments",
+      "stripPrefix": true,
+      "proxy": "https://payments.example.com",
+      "proxyUnmatched": "https://payments.example.com",
+      "include": ["intent.json"],
+      "headers": {
+        "X-Service": "payments"
+      }
+    },
+    "payments-v2": {
+      "prefix": "/api/payments",
+      "enabled": false
+    }
+  }
+}

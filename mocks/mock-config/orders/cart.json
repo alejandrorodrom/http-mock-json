@@ -1,0 +1,78 @@
+{
+  "cart/items": {
+    "store": {
+      "id": "cart",
+      "key": "id",
+      "persist": true,
+      "unique": {
+        "fields": ["menuItemId"],
+        "conflict": {
+          "response": "duplicate"
+        }
+      },
+      "seed": [
+        {
+          "id": 1,
+          "menuItemId": "m_pasta",
+          "qty": 1,
+          "name": "Carbonara"
+        }
+      ]
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "action": "list",
+          "body": []
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "created",
+      "request": {
+        "body": {
+          "menuItemId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "qty": {
+            "type": "number",
+            "min": 1,
+            "max": 20
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "invalidResponse": "invalid"
+      },
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": 201,
+          "action": "create",
+          "body": {}
+        },
+        {
+          "name": "duplicate",
+          "statusCode": 409,
+          "body": {
+            "code": "ITEM_ALREADY_IN_CART"
+          }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 422,
+          "body": {
+            "message": "Invalid cart item",
+            "errors": []
+          }
+        }
+      ]
+    }
+  }
+}

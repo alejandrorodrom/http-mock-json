@@ -1,0 +1,38 @@
+{
+  "intents": {
+    "POST": {
+      "nameResponse": "created",
+      "responses": [
+        {
+          "name": "card-declined",
+          "statusCode": 402,
+          "match": {
+            "body": {
+              "orderId": "ord_declined"
+            }
+          },
+          "body": {
+            "code": "CARD_DECLINED"
+          }
+        },
+        {
+          "name": "live",
+          "proxy": true,
+          "match": {
+            "query": {
+              "mode": "live"
+            }
+          }
+        },
+        {
+          "name": "created",
+          "statusCode": 201,
+          "body": {
+            "intentId": "pi_mock_1",
+            "status": "requires_confirmation"
+          }
+        }
+      ]
+    }
+  }
+}

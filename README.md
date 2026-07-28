@@ -21,6 +21,7 @@ Define the same endpoints your app will call. Switch success and failure scenari
 - [Commands](#commands-)
 - [Changelog](CHANGELOG.md)
 - [Validation System](#validation-system-)
+- [Examples in this repository](#examples-in-this-repository-)
 - [Advanced examples](#advanced-examples)
 - [Real-world projects](#real-world-projects-)
 - [Mutable store](#mutable-store-)
@@ -360,12 +361,60 @@ When files change during watch mode:
 
 ## Recommendations 📋
 
-* Review the advanced examples and the [mutable store guide](#mutable-store-) if you need mutable CRUD.
+* Need a ready-made JSON? Browse [Examples in this repository](#examples-in-this-repository-) and copy the one that matches what you need.
+* Want a full explanation of a feature? Use [Advanced examples](#advanced-examples) and the [mutable store guide](#mutable-store-).
 * A single json file can contain many mocks.
 * There can be many json files each with their respective mocks.
 * For microservices or large APIs, use optional [folder organization](#example-11-folder-organization-mockconfigjson) with `mock.config.json`.
 * The server validates your mocks automatically - fix any errors before the server can start.
 * Prefer `request` for input shape and `store.unique` / conflict responses for business uniqueness (`409`).
+
+---
+
+## Examples in this repository 📂
+
+Sample mocks live under [`mocks/`](./mocks) on GitHub (not published with the npm package). Use the descriptions below to pick what you need and copy it into your project.
+
+The numbered `.json` files are single-file samples (copy into your mocks folder). [`mocks/mock-config/`](./mocks/mock-config) is a full folder-organization tree (`mock.config.json` + service folders); point `start` at that directory with `-f` / `--path` — see [Example 11: Folder organization](#example-11-folder-organization-mockconfigjson).
+
+| Topic | File | What it is for |
+|-------|------|----------------|
+| Basics | [`01-basic-multiple-responses.json`](./mocks/01-basic-multiple-responses.json) | Multiple responses / switch scenario |
+| | [`02-custom-headers.json`](./mocks/02-custom-headers.json) | Custom response headers |
+| | [`03-null-body.json`](./mocks/03-null-body.json) | `204` / null body |
+| | [`04-params-and-methods.json`](./mocks/04-params-and-methods.json) | Route params + several HTTP methods |
+| Match | [`05-match-params.json`](./mocks/05-match-params.json) | `match.params` |
+| | [`06-match-query-delay.json`](./mocks/06-match-query-delay.json) | `match.query` + delay |
+| | [`07-match-body.json`](./mocks/07-match-body.json) | `match.body` |
+| | [`08-match-combined.json`](./mocks/08-match-combined.json) | Combined match rules |
+| | [`40-match-call.json`](./mocks/40-match-call.json) | `match.call` (attempts / lockout-style) |
+| Proxy | [`09-proxy.json`](./mocks/09-proxy.json) | Proxy to a live backend |
+| | [`17-proxy-request-failed.json`](./mocks/17-proxy-request-failed.json) | Proxy failure surface |
+| Shape / status | [`10-status-codes-standard.json`](./mocks/10-status-codes-standard.json) | Common status codes |
+| | [`12-body-types.json`](./mocks/12-body-types.json) | Body type variants |
+| | [`13-endpoint-chars.json`](./mocks/13-endpoint-chars.json) | Endpoint path characters |
+| | [`14-http-methods-case.json`](./mocks/14-http-methods-case.json) | HTTP method casing |
+| Request | [`22-request.json`](./mocks/22-request.json) | Request validation |
+| | [`24-request-saas.json`](./mocks/24-request-saas.json) | SaaS-style validation flows |
+| Product-style | [`15-auth-scenarios.json`](./mocks/15-auth-scenarios.json) | Auth scenarios |
+| | [`18-rest-resource-lifecycle.json`](./mocks/18-rest-resource-lifecycle.json) | REST resource lifecycle |
+| | [`19-checkout-resilience.json`](./mocks/19-checkout-resilience.json) | Checkout / payment resilience |
+| | [`20-multi-tenant-rbac.json`](./mocks/20-multi-tenant-rbac.json) | Multi-tenant RBAC |
+| Store | [`25-store.json`](./mocks/25-store.json) | Mutable store basics |
+| | [`26-store-persist.json`](./mocks/26-store-persist.json) | Persist across restarts |
+| | [`29-store-saas.json`](./mocks/29-store-saas.json) | SaaS board-style store |
+| | [`30-store-rbac.json`](./mocks/30-store-rbac.json) | Store + RBAC-style routes |
+| | [`31-store-list.json`](./mocks/31-store-list.json) | `store.list` sort / page / filters |
+| | [`32-store-commerce.json`](./mocks/32-store-commerce.json) | Commerce catalog |
+| | [`33-store-helpdesk.json`](./mocks/33-store-helpdesk.json) | Helpdesk inbox |
+| | [`34-store-hr.json`](./mocks/34-store-hr.json) | HR directory filters |
+| | [`37-store-soft-delete.json`](./mocks/37-store-soft-delete.json) | Soft delete / restore |
+| | [`38-store-relations.json`](./mocks/38-store-relations.json) | Cross-store relations |
+| Folders | [`mocks/mock-config/`](./mocks/mock-config) | Folder organization (`mock.config.json` + auth / orders / payments). Use with `-f` / `--path` — [Example 11](#example-11-folder-organization-mockconfigjson) |
+
+`mocks/invalid/` and `*-matrix.json` are test fixtures, not templates to copy.
+
+For walkthroughs of the same topics, see [Advanced examples](#advanced-examples), [Mutable store](#mutable-store-), and [Real-world projects](#real-world-projects-).
 
 ---
 
@@ -1359,7 +1408,11 @@ Proxy values:
 
 ### Example 11: Folder organization (`mock.config.json`)
 
-Optional mode (≥ `1.18.0`) for backends split into microservices (or large APIs). Group mocks into folders and declare shared settings in a single `mocks/mock.config.json`.
+Optional mode (≥ `1.18.0`) for backends split into microservices (or large APIs). Group mocks into folders and declare shared settings in a single `mock.config.json` at the root of the mocks directory.
+
+**Repo sample to copy:** [`mocks/mock-config/`](./mocks/mock-config) (food delivery: auth, orders, payments) — listed under [Examples in this repository](#examples-in-this-repository-).
+
+Put `mock.config.json` at the root of the mocks directory you pass to `--path` (for example `api-mocks/mock.config.json` with folders like `api-mocks/auth/`).
 
 Useful when you want to:
 
@@ -1369,7 +1422,7 @@ Useful when you want to:
 - Enable/disable a folder, filter files with `include`/`exclude`, and optionally fail on duplicate routes
 - Keep a large mock set readable and easy to navigate
 
-Without `mock.config.json`, mocks work as before: flat JSON files in `mocks/`.
+Without `mock.config.json`, mocks work as before: flat JSON files in the mocks directory.
 
 #### Basic layout (prefix, delay, headers, include/exclude, enabled)
 
@@ -1816,10 +1869,10 @@ mock-server start --reset-store
 
 Rules:
 
-- Opt-in: only activates when `mocks/mock.config.json` exists
+- Opt-in: only activates when `mock.config.json` exists at the root of the mocks directory (`--path`)
 - Only folders declared in `folders` are loaded; undeclared folders are ignored
-- JSON files in the root of `mocks/` still load and receive root `delay` / `proxy` / `headers` defaults
-- One folder level only (`mocks/users/*.json`)
+- JSON files in the root of that directory still load and receive root `delay` / `proxy` / `headers` defaults
+- One folder level only (e.g. `auth/*.json` under the mocks directory)
 - **Priority cheat-sheet** (see examples above for full walkthroughs):
   - `port`: CLI `-p` → config `port` → `3000`
   - `delay`: response → method → folder → root → `0`

@@ -9,6 +9,7 @@ const { stripAnsi } = require('./strip-ansi');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 const CLI_PATH = path.join(PROJECT_ROOT, 'dist', 'index.js');
+const MOCK_CONFIG_FIXTURE = 'mocks/mock-config';
 
 /**
  * @returns {Promise<number>}
@@ -32,14 +33,69 @@ function getFreePort() {
 }
 
 /**
+ * @param {string} source
+ * @param {string} destination
+ */
+function copyDirSync(source, destination) {
+  fs.mkdirSync(destination, { recursive: true });
+
+  for (const entry of fs.readdirSync(source, { withFileTypes: true })) {
+    const from = path.join(source, entry.name);
+    const to = path.join(destination, entry.name);
+
+    if (entry.isDirectory()) {
+      copyDirSync(from, to);
+    } else {
+      fs.copyFileSync(from, to);
+    }
+  }
+}
+
+/**
+ * @param {string} filePath
+ * @returns {unknown}
+ */
+function readJson(filePath) {
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
+/**
+ * @param {string} filePath
+ * @param {unknown} value
+ */
+function writeJson(filePath, value) {
+  fs.writeFileSync(filePath, `${ JSON.stringify(value, null, 2) }\n`, 'utf8');
+}
+
+/**
  * @param {string | string[] | null} mockRelativePaths
- * @param {{ emptyMocksDir?: boolean, skipMocksDir?: boolean }} [options]
+ * @param {{
+ *   emptyMocksDir?: boolean,
+ *   skipMocksDir?: boolean,
+ *   copyTree?: string,
+ *   destPath?: string
+ * }} [options]
  */
 function createWorkspace(mockRelativePaths, options = {}) {
   const workspaceDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hmj-e2e-'));
+  /** @type {string | null} */
+  let mocksDir = null;
 
-  if (!options.skipMocksDir) {
-    const mocksDir = path.join(workspaceDir, 'mocks');
+  if (options.copyTree) {
+    const source = path.isAbsolute(options.copyTree)
+      ? options.copyTree
+      : path.join(PROJECT_ROOT, options.copyTree);
+
+    if (!fs.existsSync(source) || !fs.statSync(source).isDirectory()) {
+      fs.rmSync(workspaceDir, { recursive: true, force: true });
+      throw new Error(`Fixture directory not found: ${ source }`);
+    }
+
+    const destRelative = options.destPath ?? options.copyTree;
+    mocksDir = path.join(workspaceDir, destRelative);
+    copyDirSync(source, mocksDir);
+  } else if (!options.skipMocksDir) {
+    mocksDir = path.join(workspaceDir, 'mocks');
     fs.mkdirSync(mocksDir, { recursive: true });
 
     if (!options.emptyMocksDir && mockRelativePaths) {
@@ -62,6 +118,7 @@ function createWorkspace(mockRelativePaths, options = {}) {
 
   return {
     workspaceDir,
+    mocksDir,
     cleanup: () => {
       fs.rmSync(workspaceDir, { recursive: true, force: true });
     }
@@ -343,7 +400,11 @@ async function startMockServer(options) {
 module.exports = {
   PROJECT_ROOT,
   CLI_PATH,
+  MOCK_CONFIG_FIXTURE,
   getFreePort,
+  copyDirSync,
+  readJson,
+  writeJson,
   createWorkspace,
   killProcessTree,
   runCli,

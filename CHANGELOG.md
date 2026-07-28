@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-07-28
+
+Patch release on top of **2.0.0**. No public API or CLI contract changes.
+
+### Previous version
+
+**2.0.0** — `--path` / `-f` is the mocks directory itself (breaking).
+
+### Added
+
+- Runnable folder-organization sample at [`mocks/mock-config/`](./mocks/mock-config) (auth / orders / payments) for use with `-f` / `--path`
+- README section [Examples in this repository](./README.md#examples-in-this-repository-) — curated index of `mocks/` samples to copy
+- E2E harness `copyTree` to seed workspaces from a fixture directory (used by mock-config cases)
+
+### Changed
+
+- Mock-config e2e cases load [`mocks/mock-config/`](./mocks/mock-config) via `--path` instead of building trees inline
+- Package / CLI version bumped to `2.0.1`
+
+---
+
 ## [2.0.0] - 2026-07-28
 
 ### Previous version
@@ -179,6 +200,7 @@ See git tags (`v1.9.0` … `v1.2.9`) for earlier history (proxy, match, delay, s
 
 ---
 
+[2.0.1]: https://github.com/alejandrorodrom/http-mock-json/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v1.18.1...v2.0.0
 [1.18.1]: https://github.com/alejandrorodrom/http-mock-json/compare/v1.18.0...v1.18.1
 [1.18.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v1.17.2...v1.18.0
