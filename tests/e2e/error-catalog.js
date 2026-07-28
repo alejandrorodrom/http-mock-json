@@ -216,7 +216,7 @@ const ERROR_CATALOG = [
   },
   {
     id: 'match.empty',
-    message: 'The "match" property must include "params", "query" and/or "body"',
+    message: 'The "match" property must include "params", "query", "body" and/or "call"',
     source: 'src/validators/response.validator.ts',
     kind: 'validation',
     caseName: 'error/match-errors'
@@ -248,6 +248,83 @@ const ERROR_CATALOG = [
     source: 'src/validators/response.validator.ts',
     kind: 'validation',
     caseName: 'error/match-errors'
+  },
+  {
+    id: 'match.call-not-positive-integer',
+    message: 'The "match.call" property must be a positive integer (>= 1) or an object',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/match-errors'
+  },
+  {
+    id: 'match.call-object-empty',
+    message: 'The "match.call" object must include "index" and/or "reset": true',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/match-errors'
+  },
+  {
+    id: 'match.call-reset-only-needs-match',
+    message: 'A "match.call" with only "reset": true must also include "params", "query" and/or "body"',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/match-errors'
+  },
+  {
+    id: 'match.call-by-inconsistent',
+    message: 'All "match.call.by" values in a method must be identical',
+    source: 'src/validators/method.validator.ts',
+    kind: 'validation',
+    caseName: 'error/match-errors'
+  },
+  {
+    id: 'match.call-index-not-positive-integer',
+    message: 'The "match.call.index" property must be a positive integer (>= 1)',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/match-errors'
+  },
+  {
+    id: 'match.call-loop-not-boolean',
+    message: 'The "match.call.loop" property must be a boolean',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/match-errors'
+  },
+  {
+    id: 'match.call-reset-not-boolean',
+    message: 'The "match.call.reset" property must be a boolean',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/match-errors'
+  },
+  {
+    id: 'match.call-by-exactly-one',
+    message: 'The "match.call.by" property must include exactly one of "body", "query", or "params"',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/match-errors'
+  },
+  {
+    id: 'match.call-by-not-object',
+    message: 'The "match.call.by" property must be an object',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/match-errors'
+  },
+  {
+    id: 'match.call-by-field-empty',
+    message: 'The "match.call.by.body" property must be a non-empty string',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/match-errors'
+  },
+  {
+    id: 'match.call-loop-indexes-not-dense',
+    message: 'When "match.call.loop" is true, "index" values should be contiguous from 1 to max',
+    source: 'src/validators/method.validator.ts',
+    kind: 'warning',
+    caseName: '40-match-call'
   },
 
   // --- request validation (startup) ---

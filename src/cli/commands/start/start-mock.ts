@@ -3,7 +3,7 @@ import { getMocksData } from './files';
 import { logApi, logError } from '../../../scripts/log.script';
 import cors from 'cors';
 import { validatePortAvailable } from './check-port';
-import { selectResponse } from '../../../scripts/match.script';
+import { resetCallCounters, selectResponse } from '../../../scripts/match.script';
 import { resolveDelay, sleep } from '../../../scripts/delay.script';
 import { proxyRequest, resolveProxy } from '../../../scripts/proxy.script';
 import { checkRequest } from '../../../scripts/request-check.script';
@@ -34,6 +34,7 @@ export const startMock = async (
   app.use(express.urlencoded({ extended: true }));
 
   const { apis, stores } = getMocksData(folderPath);
+  resetCallCounters();
   const registry = new StoreRegistry(stores, {
     mocksDir: folderPath,
     resetStore
@@ -79,7 +80,12 @@ export const startMock = async (
       }
 
       if (!selectedResponse) {
-        selectedResponse = selectResponse(value.responses, value.nameResponse, req);
+        selectedResponse = selectResponse(
+          value.responses,
+          value.nameResponse,
+          req,
+          `${ value.method }:${ value.route }`
+        );
       }
 
       const delay = resolveDelay(selectedResponse.delay, value.delay);

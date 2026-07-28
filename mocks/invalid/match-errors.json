@@ -85,6 +85,217 @@
       ]
     }
   },
+  "api/invalid/match-call-not-positive": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "call": 0
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-call-not-integer": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "call": 1.5
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-call-object-empty": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "call": { "loop": true }
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-call-reset-false": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "call": { "reset": false }
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-call-reset-only": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "call": { "reset": true }
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-call-by-inconsistent": {
+    "POST": {
+      "nameResponse": "fallback",
+      "responses": [
+        {
+          "name": "one",
+          "statusCode": "401",
+          "match": {
+            "call": { "index": 1, "by": { "body": "email" } }
+          },
+          "body": {}
+        },
+        {
+          "name": "two",
+          "statusCode": "401",
+          "match": {
+            "call": { "index": 2, "by": { "query": "email" } }
+          },
+          "body": {}
+        },
+        {
+          "name": "fallback",
+          "statusCode": "423",
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-call-index-invalid": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "call": { "index": 0 }
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-call-loop-not-boolean": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "call": { "index": 1, "loop": "yes" }
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-call-reset-not-boolean": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "call": { "reset": 1 }
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-call-by-empty": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "call": { "index": 1, "by": {} }
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-call-by-not-object": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "call": { "index": 1, "by": "email" }
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-call-by-empty-string": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "call": { "index": 1, "by": { "body": "  " } }
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-call-by-multiple": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "call": {
+              "index": 1,
+              "by": { "body": "email", "query": "email" }
+            }
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
   "api/invalid/match-array": {
     "GET": {
       "nameResponse": "success",

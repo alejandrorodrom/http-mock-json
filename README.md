@@ -44,6 +44,7 @@
   - [Example G — HR directory](#example-g--real-project-hr-employee-directory)
   - [Example H — Blog CMS](#example-h--real-project-blog-cms-with-authors)
   - [Example I — Multi-tenant orders](#example-i--real-project-multi-tenant-orders)
+  - [Example J — Auth lockout](#example-j--real-project-auth-lockout--sessions)
 - [Troubleshooting](#troubleshooting-)
 - [License](#license-)
 
@@ -55,7 +56,7 @@
 - **Automatic Validation** - Comprehensive validation system prevents errors before they happen
 - **Hot Reload** - Watch mode automatically restarts server on file changes
 - **Multiple Responses** - Simulate different scenarios (success, error, etc.) for the same endpoint
-- **Request Matching** - Select responses by route params, query params and/or request body
+- **Request Matching** - Select responses by route params, query params, request body and/or call count (`match.call` number or `{ index, by, loop, reset }`)
 - **Request Validation** - Validate request `body`/`query` shape with rules (`type`, `minLength`, `format`, nested objects, etc.)
 - **Mutable Store** - Opt-in mutable collections (`store` + `action`) with `seed`, `template`, unique/key conflicts, customizable `notFound` (`404`), optional soft delete (`softDelete` + `restore` + `includeDeleted`), cross-store `relations` (FK + `expand` + `onDelete`), disk `persist`, `--reset-store`, and `store.list` (sort/multi-sort, page/offset/cursor, filters with `eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in` + nested + `or` + search, response templates). Start with the [capability map](#capability-map-build-complex-mocks) to compose complex APIs from the docs.
 - **Response Delay** - Simulate latency per method or per response
@@ -169,10 +170,15 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | headers      | ❌       | object         | `{ "Content-Type": "application/json" }`  | Headers in json format (optional)                                          |
    | body         | ✅*      | any            |                                          | Required unless the response uses `proxy` or `action`                      |
    | action       | ❌       | string         | `"list"`, `"get"`, `"create"`, `"update"`, `"patch"`, `"delete"`, `"restore"` | Run a store operation instead of a fixed `body` (requires `store`; incompatible with `proxy`). `body` ignored except for `list` templates. `delete` always `204`. `restore` requires `store.softDelete` |
-   | match        | ❌       | object         | `{ "params": { "id": "1" } }`            | Request matching rules (`params`, `query` and/or `body`). First match wins |
+   | match        | ❌       | object         | `{ "params": { "id": "1" } }`            | Request matching rules (`params`, `query`, `body` and/or `call`). First match wins |
    | match.params | ❌       | object         | `{ "id": "1" }`                          | Partial match against route params (e.g. `/users/:id`)                     |
    | match.query  | ❌       | object         | `{ "page": "1" }`                        | Partial match against request query params                                 |
    | match.body   | ❌       | any            | `{ "email": "a@b.com" }`                 | Partial match against request body                                         |
+   | match.call   | ❌       | number \| object | `1` or `{ "index": 1, "by": { "body": "email" }, "loop": true, "reset": true }` | Match by N-th hit (1-based). Number shorthand = `{ "index": N }`. See [Example 8](#example-8-match-by-call-count) |
+   | match.call.index | ❌   | number         | `1`, `2`                                 | 1-based call index to match                                                |
+   | match.call.by | ❌      | object         | `{ "body": "email" }`                    | Scope the counter by one field from `body`, `query`, or `params` (nested paths allowed, e.g. `"user.email"`) |
+   | match.call.loop | ❌    | boolean        | `true`                                   | After the highest `index`, wrap back to `1` (instead of staying on `nameResponse`) |
+   | match.call.reset | ❌   | boolean        | `true`                                   | When this response is selected, reset that counter to `0` (next hit is `index` 1 again) |
    | delay        | ❌       | number         | `500`                                    | Latency in ms for this response (overrides method-level `delay`)           |
    | proxy        | ❌       | string/object/true | `true`, `"https://api.com"`, `{ "target": "...", "path": "/v2/users" }` | Forward the original request to a real backend |
 
@@ -664,9 +670,267 @@ You can combine `params`, `query`, and `body` in the same response:
 }
 ```
 
-All listed conditions must match.
+All listed conditions must match. See [Example 8](#example-8-match-by-call-count) to also match by call count.
 
-### Example 8: Request validation
+### Example 8: Match by call count
+
+`match.call` selects a response based on how many times a counter has been hit (**1-based**). Counters live in memory and clear when the server starts or hot-reloads.
+
+**Counter key**
+
+| Config | Key |
+|--------|-----|
+| Default | `METHOD:route` (shared by all clients) |
+| With `call.by` | `METHOD:route:<field value>` (e.g. per email) |
+
+Requests that fail `request` validation never reach `match`, so they do **not** advance the counter.
+
+You can combine `call` with `params` / `query` / `body` (all listed conditions must match). First match wins.
+
+#### 8.1 Shorthand — `"call": N`
+
+`"call": 1` means `{ "index": 1 }`.
+
+```json
+{
+  "api/flaky": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "fail",
+          "statusCode": 503,
+          "match": { "call": 1 },
+          "body": { "ok": false }
+        },
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": { "ok": true }
+        }
+      ]
+    }
+  }
+}
+```
+
+| Call # | Result |
+|--------|--------|
+| 1 | `fail` (`503`) |
+| 2+ | `ok` (`200`, via `nameResponse`) |
+
+Without `loop`, once you pass the highest `index`, later hits keep falling through to `nameResponse`.
+
+#### 8.2 Object form — `index`, `by`, `loop`, `reset`
+
+| Field | Type | Required | Behavior |
+|-------|------|----------|----------|
+| `index` | number (≥ 1) | ❌* | Match only when the effective call number equals this value |
+| `by` | object | ❌ | Scope the counter: exactly one of `body`, `query`, `params` → field path |
+| `loop` | boolean | ❌ | If `true` on any response of the method, wrap after `max(index)` back to `1` |
+| `reset` | boolean | ❌* | If `true` and this response is selected, set that counter back to `0` |
+
+\* A `call` object must include at least `index` and/or `"reset": true`. A reset-only `call` must also include `params` / `query` / `body` so it is not a catch-all. All `call.by` values in the same method must be identical.
+
+```json
+"match": {
+  "call": {
+    "index": 1,
+    "by": { "body": "email" },
+    "loop": true
+  }
+}
+```
+
+```json
+"match": {
+  "call": {
+    "reset": true,
+    "by": { "body": "email" }
+  },
+  "body": { "password": "correct" }
+}
+```
+
+#### 8.3 Per-user counters — `call.by`
+
+Use `by` so Alice and Bob do not share attempts:
+
+```json
+{
+  "api/auth/login-by": {
+    "POST": {
+      "nameResponse": "locked",
+      "responses": [
+        {
+          "name": "wrong-1",
+          "statusCode": 401,
+          "match": {
+            "call": { "index": 1, "by": { "body": "email" } },
+            "body": { "password": "wrong" }
+          },
+          "body": {
+            "error": "INVALID_CREDENTIALS",
+            "attemptsLeft": 2
+          }
+        },
+        {
+          "name": "wrong-2",
+          "statusCode": 401,
+          "match": {
+            "call": { "index": 2, "by": { "body": "email" } },
+            "body": { "password": "wrong" }
+          },
+          "body": {
+            "error": "INVALID_CREDENTIALS",
+            "attemptsLeft": 1
+          }
+        },
+        {
+          "name": "locked",
+          "statusCode": 423,
+          "body": { "error": "ACCOUNT_LOCKED" }
+        }
+      ]
+    }
+  }
+}
+```
+
+| Request | Result |
+|---------|--------|
+| Alice wrong (1st) | `wrong-1` |
+| Bob wrong (1st) | `wrong-1` (Bob’s own counter) |
+| Alice wrong (2nd) | `wrong-2` |
+| Alice wrong (3rd+) | `locked` |
+
+If `by` is configured and the field is missing/`null`/object, call-index matching is skipped for that request (other `match` fields / `nameResponse` still apply). Prefer the same `by` on every `call` of the method.
+
+Nested paths work: `"by": { "body": "user.email" }`.
+
+#### 8.4 Loop — `call.loop`
+
+When any response sets `"loop": true`, after the highest `index` the effective number wraps to `1` instead of sticking on `nameResponse`:
+
+```json
+{
+  "api/flaky-loop": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "fail",
+          "statusCode": 503,
+          "match": { "call": { "index": 1, "loop": true } },
+          "body": { "ok": false, "wave": 1 }
+        },
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "match": { "call": { "index": 2, "loop": true } },
+          "body": { "ok": true, "wave": 2 }
+        }
+      ]
+    }
+  }
+}
+```
+
+| Call # | Effective index | Result |
+|--------|-----------------|--------|
+| 1 | 1 | `fail` |
+| 2 | 2 | `ok` |
+| 3 | 1 | `fail` (wrapped) |
+| 4 | 2 | `ok` (wrapped) |
+
+`loop` is method-wide for that counter: one `true` is enough (you can repeat it on each indexed response for readability).
+
+#### 8.5 Reset — `call.reset`
+
+When a response with `"reset": true` is selected, that counter returns to `0`. The next hit is `index` 1 again — useful after a successful login:
+
+```json
+{
+  "name": "success",
+  "statusCode": 200,
+  "match": {
+    "call": { "reset": true },
+    "body": { "password": "correct" }
+  },
+  "body": { "token": "mock-jwt-token" }
+}
+```
+
+| Sequence | Result |
+|----------|--------|
+| wrong, wrong, wrong | `wrong-1` → `wrong-2` → `locked` |
+| correct | `success` + counter reset |
+| wrong | `wrong-1` again |
+
+Combine with `by` so only that user’s counter resets: `"call": { "reset": true, "by": { "body": "email" } }`.
+
+#### 8.6 Full login example (shorthand + reset)
+
+```json
+{
+  "api/auth/login": {
+    "POST": {
+      "nameResponse": "locked",
+      "responses": [
+        {
+          "name": "wrong-1",
+          "statusCode": 401,
+          "match": {
+            "call": 1,
+            "body": { "password": "wrong" }
+          },
+          "body": {
+            "error": "INVALID_CREDENTIALS",
+            "attemptsLeft": 2
+          }
+        },
+        {
+          "name": "wrong-2",
+          "statusCode": 401,
+          "match": {
+            "call": 2,
+            "body": { "password": "wrong" }
+          },
+          "body": {
+            "error": "INVALID_CREDENTIALS",
+            "attemptsLeft": 1
+          }
+        },
+        {
+          "name": "success",
+          "statusCode": 200,
+          "match": {
+            "call": { "reset": true },
+            "body": { "password": "correct" }
+          },
+          "body": {
+            "token": "mock-jwt-token"
+          }
+        },
+        {
+          "name": "locked",
+          "statusCode": 423,
+          "body": {
+            "error": "ACCOUNT_LOCKED"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+- 1st / 2nd wrong password → `wrong-1` / `wrong-2`
+- 3rd+ wrong → `locked` (`nameResponse`; no `loop`)
+- Correct password anytime → `success` and counter reset
+- Next wrong after success → `wrong-1` again
+
+### Example 9: Request validation
 
 `request` validates the incoming `body` and/or `query` **before** `match` / `nameResponse`.
 
@@ -990,9 +1254,9 @@ Behavior examples:
 - Invalid profile body → generic `400` with errors under `details`
 - Invalid filters → `400 bad-request` with map under `fields`
 
-See Example 8 above for a full `request` configuration you can paste into your project.
+See Example 9 above for a full `request` configuration you can paste into your project.
 
-### Example 9: Proxy to a real backend
+### Example 10: Proxy to a real backend
 
 Matching rules stay the same. After a response is selected, if it has `proxy`, the mock acts as an intermediary: it forwards the original request to the real backend and returns that response (status, headers, and body) to the frontend.
 
@@ -1073,7 +1337,7 @@ Proxy values:
 | `{ "target": "https://api.com", "path": "/v2/users" }` | Rewrite path to `/v2/users`; keep the original query |
 | `true` | Use method-level `proxy`, or `--proxy` if method has none |
 
-### Example 10: Mutable store
+### Example 11: Mutable store
 
 Opt-in collections that mutate while the server runs. Declare `store` on the endpoint and mark responses with `action`.
 
@@ -1107,7 +1371,7 @@ Goal: from this README alone you can compose multi-tenant APIs with validation, 
 | Custom missing item | `store.notFound` | `"notFound": { "response": "missing-user" }` | [Not found](#not-found-404) |
 | Survive restart | `persist` / `--reset-store` | `"persist": true` | [Persist and restart](#persist-and-restart-behavior) |
 | Validate payload/query | `request` | `"body": { "email": { "type": "string", "format": "email" } }` | [Request validation](#example-8-request-validation) |
-| Branch by params/query/body | `match` | `"match": { "params": { "orgId": "blocked" } }` | [Example 5–7](#example-5-match-by-route-params) |
+| Branch by params/query/body/call | `match` | `"match": { "call": { "index": 1, "by": { "body": "email" } } }` | [Example 5–8](#example-5-match-by-route-params) |
 | Latency / headers | `delay`, `headers` | `"delay": 120`, `"Retry-After": "30"` | [Example 6](#example-6-match-by-query-params-and-delay) |
 | Page tables | `store.list` **page** | `?page=2&pageSize=10` | [Page mode](#page-mode) |
 | Offset APIs | `store.list` **offset** | `?offset=20&limit=10` | [Offset mode](#offset-mode) |
@@ -1287,6 +1551,7 @@ Checklist when wiring a new domain:
 | People directory / HR | [Example G](#example-g--real-project-hr-employee-directory) | All filter ops + nested + combined query |
 | Blog / CMS authors + articles | [Example H](#example-h--real-project-blog-cms-with-authors) | `relations` + soft delete + expand + restrict |
 | Multi-tenant orders + line items | [Example I](#example-i--real-project-multi-tenant-orders) | Composite `join` + cascade + tenant routes |
+| Auth lockout + sessions | [Example J](#example-j--real-project-auth-lockout--sessions) | `match.call` + `request` + `store` + headers |
 
 More product scenarios (auth, RBAC, webhooks, proxy) live under [Real-world projects](#real-world-projects-).
 
@@ -4375,6 +4640,206 @@ curl -s 'http://localhost:3000/api/acme/order-items?orderId=1'
 | `onDelete: "cascade"` | Delete order → dependents removed |
 | `store.list` + `request` + `persist` | `orderId`/status/total filters, payload rules, survive restart |
 
+### Example J — Real project: Auth lockout + sessions
+
+Login UI with **per-email** failed-attempt counters (`match.call.by`), lockout headers, validation (`request`), latency, and a **sessions** store after a successful sign-in (`call.reset` clears that user’s counter).
+
+Combines: `match.call` (`index` / `by` / `reset`) + `match.body` + `request` + `delay` + custom headers + `store` (`create` / `list` / `delete`) + `persist`.
+
+```json
+{
+  "api/v1/auth/login": {
+    "POST": {
+      "nameResponse": "locked",
+      "delay": 80,
+      "request": {
+        "body": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 8, "maxLength": 72 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "attempt-1",
+          "statusCode": 401,
+          "delay": 150,
+          "match": {
+            "call": { "index": 1, "by": { "body": "email" } },
+            "body": { "password": "wrong-password" }
+          },
+          "body": {
+            "code": "INVALID_CREDENTIALS",
+            "attemptsLeft": 2
+          }
+        },
+        {
+          "name": "attempt-2",
+          "statusCode": 401,
+          "match": {
+            "call": { "index": 2, "by": { "body": "email" } },
+            "body": { "password": "wrong-password" }
+          },
+          "headers": { "X-Auth-Warning": "last-attempt" },
+          "body": {
+            "code": "INVALID_CREDENTIALS",
+            "attemptsLeft": 1
+          }
+        },
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "delay": 120,
+          "match": {
+            "call": { "reset": true, "by": { "body": "email" } },
+            "body": { "password": "CorrectHorse1" }
+          },
+          "headers": { "X-Auth": "session" },
+          "body": {
+            "token": "jwt-demo",
+            "user": { "id": 1, "email": "demo@acme.com" }
+          }
+        },
+        {
+          "name": "locked",
+          "statusCode": 423,
+          "headers": { "Retry-After": "60" },
+          "body": {
+            "code": "ACCOUNT_LOCKED",
+            "retryAfterSec": 60
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid login payload", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/v1/auth/sessions": {
+    "store": {
+      "id": "auth-sessions",
+      "seed": [
+        {
+          "id": 1,
+          "userId": 1,
+          "email": "demo@acme.com",
+          "device": "Chrome / macOS",
+          "createdAt": "2026-07-01T10:00:00.000Z"
+        }
+      ],
+      "template": {
+        "id": 0,
+        "userId": 0,
+        "email": "",
+        "device": "Unknown",
+        "createdAt": ""
+      },
+      "list": true,
+      "persist": true,
+      "notFound": { "response": "missing" }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list",
+          "body": {
+            "items": "{{items}}",
+            "total": "{{total}}"
+          }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "body": {
+          "userId": { "type": "number", "min": 1 },
+          "email": { "type": "string", "format": "email" },
+          "device": { "type": "string", "minLength": 1, "maxLength": 80 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid session", "errors": [] }
+        },
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  },
+  "api/v1/auth/sessions/:id": {
+    "store": { "id": "auth-sessions" },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" },
+        {
+          "name": "missing",
+          "statusCode": 404,
+          "body": { "code": "SESSION_NOT_FOUND", "key": "{{key}}" }
+        }
+      ]
+    }
+  }
+}
+```
+
+Try:
+
+```bash
+# Validation fails before match.call (counter does not advance)
+curl -si -X POST http://localhost:3000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"not-an-email","password":"short"}'
+
+# Per-email lockout (Alice)
+curl -si -X POST http://localhost:3000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"alice@acme.com","password":"wrong-password"}'
+# → 401 attemptsLeft: 2
+curl -si -X POST http://localhost:3000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"alice@acme.com","password":"wrong-password"}'
+# → 401 + X-Auth-Warning, attemptsLeft: 1
+curl -si -X POST http://localhost:3000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"alice@acme.com","password":"wrong-password"}'
+# → 423 + Retry-After
+
+# Bob still has a fresh counter
+curl -si -X POST http://localhost:3000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"bob@acme.com","password":"wrong-password"}'
+# → 401 attemptsLeft: 2
+
+# Success resets Alice’s counter; then register a session
+curl -si -X POST http://localhost:3000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"alice@acme.com","password":"CorrectHorse1"}'
+
+curl -si -X POST http://localhost:3000/api/v1/auth/sessions \
+  -H 'Content-Type: application/json' \
+  -d '{"userId":1,"email":"alice@acme.com","device":"Safari / iOS"}'
+
+curl -s 'http://localhost:3000/api/v1/auth/sessions'
+curl -s -o /dev/null -w '%{http_code}\n' -X DELETE http://localhost:3000/api/v1/auth/sessions/1
+```
+
+| Feature | How this example uses it |
+|---------|--------------------------|
+| `match.call.index` + `by` | Failed logins counted per email |
+| `match.call.reset` | Successful password clears that email’s counter |
+| `request` | Bad payload → `422` without advancing the counter |
+| `delay` / headers | Slow fail path, `Retry-After`, `X-Auth-Warning` |
+| `store` + `list` + `persist` | Session list / revoke after login; survives restart |
+
 ---
 
 ## Real-world projects 🏢
@@ -4392,10 +4857,10 @@ The [Advanced examples](#advanced-examples) teach one feature at a time. This se
 | [HR employee directory](#example-g--real-project-hr-employee-directory) | All filter ops + nested + `or` + search | People admin: salary, level, hire window, roles |
 | [Blog CMS with authors](#example-h--real-project-blog-cms-with-authors) | `relations` + `softDelete` + `list` + `request` + `unique` + `persist` | Expand, trash/restore, FK + restrict delete |
 | [Multi-tenant orders](#example-i--real-project-multi-tenant-orders) | Composite `join` + `cascade` + `list` + `request` + `persist` | Order + line items, tenant routes, expand parent |
+| [Auth lockout + sessions](#example-j--real-project-auth-lockout--sessions) | `match.call` + `request` + `delay` + headers + `store` + `persist` | Per-email lockout, reset on success, session revoke |
 | SaaS signup + org invite | `request` + `match` | Form validation vs business errors (`409`, `403`) |
 | Checkout resilience | `match` + `delay` + headers | `402` / `429` / `503`, retries, idempotency |
 | Multi-tenant RBAC | `match.params` + `match.query` | Admin vs member, `403` across orgs |
-| Auth login | `request` + `match` + `delay` | Invalid payload vs locked account vs MFA |
 | REST CRUD + pagination | `match` + headers | Tables, create/update/delete, `404` / `409` / `410` |
 | Request + proxy | `request` + `proxy` | Validate locally, forward only when valid |
 | Global `--proxy` | CLI `--proxy` | Unmocked routes go to a real backend |
@@ -4616,58 +5081,9 @@ Same route shape (`/orgs/:orgId/...`), different outcomes by `params` + `query.r
 
 ### Example: Auth login with validation + business match
 
-1. Bad email/password shape → `422` (`request` + `invalidResponse`)
-2. Valid credentials + locked email → `423` (`match`)
-3. Valid credentials + MFA user → `401` MFA required
-4. Otherwise → `200` token
+For **per-email lockout**, `Retry-After`, `call.reset` on success, and a **sessions** store after login, use the full pasteable mock in [Example J — Auth lockout + sessions](#example-j--real-project-auth-lockout--sessions).
 
-```json
-{
-  "api/v1/auth/login": {
-    "POST": {
-      "nameResponse": "ok",
-      "delay": 50,
-      "request": {
-        "body": {
-          "email": { "type": "string", "format": "email" },
-          "password": { "type": "string", "minLength": 8, "maxLength": 72 },
-          "otp?": { "type": "string", "pattern": "^\\d{6}$" }
-        },
-        "invalidResponse": "validation-error"
-      },
-      "responses": [
-        {
-          "name": "ok",
-          "statusCode": 200,
-          "delay": 120,
-          "headers": { "X-Auth": "session" },
-          "body": { "token": "jwt-ok" }
-        },
-        {
-          "name": "locked",
-          "statusCode": 423,
-          "match": { "body": { "email": "locked@example.com" } },
-          "body": { "code": "ACCOUNT_LOCKED" }
-        },
-        {
-          "name": "mfa-required",
-          "statusCode": 401,
-          "match": {
-            "body": { "email": "mfa@example.com", "password": "secret123" }
-          },
-          "body": { "code": "MFA_REQUIRED" }
-        },
-        {
-          "name": "validation-error",
-          "statusCode": 422,
-          "delay": 140,
-          "body": { "message": "Invalid request", "errors": [] }
-        }
-      ]
-    }
-  }
-}
-```
+That scenario combines `request` (invalid payload never advances the counter), `match.call` (`index` / `by` / `reset`), `delay`, custom headers, and `store` + `persist`.
 
 ### Example: REST CRUD + pagination
 
@@ -5092,12 +5508,23 @@ These errors occur when individual response objects are invalid:
 | `The "headers" property must be an object`   | `headers` is not an object              | If provided, `headers` must be an object: `"headers": {}`     |
 | `The "delay" "X" is not a valid number`      | Response-level `delay` is not a number  | Use a number of milliseconds: `"delay": 500`                  |
 | `The "delay" must be greater than or equal to 0` | Response-level `delay` is negative  | Use `0` or a positive number                                  |
-| `The "match" property must be an object`     | `match` is not an object                | Use `"match": { "params": {...} }`, `"query": {...}` and/or `"body": {...}` |
-| `The "match" property must include "params", "query" and/or "body"` | `match` is empty | Add at least `"params"`, `"query"`, or `"body"` inside `match` |
+| `The "match" property must be an object`     | `match` is not an object                | Use `"match": { "params": {...} }`, `"query": {...}`, `"body": {...}` and/or `"call": 1` |
+| `The "match" property must include "params", "query", "body" and/or "call"` | `match` is empty | Add at least `"params"`, `"query"`, `"body"`, or `"call"` inside `match` |
 | `The "match.params" property must be an object` | `match.params` is not an object    | Use an object of route params: `"params": { "id": "1" }`       |
 | `The "match.params" property must not be empty` | `match.params` is `{}`             | Add at least one route param key/value to match                |
 | `The "match.query" property must be an object` | `match.query` is not an object        | Use an object of query keys/values: `"query": { "page": "1" }` |
 | `The "match.query" property must not be empty` | `match.query` is `{}`                 | Add at least one query key/value to match                      |
+| `The "match.call" property must be a positive integer (>= 1) or an object` | Invalid `match.call` shape | Use `1` or `{ "index": 1 }` / `{ "reset": true }` |
+| `The "match.call" object must include "index" and/or "reset": true` | `call` object has only `loop`/`by`, or `"reset": false` alone | Add `"index"` and/or `"reset": true` |
+| `A "match.call" with only "reset": true must also include "params", "query" and/or "body"` | Reset-only catch-all match | Combine with `body` / `query` / `params` |
+| `All "match.call.by" values in a method must be identical` | Mixed `by` scopes on one method | Use the same `by` on every `call` |
+| `When "match.call.loop" is true, "index" values should be contiguous from 1 to max` | Sparse indexes with `loop` (warning) | Use `1..N` without gaps |
+| `The "match.call.index" property must be a positive integer (>= 1)` | Bad `index` | Use `1`, `2`, … |
+| `The "match.call.loop" property must be a boolean` | Non-boolean `loop` | Use `true` or `false` |
+| `The "match.call.reset" property must be a boolean` | Non-boolean `reset` | Use `true` or `false` |
+| `The "match.call.by" property must include exactly one of "body", "query", or "params"` | Empty or multiple `by` keys | Use e.g. `"by": { "body": "email" }` |
+| `The "match.call.by" property must be an object` | `by` is not an object | Use an object with one source key |
+| `The "match.call.by.body" property must be a non-empty string` | Empty / non-string path | Use a field path string |
 | `The "proxy" must be a valid http or https URL` | Invalid proxy URL                    | Use a full URL like `"https://api.staging.com"`               |
 | `The "proxy" must be a URL string, true, or an object with "target"` | Invalid response proxy shape | Use a string, `true`, or `{ "target": "https://..." }`     |
 | `The "proxy" must be a URL string or an object with "target"` | Invalid method proxy shape (`true` not allowed) | Use a string or `{ "target": "https://..." }` at method level |

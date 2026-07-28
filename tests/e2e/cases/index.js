@@ -44,7 +44,8 @@ const successCases = [
   require('./success/36-store-unique-redundant'),
   require('./success/37-store-soft-delete'),
   require('./success/38-store-relations'),
-  require('./success/39-store-relations-matrix')
+  require('./success/39-store-relations-matrix'),
+  require('./success/40-match-call')
 ];
 
 const errorCases = [
@@ -78,6 +79,7 @@ const runtimeCases = [
   require('./runtime/match-query-delay'),
   require('./runtime/match-body'),
   require('./runtime/match-combined'),
+  require('./runtime/match-call'),
   require('./runtime/headers-and-null-body'),
   require('./runtime/all-http-methods'),
   require('./runtime/proxy-orphan-502'),
@@ -115,6 +117,7 @@ const runtimeCases = [
 const unitCases = [
   require('./unit/unsupported-http-method'),
   require('./unit/fallback-response-missing'),
+  require('./unit/match-call-counters'),
   require('./unit/package-json-missing'),
   require('./unit/mocks-folder-mkdir-failed'),
   require('./unit/invalid-mock-configuration'),

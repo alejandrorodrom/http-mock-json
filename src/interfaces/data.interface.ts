@@ -3,10 +3,24 @@ import { MethodProxyValue, ProxyValue } from '../types/proxy.type';
 import { MockRequest, RawMockRequest } from '../types/request.type';
 import { StoreAction } from '../types/store.type';
 
+export interface MockMatchCallBy {
+  body?: string;
+  query?: string;
+  params?: string;
+}
+
+export interface MockMatchCall {
+  index?: number;
+  by?: MockMatchCallBy;
+  loop?: boolean;
+  reset?: boolean;
+}
+
 export interface MockMatch {
   params?: Record<string, JsonValue>;
   query?: Record<string, JsonValue>;
   body?: JsonValue;
+  call?: number | MockMatchCall;
 }
 
 export interface MockResponseConfig {

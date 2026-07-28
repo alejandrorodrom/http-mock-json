@@ -1,0 +1,409 @@
+{
+  "api/auth/login": {
+    "POST": {
+      "nameResponse": "locked",
+      "responses": [
+        {
+          "name": "wrong-1",
+          "statusCode": 401,
+          "match": {
+            "call": 1,
+            "body": { "password": "wrong" }
+          },
+          "body": {
+            "error": "INVALID_CREDENTIALS",
+            "attemptsLeft": 2
+          }
+        },
+        {
+          "name": "wrong-2",
+          "statusCode": 401,
+          "match": {
+            "call": 2,
+            "body": { "password": "wrong" }
+          },
+          "body": {
+            "error": "INVALID_CREDENTIALS",
+            "attemptsLeft": 1
+          }
+        },
+        {
+          "name": "success",
+          "statusCode": 200,
+          "match": {
+            "call": { "reset": true },
+            "body": { "password": "correct" }
+          },
+          "body": {
+            "token": "mock-jwt-token"
+          }
+        },
+        {
+          "name": "locked",
+          "statusCode": 423,
+          "body": {
+            "error": "ACCOUNT_LOCKED"
+          }
+        }
+      ]
+    }
+  },
+  "api/auth/login-by": {
+    "POST": {
+      "nameResponse": "locked",
+      "responses": [
+        {
+          "name": "wrong-1",
+          "statusCode": 401,
+          "match": {
+            "call": {
+              "index": 1,
+              "by": { "body": "email" }
+            },
+            "body": { "password": "wrong" }
+          },
+          "body": {
+            "error": "INVALID_CREDENTIALS",
+            "attemptsLeft": 2,
+            "scope": "per-email"
+          }
+        },
+        {
+          "name": "wrong-2",
+          "statusCode": 401,
+          "match": {
+            "call": {
+              "index": 2,
+              "by": { "body": "email" }
+            },
+            "body": { "password": "wrong" }
+          },
+          "body": {
+            "error": "INVALID_CREDENTIALS",
+            "attemptsLeft": 1,
+            "scope": "per-email"
+          }
+        },
+        {
+          "name": "success",
+          "statusCode": 200,
+          "match": {
+            "call": {
+              "reset": true,
+              "by": { "body": "email" }
+            },
+            "body": { "password": "correct" }
+          },
+          "body": {
+            "token": "per-email-token"
+          }
+        },
+        {
+          "name": "locked",
+          "statusCode": 423,
+          "body": {
+            "error": "ACCOUNT_LOCKED",
+            "scope": "per-email"
+          }
+        }
+      ]
+    }
+  },
+  "api/auth/login-nested": {
+    "POST": {
+      "nameResponse": "locked",
+      "responses": [
+        {
+          "name": "wrong-1",
+          "statusCode": 401,
+          "match": {
+            "call": {
+              "index": 1,
+              "by": { "body": "user.email" }
+            },
+            "body": { "password": "wrong" }
+          },
+          "body": {
+            "error": "INVALID_CREDENTIALS",
+            "scope": "nested-email",
+            "attemptsLeft": 1
+          }
+        },
+        {
+          "name": "success",
+          "statusCode": 200,
+          "match": {
+            "call": {
+              "reset": true,
+              "by": { "body": "user.email" }
+            },
+            "body": { "password": "correct" }
+          },
+          "body": { "token": "nested-token" }
+        },
+        {
+          "name": "locked",
+          "statusCode": 423,
+          "body": { "error": "ACCOUNT_LOCKED", "scope": "nested-email" }
+        }
+      ]
+    }
+  },
+  "api/auth/login-missing-by": {
+    "POST": {
+      "nameResponse": "no-scope",
+      "responses": [
+        {
+          "name": "wrong-1",
+          "statusCode": 401,
+          "match": {
+            "call": {
+              "index": 1,
+              "by": { "body": "email" }
+            },
+            "body": { "password": "wrong" }
+          },
+          "body": { "error": "ATTEMPT_1" }
+        },
+        {
+          "name": "no-scope",
+          "statusCode": 400,
+          "body": { "error": "EMAIL_REQUIRED_FOR_CALL_SCOPE" }
+        }
+      ]
+    }
+  },
+  "api/auth/login-validated": {
+    "POST": {
+      "nameResponse": "locked",
+      "request": {
+        "body": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 4 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "wrong-1",
+          "statusCode": 401,
+          "match": {
+            "call": { "index": 1 },
+            "body": { "password": "wrong" }
+          },
+          "body": {
+            "error": "INVALID_CREDENTIALS",
+            "attemptsLeft": 2,
+            "scope": "validated"
+          }
+        },
+        {
+          "name": "wrong-2",
+          "statusCode": 401,
+          "match": {
+            "call": { "index": 2 },
+            "body": { "password": "wrong" }
+          },
+          "body": {
+            "error": "INVALID_CREDENTIALS",
+            "attemptsLeft": 1,
+            "scope": "validated"
+          }
+        },
+        {
+          "name": "locked",
+          "statusCode": 423,
+          "body": { "error": "ACCOUNT_LOCKED", "scope": "validated" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid login", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/otp": {
+    "GET": {
+      "nameResponse": "done",
+      "responses": [
+        {
+          "name": "send-1",
+          "statusCode": 200,
+          "match": {
+            "call": {
+              "index": 1,
+              "by": { "query": "user" }
+            }
+          },
+          "body": { "sent": true, "attempt": 1 }
+        },
+        {
+          "name": "send-2",
+          "statusCode": 200,
+          "match": {
+            "call": {
+              "index": 2,
+              "by": { "query": "user" }
+            }
+          },
+          "body": { "sent": true, "attempt": 2 }
+        },
+        {
+          "name": "done",
+          "statusCode": 429,
+          "body": { "error": "OTP_LIMIT" }
+        }
+      ]
+    }
+  },
+  "api/tenants/:tenantId/ping": {
+    "GET": {
+      "nameResponse": "exhausted",
+      "responses": [
+        {
+          "name": "pong-1",
+          "statusCode": 200,
+          "match": {
+            "call": {
+              "index": 1,
+              "by": { "params": "tenantId" }
+            }
+          },
+          "body": { "pong": 1 }
+        },
+        {
+          "name": "pong-2",
+          "statusCode": 200,
+          "match": {
+            "call": {
+              "index": 2,
+              "by": { "params": "tenantId" }
+            }
+          },
+          "body": { "pong": 2 }
+        },
+        {
+          "name": "exhausted",
+          "statusCode": 429,
+          "body": { "error": "PING_LIMIT" }
+        }
+      ]
+    }
+  },
+  "api/orgs/:orgId/actions": {
+    "POST": {
+      "nameResponse": "fallback",
+      "responses": [
+        {
+          "name": "step-1",
+          "statusCode": 200,
+          "match": {
+            "call": { "index": 1 },
+            "params": { "orgId": "acme" },
+            "query": { "op": "retry" },
+            "body": { "phase": "run" }
+          },
+          "body": { "step": 1 }
+        },
+        {
+          "name": "step-2",
+          "statusCode": 200,
+          "match": {
+            "call": { "index": 2 },
+            "params": { "orgId": "acme" },
+            "query": { "op": "retry" },
+            "body": { "phase": "run" }
+          },
+          "body": { "step": 2 }
+        },
+        {
+          "name": "fallback",
+          "statusCode": 200,
+          "body": { "step": "done" }
+        }
+      ]
+    }
+  },
+  "api/flaky": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "fail",
+          "statusCode": 503,
+          "match": { "call": 1 },
+          "body": { "ok": false }
+        },
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": { "ok": true }
+        }
+      ]
+    }
+  },
+  "api/flaky-loop": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "fail",
+          "statusCode": 503,
+          "match": {
+            "call": {
+              "index": 1,
+              "loop": true
+            }
+          },
+          "body": { "ok": false, "wave": 1 }
+        },
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "match": {
+            "call": {
+              "index": 2,
+              "loop": true
+            }
+          },
+          "body": { "ok": true, "wave": 2 }
+        }
+      ]
+    }
+  },
+  "api/flaky-loop-sparse": {
+    "GET": {
+      "nameResponse": "done",
+      "responses": [
+        {
+          "name": "fail",
+          "statusCode": 503,
+          "match": {
+            "call": {
+              "index": 1,
+              "loop": true
+            }
+          },
+          "body": { "ok": false }
+        },
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "match": {
+            "call": {
+              "index": 3,
+              "loop": true
+            }
+          },
+          "body": { "ok": true }
+        },
+        {
+          "name": "done",
+          "statusCode": 200,
+          "body": { "ok": true, "sparse": true }
+        }
+      ]
+    }
+  }
+}
