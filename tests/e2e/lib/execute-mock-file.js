@@ -11,10 +11,12 @@ const { hasExactConsoleMatch, formatMissingMatchFailure } = require('./strip-ans
 
 /**
  * @typedef {object} ExpectedConsole
- * @property {'success' | 'error'} outcome
+ * @property {'success' | 'error' | 'cli'} outcome
+ * `cli` = short-lived command (init/version/help/flag parse); no server start required
  * @property {string[]} [stdoutIncludes]
  * @property {string[]} [stdoutExcludes]
  * @property {string[]} [stderrIncludes]
+ * @property {number} [exitCode]
  */
 
 /**
@@ -51,6 +53,18 @@ function assertConsole(stdout, stderr, expected, meta = {}) {
     if (meta.exitCode === 0) {
       failures.push(`Expected non-zero exit code on error, received ${ meta.exitCode }`);
     }
+  }
+
+  if (expected.outcome === 'cli') {
+    if (stdout.includes('Mock server is running')) {
+      failures.push('Expected a short-lived CLI command, but the mock server started');
+    }
+  }
+
+  if (expected.exitCode !== undefined && meta.exitCode !== expected.exitCode) {
+    failures.push(
+      `Expected exit code ${ expected.exitCode }, received ${ meta.exitCode }`
+    );
   }
 
   for (const snippet of expected.stdoutIncludes ?? []) {

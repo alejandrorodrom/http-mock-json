@@ -24,7 +24,7 @@ function extractCandidatesFromLine(line) {
   /** @type {string[]} */
   const candidates = [trimmed];
 
-  if (trimmed.startsWith('✖ ')) {
+  if (trimmed.startsWith('✖ ') || trimmed.startsWith('✔ ') || trimmed.startsWith('● ')) {
     const body = trimmed.slice(2);
     candidates.push(body);
 

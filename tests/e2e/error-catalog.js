@@ -1629,6 +1629,111 @@ const ERROR_CATALOG = [
     kind: 'cli',
     caseName: 'system/port-in-use'
   },
+  {
+    id: 'cli.reset-store-ids-invalid',
+    message: 'Reset store ids must be a non-empty comma-separated list',
+    source: 'src/cli/interactive.ts',
+    kind: 'cli',
+    caseName: 'system/reset-store-invalid'
+  },
+  {
+    id: 'cli.version',
+    message: '1.18.1',
+    source: 'src/cli/interactive.ts',
+    kind: 'cli',
+    caseName: 'system/cli-version-help'
+  },
+  {
+    id: 'cli.help',
+    message: 'Usage: mock-server [options] [command]',
+    source: 'src/cli/interactive.ts',
+    kind: 'cli',
+    caseName: 'system/cli-version-help'
+  },
+  {
+    id: 'cli.start-custom-path',
+    message: 'custom-path',
+    source: 'src/cli/commands/start/execute-mock.ts',
+    kind: 'cli',
+    caseName: 'system/start-custom-path'
+  },
+  {
+    id: 'init.cli-create-mocks',
+    message: 'The directory named mocks was created successfully',
+    source: 'src/cli/commands/init/add-mocks-folder.ts',
+    kind: 'init',
+    caseName: 'system/init-cli'
+  },
+  {
+    id: 'init.cli-mocks-already-exists',
+    message: 'The directory named mocks already exists',
+    source: 'src/cli/commands/init/add-mocks-folder.ts',
+    kind: 'init',
+    caseName: 'system/init-cli'
+  },
+  {
+    id: 'init.cli-script-added',
+    message: 'The script was added successfully',
+    source: 'src/cli/commands/init/add-script.ts',
+    kind: 'init',
+    caseName: 'system/init-cli'
+  },
+  {
+    id: 'init.with-mock-ready',
+    message: 'Mock ready',
+    source: 'src/cli/commands/add/add-mock.ts',
+    kind: 'init',
+    caseName: 'unit/init-with-mock'
+  },
+  {
+    id: 'add.mock-ready',
+    message: 'Mock ready',
+    source: 'src/cli/commands/add/add-mock.ts',
+    kind: 'init',
+    caseName: 'unit/add-mock'
+  },
+  {
+    id: 'add.mock-abort',
+    message: 'Aborting',
+    source: 'src/cli/commands/add/add-mock.ts',
+    kind: 'init',
+    caseName: 'unit/add-mock'
+  },
+  {
+    id: 'add.write-enoent',
+    message: 'ENOENT',
+    source: 'src/cli/commands/add/add-mock.ts',
+    kind: 'init',
+    caseName: 'unit/cli-io-errors'
+  },
+  {
+    id: 'init.script-invalid-json',
+    message: 'JSON',
+    source: 'src/cli/commands/init/add-script.ts',
+    kind: 'init',
+    caseName: 'unit/cli-io-errors'
+  },
+  {
+    id: 'init.script-write-failed',
+    message: 'EISDIR',
+    source: 'src/cli/commands/init/add-script.ts',
+    kind: 'init',
+    caseName: 'unit/cli-io-errors'
+  },
+  {
+    id: 'cli.unknown-command',
+    message: "unknown command 'nope'",
+    source: 'src/cli/interactive.ts',
+    kind: 'cli',
+    caseName: 'system/cli-commander-errors'
+  },
+  {
+    id: 'cli.start-help',
+    message: 'Usage: mock-server start [options]',
+    source: 'src/cli/interactive.ts',
+    kind: 'cli',
+    caseName: 'system/cli-commander-errors'
+  },
 
   // --- runtime ---
   {

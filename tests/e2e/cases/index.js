@@ -71,7 +71,12 @@ const systemCases = [
   require('./system/port-invalid'),
   require('./system/port-out-of-range'),
   require('./system/proxy-flag-invalid'),
-  require('./system/port-in-use')
+  require('./system/port-in-use'),
+  require('./system/reset-store-invalid'),
+  require('./system/cli-version-help'),
+  require('./system/start-custom-path'),
+  require('./system/init-cli'),
+  require('./system/cli-commander-errors')
 ];
 
 const runtimeCases = [
@@ -130,7 +135,10 @@ const unitCases = [
   require('./unit/mock-config-folders'),
   require('./unit/mock-config-invalid'),
   require('./unit/mock-config-filters'),
-  require('./unit/mock-config-advanced')
+  require('./unit/mock-config-advanced'),
+  require('./unit/add-mock'),
+  require('./unit/init-with-mock'),
+  require('./unit/cli-io-errors')
 ];
 
 /** @type {{ name: string, description: string, run: () => Promise<import('../lib/reporter').CaseResult> }[]} */

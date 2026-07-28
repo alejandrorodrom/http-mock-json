@@ -207,6 +207,7 @@ function runCli(options) {
  * @param {string | string[]} [options.mockRelativePath]
  * @param {string} [options.workspaceDir]
  * @param {() => void} [options.cleanup]
+ * @param {string} [options.cliPath] Value for `-f/--path` (parent of `mocks/`). Default `''`
  * @param {string} [options.proxy]
  * @param {boolean | string} [options.resetStore]
  * @param {boolean} [options.cleanupOnStop]
@@ -227,8 +228,9 @@ async function startMockServer(options) {
     ({ workspaceDir, cleanup } = createWorkspace(options.mockRelativePath));
   }
 
-  const mocksDir = path.join(workspaceDir, 'mocks');
-  const args = ['start', '-f', ''];
+  const cliPath = options.cliPath ?? '';
+  const mocksDir = path.join(workspaceDir, cliPath, 'mocks');
+  const args = ['start', '-f', cliPath];
 
   if (!omitCliPort) {
     args.splice(1, 0, '-p', String(port));
