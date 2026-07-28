@@ -47,6 +47,14 @@ Define the same endpoints your app will call. Switch success and failure scenari
   - [Example H — Blog CMS](#example-h--real-project-blog-cms-with-authors)
   - [Example I — Multi-tenant orders](#example-i--real-project-multi-tenant-orders)
   - [Example J — Auth lockout](#example-j--real-project-auth-lockout--sessions)
+  - [Example K — JWT refresh](#example-k--real-project-jwt-access--refresh-tokens)
+  - [Example L — Password reset](#example-l--real-project-password-reset)
+  - [Example M — Async export job](#example-m--real-project-async-export-job)
+  - [Example N — Notifications](#example-n--real-project-notifications-inbox)
+  - [Example O — Signed upload](#example-o--real-project-signed-url-upload)
+  - [Example P — Feature flags](#example-p--real-project-feature-flags--app-config)
+  - [Example Q — Billing](#example-q--real-project-billing--subscription)
+  - [Example R — Onboarding](#example-r--real-project-onboarding-wizard)
 - [Troubleshooting](#troubleshooting-)
 - [License](#license-)
 
@@ -1554,6 +1562,14 @@ Checklist when wiring a new domain:
 | Blog / CMS authors + articles | [Example H](#example-h--real-project-blog-cms-with-authors) | `relations` + soft delete + expand + restrict |
 | Multi-tenant orders + line items | [Example I](#example-i--real-project-multi-tenant-orders) | Composite `join` + cascade + tenant routes |
 | Auth lockout + sessions | [Example J](#example-j--real-project-auth-lockout--sessions) | `match.call` + `request` + `store` + headers |
+| JWT access + refresh | [Example K](#example-k--real-project-jwt-access--refresh-tokens) | Login / refresh / logout contract + reuse detection |
+| Password reset | [Example L](#example-l--real-project-password-reset) | Forgot / validate token / set new password |
+| Async export job | [Example M](#example-m--real-project-async-export-job) | `202` + poll with `match.call` until ready |
+| Notifications inbox | [Example N](#example-n--real-project-notifications-inbox) | Unread filter + mark read / mark all |
+| Signed URL upload | [Example O](#example-o--real-project-signed-url-upload) | Initiate → complete → fetch asset metadata |
+| Feature flags / config | [Example P](#example-p--real-project-feature-flags--app-config) | Boot flags + tenant overrides |
+| Billing / subscription | [Example Q](#example-q--real-project-billing--subscription) | Plans, upgrade, trial, past_due |
+| Onboarding wizard | [Example R](#example-r--real-project-onboarding-wizard) | Multi-step save + resume |
 
 More product scenarios (auth, RBAC, webhooks, proxy) live under [Real-world projects](#real-world-projects-).
 
@@ -4842,6 +4858,1468 @@ curl -s -o /dev/null -w '%{http_code}\n' -X DELETE http://localhost:3000/api/v1/
 | `delay` / headers | Slow fail path, `Retry-After`, `X-Auth-Warning` |
 | `store` + `list` + `persist` | Session list / revoke after login; survives restart |
 
+### Example K — Real project: JWT access + refresh tokens
+
+SPA auth interceptor: login returns opaque `accessToken` / `refreshToken` strings (not cryptographically signed JWTs), refresh rotates them, reuse of an already-rotated refresh fails, and a protected route branches success vs `401`.
+
+Combines: `request` + `match.body` + `match.call` (`index` / `by`) + `match.query` + custom headers.
+
+> This mocks the **HTTP contract** your frontend expects. Tokens are fixed strings you control in `match` — the server does not sign or verify real JWTs.
+
+```json
+{
+  "api/v1/auth/login": {
+    "POST": {
+      "nameResponse": "invalid",
+      "request": {
+        "body": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 1 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "match": { "body": { "password": "CorrectHorse1" } },
+          "body": {
+            "accessToken": "access.ok",
+            "refreshToken": "refresh.ok",
+            "expiresIn": 900,
+            "tokenType": "Bearer",
+            "user": { "id": 1, "email": "demo@acme.com" }
+          }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 401,
+          "body": { "code": "INVALID_CREDENTIALS" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid login payload", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/v1/auth/refresh": {
+    "POST": {
+      "nameResponse": "unauthorized",
+      "request": {
+        "body": {
+          "refreshToken": { "type": "string", "minLength": 1 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "rotated",
+          "statusCode": 200,
+          "match": {
+            "call": { "index": 1, "by": { "body": "refreshToken" } },
+            "body": { "refreshToken": "refresh.ok" }
+          },
+          "body": {
+            "accessToken": "access.ok.2",
+            "refreshToken": "refresh.ok.2",
+            "expiresIn": 900,
+            "tokenType": "Bearer"
+          }
+        },
+        {
+          "name": "rotated-again",
+          "statusCode": 200,
+          "match": {
+            "call": { "index": 1, "by": { "body": "refreshToken" } },
+            "body": { "refreshToken": "refresh.ok.2" }
+          },
+          "body": {
+            "accessToken": "access.ok.3",
+            "refreshToken": "refresh.ok.3",
+            "expiresIn": 900,
+            "tokenType": "Bearer"
+          }
+        },
+        {
+          "name": "expired",
+          "statusCode": 401,
+          "match": { "body": { "refreshToken": "refresh.expired" } },
+          "body": { "code": "REFRESH_EXPIRED" }
+        },
+        {
+          "name": "reuse-detected",
+          "statusCode": 401,
+          "match": {
+            "call": { "index": 2, "by": { "body": "refreshToken" } },
+            "body": { "refreshToken": "refresh.ok" }
+          },
+          "body": { "code": "REFRESH_REUSE" }
+        },
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "body": { "code": "INVALID_REFRESH" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid refresh payload", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/v1/auth/logout": {
+    "POST": {
+      "nameResponse": "ok-fallback",
+      "request": {
+        "body": {
+          "refreshToken": { "type": "string", "minLength": 1 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 204,
+          "match": {
+            "body": { "refreshToken": "refresh.ok" }
+          }
+        },
+        {
+          "name": "ok-rotated",
+          "statusCode": 204,
+          "match": {
+            "body": { "refreshToken": "refresh.ok.2" }
+          }
+        },
+        {
+          "name": "ok-fallback",
+          "statusCode": 204
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid logout payload", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/v1/me": {
+    "GET": {
+      "nameResponse": "unauthorized",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "match": { "query": { "auth": "ok" } },
+          "body": {
+            "id": 1,
+            "email": "demo@acme.com",
+            "name": "Demo User"
+          }
+        },
+        {
+          "name": "unauthorized",
+          "statusCode": 401,
+          "headers": { "WWW-Authenticate": "Bearer" },
+          "body": { "code": "UNAUTHORIZED" }
+        }
+      ]
+    }
+  }
+}
+```
+
+Try:
+
+```bash
+# Login → access + refresh
+curl -s -X POST http://localhost:3000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"demo@acme.com","password":"CorrectHorse1"}'
+
+# First refresh rotates tokens (reuse counter scoped by refreshToken)
+curl -s -X POST http://localhost:3000/api/v1/auth/refresh \
+  -H 'Content-Type: application/json' \
+  -d '{"refreshToken":"refresh.ok"}'
+# → access.ok.2 / refresh.ok.2
+
+# Reusing the old refresh fails
+curl -si -X POST http://localhost:3000/api/v1/auth/refresh \
+  -H 'Content-Type: application/json' \
+  -d '{"refreshToken":"refresh.ok"}'
+# → 401 REFRESH_REUSE
+
+# Expired refresh
+curl -si -X POST http://localhost:3000/api/v1/auth/refresh \
+  -H 'Content-Type: application/json' \
+  -d '{"refreshToken":"refresh.expired"}'
+# → 401 REFRESH_EXPIRED
+
+# Protected route (query stand-in until header match exists)
+curl -s 'http://localhost:3000/api/v1/me?auth=ok'
+curl -si 'http://localhost:3000/api/v1/me'
+# → 401 + WWW-Authenticate
+
+# Logout
+curl -si -X POST http://localhost:3000/api/v1/auth/logout \
+  -H 'Content-Type: application/json' \
+  -d '{"refreshToken":"refresh.ok.2"}'
+```
+
+| Feature | How this example uses it |
+|---------|--------------------------|
+| `request` | Login / refresh / logout payload shape |
+| `match.body` | Correct password, known refresh strings, expired token |
+| `match.call` + `by` | First use of `refresh.ok` rotates; second use → `REFRESH_REUSE` |
+| `match.query` | Protected `/me` success path (`?auth=ok` as a stand-in for Bearer) |
+| Headers | `WWW-Authenticate: Bearer` on unauthorized `/me` |
+
+For lockout counters and a **sessions** store after login, see [Example J](#example-j--real-project-auth-lockout--sessions).
+
+### Example L — Real project: Password reset
+
+Forgot-password UI: always acknowledge the request (no email enumeration), then validate a reset token and set a new password. Invalid / expired / already-used tokens branch with `match`.
+
+Combines: `request` + `match.params` + `match.body` + `delay` + custom headers.
+
+```json
+{
+  "api/v1/auth/forgot-password": {
+    "POST": {
+      "nameResponse": "accepted",
+      "delay": 200,
+      "request": {
+        "body": {
+          "email": { "type": "string", "format": "email" }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "accepted",
+          "statusCode": 202,
+          "body": {
+            "message": "If an account exists for that email, a reset link was sent"
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid email", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/v1/auth/reset-password/:token": {
+    "GET": {
+      "nameResponse": "invalid",
+      "responses": [
+        {
+          "name": "valid",
+          "statusCode": 200,
+          "match": { "params": { "token": "reset.ok" } },
+          "body": {
+            "email": "demo@acme.com",
+            "expiresIn": 900
+          }
+        },
+        {
+          "name": "expired",
+          "statusCode": 410,
+          "match": { "params": { "token": "reset.expired" } },
+          "body": { "code": "RESET_TOKEN_EXPIRED" }
+        },
+        {
+          "name": "used",
+          "statusCode": 410,
+          "match": { "params": { "token": "reset.used" } },
+          "body": { "code": "RESET_TOKEN_USED" }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 404,
+          "body": { "code": "RESET_TOKEN_INVALID" }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "invalid",
+      "request": {
+        "body": {
+          "password": { "type": "string", "minLength": 10, "maxLength": 72 },
+          "passwordConfirm": { "type": "string", "minLength": 10, "maxLength": 72 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 204,
+          "match": {
+            "params": { "token": "reset.ok" },
+            "body": { "password": "NewCorrect1", "passwordConfirm": "NewCorrect1" }
+          },
+          "headers": { "X-Auth": "password-reset" }
+        },
+        {
+          "name": "mismatch",
+          "statusCode": 422,
+          "match": {
+            "params": { "token": "reset.ok" },
+            "body": { "password": "NewCorrect1", "passwordConfirm": "OtherPass99" }
+          },
+          "body": { "code": "PASSWORD_MISMATCH" }
+        },
+        {
+          "name": "expired",
+          "statusCode": 410,
+          "match": { "params": { "token": "reset.expired" } },
+          "body": { "code": "RESET_TOKEN_EXPIRED" }
+        },
+        {
+          "name": "used",
+          "statusCode": 410,
+          "match": { "params": { "token": "reset.used" } },
+          "body": { "code": "RESET_TOKEN_USED" }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 404,
+          "body": { "code": "RESET_TOKEN_INVALID" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid reset payload", "errors": [] }
+        }
+      ]
+    }
+  }
+}
+```
+
+Try:
+
+```bash
+# Always 202 (no email enumeration)
+curl -si -X POST http://localhost:3000/api/v1/auth/forgot-password \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"anyone@acme.com"}'
+
+# Validate token before showing the form
+curl -s http://localhost:3000/api/v1/auth/reset-password/reset.ok
+curl -si http://localhost:3000/api/v1/auth/reset-password/reset.expired
+# → 410 RESET_TOKEN_EXPIRED
+
+# Password mismatch vs success
+curl -si -X POST http://localhost:3000/api/v1/auth/reset-password/reset.ok \
+  -H 'Content-Type: application/json' \
+  -d '{"password":"NewCorrect1","passwordConfirm":"OtherPass99"}'
+# → 422 PASSWORD_MISMATCH
+
+curl -si -X POST http://localhost:3000/api/v1/auth/reset-password/reset.ok \
+  -H 'Content-Type: application/json' \
+  -d '{"password":"NewCorrect1","passwordConfirm":"NewCorrect1"}'
+# → 204
+```
+
+| Feature | How this example uses it |
+|---------|--------------------------|
+| `request` | Email + password shape |
+| `match.params` | `reset.ok` / `reset.expired` / `reset.used` tokens |
+| `match.body` | Password confirm mismatch vs success |
+| `delay` | Slow forgot-password path |
+| `410` | Expired / already-used tokens |
+
+Pairs with [Example J](#example-j--real-project-auth-lockout--sessions) (lockout) and [Example K](#example-k--real-project-jwt-access--refresh-tokens) (JWT refresh).
+
+### Example M — Real project: Async export job
+
+CSV/PDF export: create a job (`202`), poll until ready (`match.call`), then return a download URL. Models the classic frontend spinner / retry loop without a real queue.
+
+Combines: `request` + `match.params` + `match.call` + `delay` + headers (`Retry-After`, `Location`).
+
+```json
+{
+  "api/v1/exports": {
+    "POST": {
+      "nameResponse": "accepted",
+      "request": {
+        "body": {
+          "type": { "type": "string", "enum": ["orders-csv", "users-csv", "invoices-pdf"] },
+          "from?": { "type": "string", "format": "date" },
+          "to?": { "type": "string", "format": "date" }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "accepted",
+          "statusCode": 202,
+          "delay": 80,
+          "headers": {
+            "Location": "/api/v1/exports/job_1",
+            "Retry-After": "1"
+          },
+          "body": {
+            "id": "job_1",
+            "status": "queued",
+            "type": "orders-csv"
+          }
+        },
+        {
+          "name": "quota",
+          "statusCode": 429,
+          "match": { "body": { "type": "invoices-pdf" } },
+          "headers": { "Retry-After": "30" },
+          "body": { "code": "EXPORT_QUOTA", "retryAfterSec": 30 }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid export request", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/v1/exports/:id": {
+    "GET": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "queued",
+          "statusCode": 202,
+          "delay": 50,
+          "match": {
+            "params": { "id": "job_1" },
+            "call": { "index": 1 }
+          },
+          "headers": { "Retry-After": "1" },
+          "body": {
+            "id": "job_1",
+            "status": "queued",
+            "progress": 0
+          }
+        },
+        {
+          "name": "running",
+          "statusCode": 202,
+          "delay": 80,
+          "match": {
+            "params": { "id": "job_1" },
+            "call": { "index": 2 }
+          },
+          "headers": { "Retry-After": "1" },
+          "body": {
+            "id": "job_1",
+            "status": "running",
+            "progress": 55
+          }
+        },
+        {
+          "name": "ready",
+          "statusCode": 200,
+          "match": {
+            "params": { "id": "job_1" },
+            "call": { "index": 3 }
+          },
+          "body": {
+            "id": "job_1",
+            "status": "ready",
+            "progress": 100,
+            "downloadUrl": "/api/v1/exports/job_1/download",
+            "expiresAt": "2026-07-28T18:00:00.000Z"
+          }
+        },
+        {
+          "name": "ready-again",
+          "statusCode": 200,
+          "match": { "params": { "id": "job_1" } },
+          "body": {
+            "id": "job_1",
+            "status": "ready",
+            "progress": 100,
+            "downloadUrl": "/api/v1/exports/job_1/download",
+            "expiresAt": "2026-07-28T18:00:00.000Z"
+          }
+        },
+        {
+          "name": "failed",
+          "statusCode": 200,
+          "match": { "params": { "id": "job_fail" } },
+          "body": {
+            "id": "job_fail",
+            "status": "failed",
+            "error": { "code": "EXPORT_FAILED", "message": "Source query timed out" }
+          }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "body": { "code": "JOB_NOT_FOUND" }
+        }
+      ]
+    }
+  },
+  "api/v1/exports/:id/download": {
+    "GET": {
+      "nameResponse": "not-ready",
+      "responses": [
+        {
+          "name": "file",
+          "statusCode": 200,
+          "match": { "params": { "id": "job_1" } },
+          "headers": {
+            "Content-Type": "text/csv",
+            "Content-Disposition": "attachment; filename=\"orders.csv\""
+          },
+          "body": "id,total\n1,42.00\n2,15.50\n"
+        },
+        {
+          "name": "not-ready",
+          "statusCode": 409,
+          "body": { "code": "EXPORT_NOT_READY" }
+        }
+      ]
+    }
+  }
+}
+```
+
+Try:
+
+```bash
+# Start export
+curl -si -X POST http://localhost:3000/api/v1/exports \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"orders-csv","from":"2026-07-01","to":"2026-07-28"}'
+# → 202 + Location
+
+# Poll: queued → running → ready
+curl -si http://localhost:3000/api/v1/exports/job_1
+curl -si http://localhost:3000/api/v1/exports/job_1
+curl -s http://localhost:3000/api/v1/exports/job_1
+
+# Download when ready
+curl -s http://localhost:3000/api/v1/exports/job_1/download
+
+# Quota example
+curl -si -X POST http://localhost:3000/api/v1/exports \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"invoices-pdf"}'
+# → 429
+```
+
+| Feature | How this example uses it |
+|---------|--------------------------|
+| `202` + `Location` / `Retry-After` | Job accepted; client knows where to poll |
+| `match.call` | Poll sequence: queued → running → ready |
+| `match.body` | Quota path for a specific export type |
+| `delay` | Slight wait on create / early poll hits |
+| Static CSV `body` | Fake download without a real file store |
+
+### Example N — Real project: Notifications inbox
+
+Bell icon + inbox: list notifications, filter unread, mark one as read, mark all as read. Uses a mutable `store` so the UI stays consistent across requests.
+
+Combines: `store` + `list` filters + `patch` + `request` + `persist`.
+
+```json
+{
+  "api/v1/notifications": {
+    "store": {
+      "id": "notifications",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1,
+          "title": "Invoice paid",
+          "body": "Invoice #1042 was paid",
+          "unread": true,
+          "createdAt": "2026-07-28T09:00:00.000Z"
+        },
+        {
+          "id": 2,
+          "title": "New comment",
+          "body": "Alex commented on your task",
+          "unread": true,
+          "createdAt": "2026-07-28T10:15:00.000Z"
+        },
+        {
+          "id": 3,
+          "title": "Welcome",
+          "body": "Thanks for joining Acme",
+          "unread": false,
+          "createdAt": "2026-07-01T08:00:00.000Z"
+        }
+      ],
+      "template": {
+        "id": 0,
+        "title": "",
+        "body": "",
+        "unread": true,
+        "createdAt": ""
+      },
+      "list": {
+        "sort": { "query": "sort", "default": "-createdAt", "fields": ["createdAt", "id"] },
+        "order": { "query": "order", "default": "desc" },
+        "page": { "query": "page", "default": 1 },
+        "pageSize": { "query": "pageSize", "default": 20, "max": 50 },
+        "filter": {
+          "fields": [
+            { "field": "unread", "query": "unread", "op": "eq" }
+          ]
+        }
+      },
+      "persist": true
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list",
+          "body": {
+            "items": "{{items}}",
+            "page": "{{page}}",
+            "pageSize": "{{pageSize}}",
+            "total": "{{total}}",
+            "unreadCount": "{{total}}"
+          }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "body": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "body": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "unread?": { "type": "boolean" }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        { "name": "create", "statusCode": 201, "action": "create" },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid notification", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/v1/notifications/:id": {
+    "store": { "id": "notifications" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        { "name": "get", "statusCode": 200, "action": "get" }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "patch",
+      "request": {
+        "body": {
+          "unread?": { "type": "boolean" },
+          "title?": { "type": "string", "minLength": 1, "maxLength": 120 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        { "name": "patch", "statusCode": 200, "action": "patch" },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid patch", "errors": [] }
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    }
+  },
+  "api/v1/notifications/mark-all-read": {
+    "POST": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "updated": 2,
+            "message": "All notifications marked as read"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Try:
+
+```bash
+# Inbox + unread only
+curl -s 'http://localhost:3000/api/v1/notifications?sort=createdAt&order=desc'
+curl -s 'http://localhost:3000/api/v1/notifications?unread=true'
+
+# Mark one as read
+curl -s -X PATCH http://localhost:3000/api/v1/notifications/1 \
+  -H 'Content-Type: application/json' \
+  -d '{"unread":false}'
+
+# Mark-all endpoint (static ack — wire to your UI; store rows still need per-item patch for live counts)
+curl -s -X POST http://localhost:3000/api/v1/notifications/mark-all-read
+```
+
+| Feature | How this example uses it |
+|---------|--------------------------|
+| `store` + `seed` | Realistic inbox bootstrap |
+| `store.list` + `filter` | `?unread=true` |
+| `action: "patch"` | Mark one notification read |
+| `persist` | Bell state survives restart |
+| Static mark-all | Simple UI ack; pair with patches if you need store truth |
+
+> `mark-all-read` is a **static** response (no bulk store action). For a fully consistent unread count, patch each item or reset the store seed after testing.
+
+### Example O — Real project: Signed URL upload
+
+Avatar / attachment flow without multipart parsing: the API returns a signed upload URL, the client “uploads”, then confirms completion and fetches asset metadata.
+
+Combines: `request` + `match.params` + `match.body` + `delay` + headers.
+
+```json
+{
+  "api/v1/uploads": {
+    "POST": {
+      "nameResponse": "created",
+      "request": {
+        "body": {
+          "filename": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "contentType": {
+            "type": "string",
+            "enum": ["image/png", "image/jpeg", "application/pdf"]
+          },
+          "sizeBytes": { "type": "number", "min": 1, "max": 10485760 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "too-large",
+          "statusCode": 413,
+          "match": { "body": { "filename": "huge.bin" } },
+          "body": { "code": "FILE_TOO_LARGE", "maxBytes": 10485760 }
+        },
+        {
+          "name": "created-pdf",
+          "statusCode": 201,
+          "match": { "body": { "contentType": "application/pdf" } },
+          "body": {
+            "uploadId": "upl_pdf",
+            "uploadUrl": "/api/v1/uploads/upl_pdf/content",
+            "assetUrl": "/api/v1/assets/upl_pdf",
+            "expiresIn": 300
+          }
+        },
+        {
+          "name": "created",
+          "statusCode": 201,
+          "delay": 60,
+          "body": {
+            "uploadId": "upl_ok",
+            "uploadUrl": "/api/v1/uploads/upl_ok/content",
+            "assetUrl": "/api/v1/assets/upl_ok",
+            "expiresIn": 300
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid upload request", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/v1/uploads/:uploadId/content": {
+    "PUT": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "stored",
+          "statusCode": 200,
+          "delay": 120,
+          "match": { "params": { "uploadId": "upl_ok" } },
+          "body": { "uploadId": "upl_ok", "stored": true }
+        },
+        {
+          "name": "stored-pdf",
+          "statusCode": 200,
+          "match": { "params": { "uploadId": "upl_pdf" } },
+          "body": { "uploadId": "upl_pdf", "stored": true }
+        },
+        {
+          "name": "expired",
+          "statusCode": 410,
+          "match": { "params": { "uploadId": "upl_expired" } },
+          "body": { "code": "UPLOAD_URL_EXPIRED" }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "body": { "code": "UPLOAD_NOT_FOUND" }
+        }
+      ]
+    }
+  },
+  "api/v1/uploads/:uploadId/complete": {
+    "POST": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "match": { "params": { "uploadId": "upl_ok" } },
+          "body": {
+            "id": "upl_ok",
+            "status": "ready",
+            "url": "/api/v1/assets/upl_ok",
+            "contentType": "image/png",
+            "sizeBytes": 245760
+          }
+        },
+        {
+          "name": "incomplete",
+          "statusCode": 409,
+          "match": { "params": { "uploadId": "upl_pdf" } },
+          "body": { "code": "UPLOAD_INCOMPLETE" }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "body": { "code": "UPLOAD_NOT_FOUND" }
+        }
+      ]
+    }
+  },
+  "api/v1/assets/:id": {
+    "GET": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "match": { "params": { "id": "upl_ok" } },
+          "body": {
+            "id": "upl_ok",
+            "url": "https://cdn.example.com/upl_ok.png",
+            "contentType": "image/png",
+            "sizeBytes": 245760
+          }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "body": { "code": "ASSET_NOT_FOUND" }
+        }
+      ]
+    }
+  }
+}
+```
+
+Try:
+
+```bash
+# Initiate upload
+curl -s -X POST http://localhost:3000/api/v1/uploads \
+  -H 'Content-Type: application/json' \
+  -d '{"filename":"avatar.png","contentType":"image/png","sizeBytes":245760}'
+
+# PUT content to the signed path (body ignored — contract only)
+curl -si -X PUT http://localhost:3000/api/v1/uploads/upl_ok/content \
+  -H 'Content-Type: image/png' \
+  -d 'fake-bytes'
+
+# Complete + fetch asset metadata
+curl -s -X POST http://localhost:3000/api/v1/uploads/upl_ok/complete
+curl -s http://localhost:3000/api/v1/assets/upl_ok
+
+# Too large
+curl -si -X POST http://localhost:3000/api/v1/uploads \
+  -H 'Content-Type: application/json' \
+  -d '{"filename":"huge.bin","contentType":"image/jpeg","sizeBytes":100}'
+# → 413
+```
+
+| Feature | How this example uses it |
+|---------|--------------------------|
+| `request` + `enum` | Allowed content types / size bounds |
+| `match.body` / `match.params` | Happy path vs `413` / `410` / `409` |
+| `delay` | Simulate upload latency on PUT |
+| Static CDN URL | Frontend can bind an `<img>` / download link |
+
+> No multipart parser: the mock returns the **same JSON shape** as a real signed-URL API so the SPA flow works end-to-end.
+
+### Example P — Real project: Feature flags + app config
+
+App boot: load global config + feature flags, optionally overridden per tenant/env. Frontend gates UI without waiting on a real flag service.
+
+Combines: `match.params` + `match.query` + static bodies + light `delay`.
+
+```json
+{
+  "api/v1/config": {
+    "GET": {
+      "nameResponse": "default",
+      "delay": 40,
+      "responses": [
+        {
+          "name": "staging",
+          "statusCode": 200,
+          "match": { "query": { "env": "staging" } },
+          "body": {
+            "env": "staging",
+            "apiBaseUrl": "https://staging.api.example.com",
+            "supportEmail": "support-staging@example.com",
+            "maintenance": false
+          }
+        },
+        {
+          "name": "maintenance",
+          "statusCode": 200,
+          "match": { "query": { "env": "maintenance" } },
+          "body": {
+            "env": "production",
+            "apiBaseUrl": "https://api.example.com",
+            "supportEmail": "support@example.com",
+            "maintenance": true,
+            "maintenanceMessage": "Scheduled maintenance until 18:00 UTC"
+          }
+        },
+        {
+          "name": "default",
+          "statusCode": 200,
+          "body": {
+            "env": "production",
+            "apiBaseUrl": "https://api.example.com",
+            "supportEmail": "support@example.com",
+            "maintenance": false
+          }
+        }
+      ]
+    }
+  },
+  "api/v1/feature-flags": {
+    "GET": {
+      "nameResponse": "default",
+      "responses": [
+        {
+          "name": "beta-tenant",
+          "statusCode": 200,
+          "match": { "query": { "tenantId": "beta" } },
+          "body": {
+            "flags": {
+              "newCheckout": true,
+              "aiAssistant": true,
+              "darkMode": true,
+              "exportsV2": true
+            }
+          }
+        },
+        {
+          "name": "default",
+          "statusCode": 200,
+          "body": {
+            "flags": {
+              "newCheckout": false,
+              "aiAssistant": false,
+              "darkMode": true,
+              "exportsV2": false
+            }
+          }
+        }
+      ]
+    }
+  },
+  "api/v1/tenants/:tenantId/feature-flags": {
+    "GET": {
+      "nameResponse": "default",
+      "responses": [
+        {
+          "name": "acme",
+          "statusCode": 200,
+          "match": { "params": { "tenantId": "acme" } },
+          "body": {
+            "tenantId": "acme",
+            "flags": {
+              "newCheckout": true,
+              "aiAssistant": false,
+              "darkMode": true,
+              "exportsV2": true
+            }
+          }
+        },
+        {
+          "name": "blocked",
+          "statusCode": 403,
+          "match": { "params": { "tenantId": "blocked" } },
+          "body": { "code": "TENANT_FORBIDDEN" }
+        },
+        {
+          "name": "default",
+          "statusCode": 200,
+          "body": {
+            "tenantId": "unknown",
+            "flags": {
+              "newCheckout": false,
+              "aiAssistant": false,
+              "darkMode": true,
+              "exportsV2": false
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Try:
+
+```bash
+curl -s 'http://localhost:3000/api/v1/config'
+curl -s 'http://localhost:3000/api/v1/config?env=staging'
+curl -s 'http://localhost:3000/api/v1/config?env=maintenance'
+
+curl -s 'http://localhost:3000/api/v1/feature-flags'
+curl -s 'http://localhost:3000/api/v1/feature-flags?tenantId=beta'
+curl -s 'http://localhost:3000/api/v1/tenants/acme/feature-flags'
+curl -si 'http://localhost:3000/api/v1/tenants/blocked/feature-flags'
+```
+
+| Feature | How this example uses it |
+|---------|--------------------------|
+| `match.query` | Env-specific config / beta tenant flags |
+| `match.params` | Per-tenant flag document + `403` |
+| `delay` | Slight boot latency on config |
+| Static JSON | SPA can gate routes/components immediately |
+
+### Example Q — Real project: Billing + subscription
+
+Settings → plan: list plans, read current subscription, upgrade/downgrade, and surface trial / past_due / payment-required states.
+
+Combines: `request` + `match.body` + `match.query` + `delay` + `402` / `403` / `409`.
+
+```json
+{
+  "api/v1/billing/plans": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "plans": [
+              { "id": "free", "name": "Free", "priceMonthly": 0, "seats": 1 },
+              { "id": "pro", "name": "Pro", "priceMonthly": 29, "seats": 10 },
+              { "id": "business", "name": "Business", "priceMonthly": 99, "seats": 50 }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "api/v1/billing/subscription": {
+    "GET": {
+      "nameResponse": "active",
+      "responses": [
+        {
+          "name": "trial",
+          "statusCode": 200,
+          "match": { "query": { "state": "trial" } },
+          "body": {
+            "planId": "pro",
+            "status": "trialing",
+            "trialEndsAt": "2026-08-15T00:00:00.000Z",
+            "seats": 10,
+            "renewAt": null
+          }
+        },
+        {
+          "name": "past-due",
+          "statusCode": 200,
+          "match": { "query": { "state": "past_due" } },
+          "body": {
+            "planId": "pro",
+            "status": "past_due",
+            "trialEndsAt": null,
+            "seats": 10,
+            "renewAt": "2026-07-01T00:00:00.000Z",
+            "invoiceId": "inv_past_1"
+          }
+        },
+        {
+          "name": "active",
+          "statusCode": 200,
+          "body": {
+            "planId": "free",
+            "status": "active",
+            "trialEndsAt": null,
+            "seats": 1,
+            "renewAt": null
+          }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "upgraded",
+      "delay": 150,
+      "request": {
+        "body": {
+          "planId": { "type": "string", "enum": ["free", "pro", "business"] },
+          "seats?": { "type": "number", "min": 1, "max": 500 },
+          "paymentMethodId?": { "type": "string", "minLength": 1 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "payment-required",
+          "statusCode": 402,
+          "match": { "body": { "planId": "business", "paymentMethodId": "pm_fail" } },
+          "body": {
+            "code": "PAYMENT_REQUIRED",
+            "message": "Card was declined"
+          }
+        },
+        {
+          "name": "forbidden-downgrade",
+          "statusCode": 403,
+          "match": { "body": { "planId": "free" }, "query": { "usage": "over" } },
+          "body": {
+            "code": "DOWNGRADE_BLOCKED",
+            "message": "Reduce seats/usage before moving to Free"
+          }
+        },
+        {
+          "name": "same-plan",
+          "statusCode": 409,
+          "match": { "body": { "planId": "free" } },
+          "body": { "code": "ALREADY_ON_PLAN" }
+        },
+        {
+          "name": "upgraded",
+          "statusCode": 200,
+          "body": {
+            "planId": "pro",
+            "status": "active",
+            "seats": 10,
+            "renewAt": "2026-08-28T00:00:00.000Z"
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid subscription change", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/v1/billing/invoices/:id/pay": {
+    "POST": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "match": { "params": { "id": "inv_past_1" } },
+          "delay": 200,
+          "body": {
+            "invoiceId": "inv_past_1",
+            "status": "paid",
+            "subscriptionStatus": "active"
+          }
+        },
+        {
+          "name": "declined",
+          "statusCode": 402,
+          "match": { "params": { "id": "inv_past_1" }, "query": { "card": "fail" } },
+          "body": { "code": "CARD_DECLINED" }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "body": { "code": "INVOICE_NOT_FOUND" }
+        }
+      ]
+    }
+  }
+}
+```
+
+Try:
+
+```bash
+curl -s http://localhost:3000/api/v1/billing/plans
+curl -s 'http://localhost:3000/api/v1/billing/subscription?state=trial'
+curl -s 'http://localhost:3000/api/v1/billing/subscription?state=past_due'
+
+# Upgrade happy path (nameResponse)
+curl -s -X POST http://localhost:3000/api/v1/billing/subscription \
+  -H 'Content-Type: application/json' \
+  -d '{"planId":"pro","seats":10,"paymentMethodId":"pm_ok"}'
+
+# Declined card on business
+curl -si -X POST http://localhost:3000/api/v1/billing/subscription \
+  -H 'Content-Type: application/json' \
+  -d '{"planId":"business","paymentMethodId":"pm_fail"}'
+# → 402
+
+# Same plan conflict
+curl -si -X POST http://localhost:3000/api/v1/billing/subscription \
+  -H 'Content-Type: application/json' \
+  -d '{"planId":"free"}'
+# → 409
+
+# Pay past-due invoice
+curl -s -X POST http://localhost:3000/api/v1/billing/invoices/inv_past_1/pay
+curl -si -X POST 'http://localhost:3000/api/v1/billing/invoices/inv_past_1/pay?card=fail'
+```
+
+| Feature | How this example uses it |
+|---------|--------------------------|
+| `match.query` | Trial / past_due subscription views; card fail on pay |
+| `match.body` | `402` decline, `409` same plan |
+| `match.body` + `match.query` | Downgrade blocked when `usage=over` |
+| `request` + `enum` | Plan ids and seat bounds |
+| `delay` | Slow upgrade / pay paths |
+
+Pairs with [Checkout resilience](#example-checkout-resilience-payments-ui) for retry/`429` payment UX.
+
+### Example R — Real project: Onboarding wizard
+
+Multi-step signup/onboarding: save each step, resume from the server, and finish only when required steps are complete.
+
+Combines: `request` + `match.body` + `match.query` + `409` / `422`.
+
+```json
+{
+  "api/v1/onboarding": {
+    "GET": {
+      "nameResponse": "in-progress",
+      "responses": [
+        {
+          "name": "fresh",
+          "statusCode": 200,
+          "match": { "query": { "state": "fresh" } },
+          "body": {
+            "status": "in_progress",
+            "currentStep": 1,
+            "completedSteps": [],
+            "data": {}
+          }
+        },
+        {
+          "name": "done",
+          "statusCode": 200,
+          "match": { "query": { "state": "done" } },
+          "body": {
+            "status": "completed",
+            "currentStep": 3,
+            "completedSteps": [1, 2, 3],
+            "data": {
+              "company": "Acme",
+              "role": "admin",
+              "inviteEmails": ["alex@acme.com"]
+            }
+          }
+        },
+        {
+          "name": "in-progress",
+          "statusCode": 200,
+          "body": {
+            "status": "in_progress",
+            "currentStep": 2,
+            "completedSteps": [1],
+            "data": {
+              "company": "Acme",
+              "role": null,
+              "inviteEmails": []
+            }
+          }
+        }
+      ]
+    }
+  },
+  "api/v1/onboarding/steps/:step": {
+    "PUT": {
+      "nameResponse": "saved",
+      "request": {
+        "body": {
+          "company?": { "type": "string", "minLength": 2, "maxLength": 80 },
+          "role?": { "type": "string", "enum": ["admin", "member", "viewer"] },
+          "inviteEmails?": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 10,
+            "items": { "type": "string", "format": "email" }
+          }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        {
+          "name": "step1",
+          "statusCode": 200,
+          "match": {
+            "params": { "step": "1" },
+            "body": { "company": "Acme" }
+          },
+          "body": {
+            "status": "in_progress",
+            "currentStep": 2,
+            "completedSteps": [1],
+            "data": { "company": "Acme" }
+          }
+        },
+        {
+          "name": "step2",
+          "statusCode": 200,
+          "match": {
+            "params": { "step": "2" },
+            "body": { "role": "admin" }
+          },
+          "body": {
+            "status": "in_progress",
+            "currentStep": 3,
+            "completedSteps": [1, 2],
+            "data": { "company": "Acme", "role": "admin" }
+          }
+        },
+        {
+          "name": "step3",
+          "statusCode": 200,
+          "match": {
+            "params": { "step": "3" },
+            "body": { "inviteEmails": ["alex@acme.com"] }
+          },
+          "body": {
+            "status": "in_progress",
+            "currentStep": 3,
+            "completedSteps": [1, 2, 3],
+            "data": {
+              "company": "Acme",
+              "role": "admin",
+              "inviteEmails": ["alex@acme.com"]
+            }
+          }
+        },
+        {
+          "name": "out-of-order",
+          "statusCode": 409,
+          "match": { "params": { "step": "3" }, "query": { "skip": "1" } },
+          "body": {
+            "code": "STEP_OUT_OF_ORDER",
+            "message": "Complete previous steps first",
+            "currentStep": 1
+          }
+        },
+        {
+          "name": "saved",
+          "statusCode": 200,
+          "body": {
+            "status": "in_progress",
+            "currentStep": 2,
+            "completedSteps": [1],
+            "data": { "company": "Acme" }
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid step payload", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/v1/onboarding/complete": {
+    "POST": {
+      "nameResponse": "incomplete",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "match": { "query": { "ready": "true" } },
+          "body": {
+            "status": "completed",
+            "redirectTo": "/app/home"
+          }
+        },
+        {
+          "name": "incomplete",
+          "statusCode": 409,
+          "body": {
+            "code": "ONBOARDING_INCOMPLETE",
+            "missingSteps": [2, 3]
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Try:
+
+```bash
+# Resume wizard
+curl -s http://localhost:3000/api/v1/onboarding
+curl -s 'http://localhost:3000/api/v1/onboarding?state=fresh'
+curl -s 'http://localhost:3000/api/v1/onboarding?state=done'
+
+# Save steps
+curl -s -X PUT http://localhost:3000/api/v1/onboarding/steps/1 \
+  -H 'Content-Type: application/json' \
+  -d '{"company":"Acme"}'
+
+curl -s -X PUT http://localhost:3000/api/v1/onboarding/steps/2 \
+  -H 'Content-Type: application/json' \
+  -d '{"role":"admin"}'
+
+curl -s -X PUT http://localhost:3000/api/v1/onboarding/steps/3 \
+  -H 'Content-Type: application/json' \
+  -d '{"inviteEmails":["alex@acme.com"]}'
+
+# Out of order / incomplete finish
+curl -si -X PUT 'http://localhost:3000/api/v1/onboarding/steps/3?skip=1' \
+  -H 'Content-Type: application/json' \
+  -d '{"inviteEmails":["alex@acme.com"]}'
+# → 409
+
+curl -si -X POST http://localhost:3000/api/v1/onboarding/complete
+# → 409 ONBOARDING_INCOMPLETE
+
+curl -s -X POST 'http://localhost:3000/api/v1/onboarding/complete?ready=true'
+# → completed + redirectTo
+```
+
+| Feature | How this example uses it |
+|---------|--------------------------|
+| `match.query` | Fresh / done resume; complete only when `ready=true` |
+| `match.params` + `match.body` | Per-step happy paths |
+| `request` | Partial step payloads + email array |
+| `409` | Out-of-order step and incomplete finish |
+
 ---
 
 ## Real-world projects 🏢
@@ -4860,6 +6338,14 @@ The [Advanced examples](#advanced-examples) teach one feature at a time. This se
 | [Blog CMS with authors](#example-h--real-project-blog-cms-with-authors) | `relations` + `softDelete` + `list` + `request` + `unique` + `persist` | Expand, trash/restore, FK + restrict delete |
 | [Multi-tenant orders](#example-i--real-project-multi-tenant-orders) | Composite `join` + `cascade` + `list` + `request` + `persist` | Order + line items, tenant routes, expand parent |
 | [Auth lockout + sessions](#example-j--real-project-auth-lockout--sessions) | `match.call` + `request` + `delay` + headers + `store` + `persist` | Per-email lockout, reset on success, session revoke |
+| [JWT access + refresh](#example-k--real-project-jwt-access--refresh-tokens) | `request` + `match.body` + `match.call` + `match.query` | Login / refresh rotation / reuse / logout / `/me` |
+| [Password reset](#example-l--real-project-password-reset) | `request` + `match.params` + `match.body` + `delay` | Forgot / validate token / set password |
+| [Async export job](#example-m--real-project-async-export-job) | `match.call` + `202` + `Retry-After` + `delay` | Create job, poll queued→ready, download |
+| [Notifications inbox](#example-n--real-project-notifications-inbox) | `store` + `list` filter + `patch` + `persist` | Unread filter, mark read, mark-all ack |
+| [Signed URL upload](#example-o--real-project-signed-url-upload) | `request` + `match` + `delay` + `413`/`410` | Initiate → PUT content → complete → asset |
+| [Feature flags / config](#example-p--real-project-feature-flags--app-config) | `match.query` + `match.params` + `delay` | Boot config, tenant flags, maintenance |
+| [Billing / subscription](#example-q--real-project-billing--subscription) | `request` + `match` + `402`/`403`/`409` | Plans, trial, past_due, upgrade, pay invoice |
+| [Onboarding wizard](#example-r--real-project-onboarding-wizard) | `request` + `match` + `409` | Multi-step save, resume, complete |
 | SaaS signup + org invite | `request` + `match` | Form validation vs business errors (`409`, `403`) |
 | Checkout resilience | `match` + `delay` + headers | `402` / `429` / `503`, retries, idempotency |
 | Multi-tenant RBAC | `match.params` + `match.query` | Admin vs member, `403` across orgs |
@@ -5086,6 +6572,10 @@ Same route shape (`/orgs/:orgId/...`), different outcomes by `params` + `query.r
 For **per-email lockout**, `Retry-After`, `call.reset` on success, and a **sessions** store after login, use the full pasteable mock in [Example J — Auth lockout + sessions](#example-j--real-project-auth-lockout--sessions).
 
 That scenario combines `request` (invalid payload never advances the counter), `match.call` (`index` / `by` / `reset`), `delay`, custom headers, and `store` + `persist`.
+
+For **access + refresh token** flows (rotation, reuse detection, logout, protected `/me`), see [Example K — JWT access + refresh tokens](#example-k--real-project-jwt-access--refresh-tokens).
+
+For **forgot / reset password** (no email enumeration, expired/used tokens), see [Example L — Password reset](#example-l--real-project-password-reset).
 
 ### Example: REST CRUD + pagination
 
