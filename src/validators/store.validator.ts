@@ -11,6 +11,7 @@ import {
   RawStoreList,
   RawStoreListObject,
   RawStorePersist,
+  RawStoreSoftDelete,
   RawStoreUnique,
   StoreConflictConfig,
   StoreDefinition,
@@ -29,6 +30,7 @@ import { getKeys } from '../scripts/objects.script';
 import {
   isStoreReference,
   normalizeKey,
+  normalizeSoftDelete,
   normalizeStoreDefinition
 } from '../scripts/store-normalize.script';
 import { isPersistFileInsideMocks } from '../scripts/store-persist.script';
@@ -922,6 +924,74 @@ const validatePersist = (
   }
 };
 
+const collectUniqueFieldNames = (unique: RawStoreUnique): string[] => {
+  const entries = isArray(unique)
+    ? unique
+    : isObject(unique) && isArray(unique.fields)
+      ? unique.fields
+      : null;
+
+  if (!entries) {
+    return [];
+  }
+
+  return entries.flatMap((entry) => uniqueEntryFields(entry) ?? []);
+};
+
+const validateSoftDelete = (
+  errors: LocalIssue[],
+  endpoint: string,
+  softDelete: RawStoreSoftDelete,
+  keyFields: string[],
+  uniqueFieldNames: string[]
+): void => {
+  if (softDelete === false) {
+    return;
+  }
+
+  if (typeof softDelete !== 'boolean' && !isObject(softDelete)) {
+    push(errors, endpoint, 'The "store.softDelete" property must be a boolean or an object');
+    return;
+  }
+
+  if (isObject(softDelete)) {
+    const keys = getKeys(softDelete as unknown as Record<string, unknown>);
+    for (const key of keys) {
+      if (key !== 'field') {
+        push(errors, endpoint, `The "store.softDelete" property contains unknown key "${ key }"`);
+      }
+    }
+
+    if (hasProperty(softDelete, 'field')) {
+      if (typeof softDelete.field !== 'string' || softDelete.field.length === 0) {
+        push(errors, endpoint, 'The "store.softDelete.field" must be a non-empty string');
+        return;
+      }
+    }
+  }
+
+  const normalized = normalizeSoftDelete(softDelete);
+  if (!normalized) {
+    return;
+  }
+
+  if (keyFields.includes(normalized.field)) {
+    push(
+      errors,
+      endpoint,
+      `The "store.softDelete.field" "${ normalized.field }" cannot overlap store key fields`
+    );
+  }
+
+  if (uniqueFieldNames.includes(normalized.field)) {
+    push(
+      errors,
+      endpoint,
+      `The "store.softDelete.field" "${ normalized.field }" cannot overlap store unique fields`
+    );
+  }
+};
+
 export const validateStore = (
   endpoint: string,
   store: unknown,
@@ -948,7 +1018,7 @@ export const validateStore = (
 
   const keys = getKeys(config as unknown as Record<string, unknown>);
   for (const key of keys) {
-    if (!['id', 'key', 'seed', 'template', 'unique', 'persist', 'list'].includes(key)) {
+    if (!['id', 'key', 'seed', 'template', 'unique', 'persist', 'list', 'softDelete'].includes(key)) {
       push(errors, endpoint, `The "store" property contains unknown key "${ key }"`);
     }
   }
@@ -992,6 +1062,20 @@ export const validateStore = (
 
   if (hasProperty(config, 'list')) {
     validateList(errors, endpoint, config.list as RawStoreList);
+  }
+
+  if (hasProperty(config, 'softDelete')) {
+    const uniqueFieldNames = hasProperty(config, 'unique')
+      ? collectUniqueFieldNames(config.unique as RawStoreUnique)
+      : [];
+
+    validateSoftDelete(
+      errors,
+      endpoint,
+      config.softDelete as RawStoreSoftDelete,
+      keyFields,
+      uniqueFieldNames
+    );
   }
 
   if (!isEmpty(errors)) {

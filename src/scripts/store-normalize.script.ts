@@ -15,6 +15,7 @@ import {
   DEFAULT_LIST_SORT_FIELD,
   DEFAULT_LIST_SORT_QUERY,
   DEFAULT_STORE_KEY,
+  DEFAULT_SOFT_DELETE_FIELD,
   STORE_LIST_FILTER_OP_SET
 } from '../constants/store.constant';
 import {
@@ -27,6 +28,7 @@ import {
   RawStoreListFilterField,
   RawStoreListObject,
   RawStorePersist,
+  RawStoreSoftDelete,
   RawStoreUnique,
   StoreConflictConfig,
   StoreDefinition,
@@ -38,6 +40,7 @@ import {
   StoreListFilterOp,
   StoreListOrder,
   StorePersistConfig,
+  StoreSoftDeleteConfig,
   StoreUniqueField
 } from '../types/store.type';
 import { isArray, isObject } from './guards.script';
@@ -532,6 +535,36 @@ export const normalizePersist = (
   };
 };
 
+export const normalizeSoftDelete = (
+  softDelete: RawStoreSoftDelete | undefined
+): StoreSoftDeleteConfig | undefined | null => {
+  if (softDelete === undefined) {
+    return undefined;
+  }
+
+  if (softDelete === false) {
+    return undefined;
+  }
+
+  if (softDelete === true) {
+    return { field: DEFAULT_SOFT_DELETE_FIELD };
+  }
+
+  if (!isObject(softDelete)) {
+    return null;
+  }
+
+  if (softDelete.field === undefined) {
+    return { field: DEFAULT_SOFT_DELETE_FIELD };
+  }
+
+  if (typeof softDelete.field !== 'string' || softDelete.field.length === 0) {
+    return null;
+  }
+
+  return { field: softDelete.field };
+};
+
 export const normalizeStoreDefinition = (store: RawStoreConfig): StoreDefinition | null => {
   if (typeof store.id !== 'string' || store.id.length === 0) {
     return null;
@@ -586,6 +619,11 @@ export const normalizeStoreDefinition = (store: RawStoreConfig): StoreDefinition
     return null;
   }
 
+  const softDelete = normalizeSoftDelete(store.softDelete);
+  if (softDelete === null) {
+    return null;
+  }
+
   return {
     id: store.id,
     keyFields: key.fields,
@@ -595,6 +633,7 @@ export const normalizeStoreDefinition = (store: RawStoreConfig): StoreDefinition
     uniqueFields,
     uniqueConflict,
     persist: persist?.enabled ? persist : undefined,
-    list
+    list,
+    softDelete
   };
 };

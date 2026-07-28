@@ -7,7 +7,8 @@ export const validateAction = (
   endpoint: string,
   method: string,
   response: RawMockResponse,
-  hasStore: boolean
+  hasStore: boolean,
+  hasSoftDelete = false
 ): ResponseValidationResult => {
   const errors: LocalIssue[] = [];
   const warnings: LocalIssue[] = [];
@@ -32,6 +33,14 @@ export const validateAction = (
       endpoint,
       method,
       message: 'The "action" property requires a "store" on the endpoint'
+    });
+  }
+
+  if (action === 'restore' && hasStore && !hasSoftDelete) {
+    errors.push({
+      endpoint,
+      method,
+      message: 'The "action" "restore" requires "store.softDelete" to be enabled'
     });
   }
 

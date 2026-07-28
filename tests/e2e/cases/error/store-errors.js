@@ -28,7 +28,7 @@ module.exports = {
         'The "store.seed" contains duplicate unique field "email"',
         'The "action" property requires a "store" on the endpoint',
         'The "action" property cannot be used together with "proxy"',
-        'The "action" must be one of: list, get, create, update, patch, delete',
+        'The "action" must be one of: list, get, create, update, patch, delete, restore',
         'The store conflict response "duplicate-email" does not exist in responses',
         'The store "does-not-exist" is referenced but not defined',
         'The "store.persist" property must be a boolean or an object',
@@ -54,7 +54,13 @@ module.exports = {
         'The "store.unique.fields[0]" object must include "field" or "fields"',
         'The "store.seed" contains duplicate unique field "tenantId+email"',
         'The "store.unique.fields[0]" property contains unknown key "foo"',
-        'The "store.unique.fields[1]" duplicates the unique constraint "email"'
+        'The "store.unique.fields[1]" duplicates the unique constraint "email"',
+        'The "store.softDelete" property must be a boolean or an object',
+        'The "store.softDelete.field" must be a non-empty string',
+        'The "store.softDelete" property contains unknown key "foo"',
+        'The "store.softDelete.field" "id" cannot overlap store key fields',
+        'The "store.softDelete.field" "email" cannot overlap store unique fields',
+        'The "action" "restore" requires "store.softDelete" to be enabled'
       ],
       stdoutExcludes: ['Mock server is running']
     }

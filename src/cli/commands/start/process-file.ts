@@ -182,7 +182,8 @@ export const processMockData = (
           route,
           method,
           response,
-          storeId !== undefined
+          storeId !== undefined,
+          Boolean(storeDefinition?.softDelete)
         );
 
         addIssues(errorsByFile, file, responseResult.errors);

@@ -640,5 +640,83 @@
         { "name": "ok", "statusCode": 200, "body": {} }
       ]
     }
+  },
+  "bad-soft-delete-type": {
+    "store": {
+      "id": "soft-type",
+      "softDelete": "yes"
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-soft-delete-field": {
+    "store": {
+      "id": "soft-field",
+      "softDelete": { "field": "" }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-soft-delete-unknown-key": {
+    "store": {
+      "id": "soft-unknown",
+      "softDelete": { "field": "deletedAt", "foo": 1 }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-soft-delete-overlap-key": {
+    "store": {
+      "id": "soft-overlap-key",
+      "key": "id",
+      "softDelete": { "field": "id" }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "bad-soft-delete-overlap-unique": {
+    "store": {
+      "id": "soft-overlap-unique",
+      "unique": ["email"],
+      "softDelete": { "field": "email" }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "body": {} }
+      ]
+    }
+  },
+  "restore-without-soft-delete": {
+    "store": {
+      "id": "restore-no-soft",
+      "seed": []
+    },
+    "POST": {
+      "nameResponse": "restore",
+      "responses": [
+        {
+          "name": "restore",
+          "statusCode": 200,
+          "action": "restore"
+        }
+      ]
+    }
   }
 }

@@ -52,7 +52,7 @@
 - **Multiple Responses** - Simulate different scenarios (success, error, etc.) for the same endpoint
 - **Request Matching** - Select responses by route params, query params and/or request body
 - **Request Validation** - Validate request `body`/`query` shape with rules (`type`, `minLength`, `format`, nested objects, etc.)
-- **Mutable Store** - Opt-in mutable collections (`store` + `action`) with `seed`, `template`, unique/key conflicts, optional disk `persist`, `--reset-store`, and `store.list` (sort/multi-sort, page/offset/cursor, filters with `eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in` + nested + `or` + search, response templates). Start with the [capability map](#capability-map-build-complex-mocks) to compose complex APIs from the docs.
+- **Mutable Store** - Opt-in mutable collections (`store` + `action`) with `seed`, `template`, unique/key conflicts, optional soft delete (`softDelete` + `restore` + `includeDeleted`), disk `persist`, `--reset-store`, and `store.list` (sort/multi-sort, page/offset/cursor, filters with `eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in` + nested + `or` + search, response templates). Start with the [capability map](#capability-map-build-complex-mocks) to compose complex APIs from the docs.
 - **Response Delay** - Simulate latency per method or per response
 - **Type Safe** - Built with TypeScript for better developer experience
 - **RESTful Support** - Full support for GET, POST, PUT, PATCH, DELETE methods
@@ -144,6 +144,7 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | store.unique | ❌       | array/object   | `["email"]` or `{ "fields": ["email", { "fields": ["tenantId","email"] }], "conflict": {...} }` | Unique fields (simple or composite) + customizable `409` conflict response |
    | store.persist| ❌       | boolean/object | `true` or `{ "enabled": true, "file": "state.json" }` | Persist to disk under the mock files root (default `.store/<id>.json`). Custom `file` must be relative (no `..`) |
    | store.list   | ❌       | boolean/object | `true` / `{ page, pageSize, offset, limit, cursor, sort, order, filter }` | Opt-in list engine for `action: "list"`: multi-sort, page/offset/cursor, filters (`eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in`, nested, `or`) + search. Response `body`/`headers` use placeholders (`{{items}}`, `{{next}}`, `{{nextCursor}}`, …) |
+   | store.softDelete | ❌   | boolean/object | `true` or `{ "field": "deletedAt" }`     | Soft delete: `action: "delete"` sets the field (ISO); `list`/`get` hide items unless `?includeDeleted=true`; `action: "restore"` clears it |
    | HTTP Method  | ✅       | string         | `GET`, `POST`, `PUT`, `PATCH`, `DELETE`  | HTTP verb (must be uppercase)                                              |
    | nameResponse | ✅       | string         | `success`, `error`, `error-401`          | Fallback response when no `match` applies (must exist in responses array) |
    | request      | ❌       | object         | `{ "body": { "email": "string" } }`      | Validate incoming `body` and/or `query` before selecting a response        |
@@ -160,7 +161,7 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | statusCode   | ✅*      | string/number  | `200`, `"200"`, `404`, `"404"`          | Required unless the response uses `proxy`                                  |
    | headers      | ❌       | object         | `{ "Content-Type": "application/json" }`  | Headers in json format (optional)                                          |
    | body         | ✅*      | any            |                                          | Required unless the response uses `proxy` or `action`                      |
-   | action       | ❌       | string         | `"list"`, `"get"`, `"create"`, `"update"`, `"patch"`, `"delete"` | Run a store operation instead of a fixed `body` (requires `store`; incompatible with `proxy`). `body` ignored except for `list` templates. `delete` always `204` |
+   | action       | ❌       | string         | `"list"`, `"get"`, `"create"`, `"update"`, `"patch"`, `"delete"`, `"restore"` | Run a store operation instead of a fixed `body` (requires `store`; incompatible with `proxy`). `body` ignored except for `list` templates. `delete` always `204`. `restore` requires `store.softDelete` |
    | match        | ❌       | object         | `{ "params": { "id": "1" } }`            | Request matching rules (`params`, `query` and/or `body`). First match wins |
    | match.params | ❌       | object         | `{ "id": "1" }`                          | Partial match against route params (e.g. `/users/:id`)                     |
    | match.query  | ❌       | object         | `{ "page": "1" }`                        | Partial match against request query params                                 |
@@ -1076,7 +1077,7 @@ See the full guide (capability map, schema, persist, conflicts, recipes, example
 
 ## Mutable store 🗄️
 
-Opt-in feature (≥ `1.11.0`; advanced list filters ≥ `1.12.0`; composite unique ≥ `1.13.0`). Without `store` + `action`, mocks stay 100% static.
+Opt-in feature (≥ `1.11.0`; advanced list filters ≥ `1.12.0`; composite unique ≥ `1.13.0`; soft delete ≥ `1.14.0`). Without `store` + `action`, mocks stay 100% static.
 
 Use it when the frontend needs **real CRUD flows**: create an item, list it, edit it, delete it — without a backend. Data lives in memory for the process lifetime; optionally survive restarts with `persist`.
 
@@ -1090,7 +1091,8 @@ Goal: from this README alone you can compose multi-tenant APIs with validation, 
 
 | You need… | Use | Query / config sketch | Deep dive |
 |-----------|-----|----------------------|-----------|
-| Collection + CRUD | `store` + `action` | `"action": "list" \| "get" \| "create" \| "update" \| "patch" \| "delete"` | [Actions](#actions), [Schema](#schema-definition-vs-reference) |
+| Collection + CRUD | `store` + `action` | `"action": "list" \| "get" \| "create" \| "update" \| "patch" \| "delete" \| "restore"` | [Actions](#actions), [Schema](#schema-definition-vs-reference) |
+| Soft delete / trash | `store.softDelete` | `"softDelete": true` + `?includeDeleted=true` | [Soft delete](#soft-delete) |
 | Auto ids / defaults | `key`, `template` | `"key": "id"` or `{ "fields": ["tenantId", "id"] }` | [Key generation](#key-generation-on-create) |
 | Seed data | `seed` | `"seed": [{ "id": 1, ... }]` | [Schema](#schema-definition-vs-reference) |
 | Business uniqueness | `unique` + `409` responses | `"unique": ["email"]` or field-level `conflict` | [Conflicts](#conflicts-409) |
@@ -1296,12 +1298,13 @@ Request pipeline (fixed order):
 
 | Action | Behavior | Success status | Common errors |
 |--------|----------|----------------|---------------|
-| `list` | Returns items. Filters by route `key` params. With `store.list`: filter (`fields`/`or`/`search`) → multi-sort → page/offset/cursor. Optional `body`/`headers` templates | response `statusCode` | `400` (invalid page/sort/order/cursor/filter query) |
-| `get` | Loads one item; all `key` fields must come from route params | response `statusCode` | `404` `{ "message": "Not found" }` |
-| `create` | Inserts; merges `template` + body; auto-generates missing numeric key fields; route params override key fields | typically `201` | `400` (body not object), `409` (conflict) |
-| `update` | Full replace (`template` + body), preserves existing key | response `statusCode` | `404` / `400` / `409` |
-| `patch` | Partial merge on existing item (no template), preserves key | response `statusCode` | `404` / `400` / `409` |
-| `delete` | Removes item; **always** `204` with empty body (`statusCode` in JSON is ignored, warning if ≠ 204) | `204` | `404` |
+| `list` | Returns items. Filters by route `key` params. With `store.list`: filter (`fields`/`or`/`search`) → multi-sort → page/offset/cursor. Optional `body`/`headers` templates. Soft-deleted items omitted unless `?includeDeleted=true` | response `statusCode` | `400` (invalid page/sort/order/cursor/filter query) |
+| `get` | Loads one item; all `key` fields must come from route params. Soft-deleted → `404` unless `?includeDeleted=true` | response `statusCode` | `404` `{ "message": "Not found" }` |
+| `create` | Inserts; merges `template` + body; auto-generates missing numeric key fields; route params override key fields. Soft-deleted rows do not count toward `unique`/`key` | typically `201` | `400` (body not object), `409` (conflict) |
+| `update` | Full replace (`template` + body), preserves existing key. Soft-deleted → `404` | response `statusCode` | `404` / `400` / `409` |
+| `patch` | Partial merge on existing item (no template), preserves key. Soft-deleted → `404` | response `statusCode` | `404` / `400` / `409` |
+| `delete` | Without `softDelete`: removes item. With `softDelete`: sets the delete field (ISO) and keeps the row. **Always** `204` with empty body (`statusCode` in JSON is ignored, warning if ≠ 204) | `204` | `404` |
+| `restore` | Requires `store.softDelete`. Clears the delete field and returns the item. Soft-deleted-only; active or missing → `404` | response `statusCode` | `404` / `409` |
 
 Rules for `action`:
 
@@ -1310,10 +1313,82 @@ Rules for `action`:
 - `body` is optional; ignored with warning for actions other than `list`  
 - For `list`, `body` and `headers` may be templates with placeholders (see below)  
 - Returned items are **clones** (mutating the HTTP response does not mutate the store)
+- `restore` is only valid when the store definition has `softDelete`
+
+### Soft delete
+
+Soft delete means: **the item stays in the collection**, but is marked deleted (default field `deletedAt` = ISO timestamp). Clients that call `list` / `get` / `update` / `patch` treat it as gone, unless they ask for trash with `?includeDeleted=true` (or `1`). `action: "restore"` clears the mark.
+
+#### Why it lives on `store`, not on the HTTP `DELETE`
+
+`softDelete` is a property of the **collection**, not of one route:
+
+1. **Same data, many verbs.** After a soft delete, `list` must hide the row, `get`/`patch` must 404, and `unique` must free the email/title. That logic belongs to the store that holds the rows, not to the `DELETE` response alone.
+2. **`DELETE` only triggers the action.** The HTTP method still uses `"action": "delete"`. With soft delete on, that action **marks**; without it, that action **removes**. Same verb, different store policy.
+3. **One policy per `store.id`.** Every endpoint that references `{ "id": "notes" }` shares the same in-memory Map. Putting soft delete on the store definition once keeps list/get/delete/restore consistent. Putting it only on the `DELETE` response would leave other actions unaware.
+
+So: configure `"softDelete": true` (or `{ "field": "deletedAt" }`) on the **full store definition**. The `DELETE` endpoint does not need a special soft-delete flag — only `"action": "delete"` and a `store` that already has soft delete enabled.
+
+#### Why a single endpoint is enough
+
+You do **not** need `GET` list + `POST` create + `DELETE` for soft delete to work. Soft delete only needs:
+
+1. A store definition with `softDelete` (and usually `seed`, or a `create` route, so there is something to delete).
+2. A response with `"action": "delete"`.
+
+Example — delete-only mock:
+
+```json
+"api/notes/:id": {
+  "store": {
+    "id": "notes",
+    "softDelete": true,
+    "seed": [{ "id": 1, "title": "Keep" }]
+  },
+  "DELETE": {
+    "nameResponse": "remove",
+    "responses": [
+      { "name": "remove", "statusCode": 204, "action": "delete" }
+    ]
+  }
+}
+```
+
+`DELETE /api/notes/1` returns 204 and sets `deletedAt` on that row. There is no list route here, so you cannot “see” the trash over HTTP until you add `get`/`list`/`restore` — but the soft delete **did** run in the store.
+
+When you **do** share the store across routes (`api/notes` + `api/notes/:id`), keep **one** full definition (with `softDelete`) and use `{ "id": "notes" }` elsewhere — see [Schema (definition vs reference)](#schema-definition-vs-reference). Do not add `softDelete` on a reference; that becomes a second definition and fails startup.
+
+#### Behavior
+
+```json
+"store": {
+  "id": "notes",
+  "softDelete": true
+}
+```
+
+or `"softDelete": { "field": "deletedAt" }`.
+
+| | Without `softDelete` | With `softDelete: true` |
+|--|----------------------|-------------------------|
+| `action: "delete"` | Removes the item | Keeps the item and sets `deletedAt` (ISO) |
+| `list` / `get` | Normal | Soft-deleted items hidden (unless `?includeDeleted=true` or `1`) |
+| `update` / `patch` | Normal | Soft-deleted → `404` |
+| `unique` / `key` | Counts all items | Soft-deleted ignored (values free to reuse) |
+| `action: "restore"` | Invalid | Clears `deletedAt` and returns the item |
+
+Also:
+
+- Absent/`null` delete field = active. Soft-deleting an already soft-deleted item → `404`.
+- Persist keeps soft-deleted rows as-is (same file format).
+
+Example with list + restore: `mocks/37-store-soft-delete.json`.
 
 ### Schema (definition vs reference)
 
-**Full definition** (only once per `id` in the whole mock set):
+Think of `store.id` as the collection name. **Configure it once; point at it everywhere else.**
+
+**Full definition** — all config for that collection, **only once** per `id` in the whole mock set:
 
 ```json
 "store": {
@@ -1323,38 +1398,68 @@ Rules for `action`:
   "template": { "id": 0, "title": "", "done": false },
   "unique": ["title"],
   "persist": true,
-  "list": true
+  "list": true,
+  "softDelete": true
 }
 ```
 
-**Reference** (other endpoints sharing the same collection — **only** `id`; any other property makes it a full definition). `list` is configured on the full definition and shared by all endpoints with that `store.id`:
+**Reference** — other endpoints that share the same collection. **Only** `id` is allowed:
 
 ```json
 "store": { "id": "notes" }
 ```
 
+If you add any other key on a reference (`softDelete`, `seed`, `unique`, …), it becomes a second full definition → startup error (`store already defined`).
+
+Right:
+
+```json
+"api/notes": {
+  "store": { "id": "notes", "softDelete": true, "seed": [...] }
+},
+"api/notes/:id": {
+  "store": { "id": "notes" },
+  "DELETE": { "responses": [{ "action": "delete", ... }] }
+}
+```
+
+Wrong (splits config / two definitions):
+
+```json
+"api/notes": {
+  "store": { "id": "notes", "seed": [...] }
+},
+"api/notes/:id": {
+  "store": { "id": "notes", "softDelete": true }
+}
+```
+
+Also fine: put the **entire** full definition on `api/notes/:id` and use `{ "id": "notes" }` on `api/notes` — same rule, one definition only.
+
 | Field | Default | Notes |
 |-------|---------|-------|
 | `id` | — | Required. Collection name in memory (and default persist filename) |
 | `key` | `"id"` | String, string array, or `{ "field" }` / `{ "fields", "conflict?" }` — not both `field` and `fields` |
-| `seed` | `[]` | Initial rows. Every seed item must include all key fields; no duplicate key/unique values |
+| `seed` | `[]` | Initial rows. Optional. Every seed item must include all key fields; no duplicate key/unique values. Omit/`[]` → empty until `create` or a persist snapshot |
 | `template` | — | Defaults for `create` / `update`. Values on key fields are placeholders unless the client sends them |
 | `unique` | — | `["email"]` or `{ "fields": [...], "conflict": { "response", "detail" } }` |
 | `persist` | off | `true` / `{ "enabled": true, "file?": "relative/path.json" }` |
 | `list` | off | `true` / `{}` / object — sort (multi), page/offset/cursor, filters/search for `action: "list"` (see [Filters / search](#filters--search) and [List sort and pagination](#list-sort-and-pagination-storelist)) |
+| `softDelete` | off | `true` / `{ "field": "deletedAt" }` — on the full definition only; see [Soft delete](#soft-delete) |
 
 Rules:
 
 1. `store` is **not** an HTTP method; the endpoint still needs at least one verb (`GET`, `POST`, …).
 2. Unknown keys inside `store` → startup error.
-3. Several endpoints may share the same `store.id`; the full definition can appear only once.
-4. A reference to an undefined `id` → startup error.
-5. `seed` must be an array of objects (when present). `[]` or omitted → empty collection at start (unless a persist snapshot loads).
-6. `unique.fields` must be non-empty. Each entry is a non-empty string, `{ "field", "conflict?" }`, or `{ "fields": ["a","b"], "conflict?" }` (composite unique).
-7. `conflict` objects only allow `response` and `detail`.
-8. `conflict.detail` is a non-empty string **or** a non-empty object whose values are strings (templates).
-9. Named `conflict.response` values must exist in `responses` of every method that uses mutating actions (`create` / `update` / `patch`) for that store.
-10. In a unique entry object, `field` and `fields` are mutually exclusive.
+3. Several endpoints may share the same `store.id`; the full definition can appear only once. All of `key` / `seed` / `template` / `unique` / `persist` / `list` / `softDelete` belong on that one definition.
+4. A reference is **only** `{ "id": "..." }`. Any other property = full definition (and will conflict if that `id` is already defined).
+5. A reference to an undefined `id` → startup error.
+6. `seed` must be an array of objects (when present). `[]` or omitted → empty collection at start (unless a persist snapshot loads).
+7. `unique.fields` must be non-empty. Each entry is a non-empty string, `{ "field", "conflict?" }`, or `{ "fields": ["a","b"], "conflict?" }` (composite unique).
+8. `conflict` objects only allow `response` and `detail`.
+9. `conflict.detail` is a non-empty string **or** a non-empty object whose values are strings (templates).
+10. Named `conflict.response` values must exist in `responses` of every method that uses mutating actions (`create` / `update` / `patch`) for that store.
+11. In a unique entry object, `field` and `fields` are mutually exclusive.
 
 `key` shapes:
 
@@ -4272,7 +4377,13 @@ These errors occur when `store` or `action` configuration is invalid:
 | `The "store.unique.fields[0]" property contains unknown key "X"` | Typo in unique entry | Only `field`, `fields`, `conflict` |
 | `The "store.unique.fields[1]" duplicates the unique constraint "email"` | Same unique twice | Keep one entry per constraint |
 | `The "store.unique.fields[0]" matches the store key and is redundant` (warning) | Unique equals PK | Remove the redundant unique or keep intentionally |
-| `The "action" must be one of: list, get, create, update, patch, delete` | Unknown action | Use a supported action |
+| `The "action" must be one of: list, get, create, update, patch, delete, restore` | Unknown action | Use a supported action |
+| `The "action" "restore" requires "store.softDelete" to be enabled` | `restore` without soft delete | Enable `store.softDelete` or use another action |
+| `The "store.softDelete" property must be a boolean or an object` | Invalid softDelete shape | Use `true` or `{ "field": "deletedAt" }` |
+| `The "store.softDelete.field" must be a non-empty string` | Empty/missing field | Provide a non-empty field name |
+| `The "store.softDelete" property contains unknown key "X"` | Typo / unsupported key | Only `field` is allowed |
+| `The "store.softDelete.field" "X" cannot overlap store key fields` | Soft-delete field is a key field | Choose another field name |
+| `The "store.softDelete.field" "X" cannot overlap store unique fields` | Soft-delete field is unique | Choose another field name |
 | `The "action" property requires a "store" on the endpoint` | Action without store | Add `store` to the endpoint |
 | `The "action" property cannot be used together with "proxy"` | Action + proxy | Remove one of them |
 | `The store conflict response "X" does not exist in responses` | Missing conflict response name | Add a response with that `name` on mutating methods |

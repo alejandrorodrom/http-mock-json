@@ -34,6 +34,13 @@ import {
   shouldResetStore,
   writePersistedItems
 } from './store-persist.script';
+import {
+  clearSoftDeleted,
+  filterOutSoftDeleted,
+  isIncludeDeletedRequested,
+  isSoftDeleted,
+  markSoftDeleted
+} from './store-soft-delete.script';
 
 interface Collection {
   definition: StoreDefinition;
@@ -125,15 +132,20 @@ const findConflicts = (
 
   const keyFields = collection.definition.keyFields;
   const keyValue = encodeFieldTuple(keyFields, item);
+  const softDelete = collection.definition.softDelete;
+
   if (collection.items.has(keyValue) && keyValue !== ignoreKey) {
-    conflicts.push({
-      field: uniqueConstraintLabel(keyFields),
-      fields: keyFields,
-      value: keyFields.length === 1
-        ? item[keyFields[0]]
-        : keyFields.map(field => item[field]),
-      message: DEFAULT_CONFLICT_MESSAGE
-    });
+    const existingKeyItem = collection.items.get(keyValue);
+    if (!existingKeyItem || !isSoftDeleted(existingKeyItem, softDelete)) {
+      conflicts.push({
+        field: uniqueConstraintLabel(keyFields),
+        fields: keyFields,
+        value: keyFields.length === 1
+          ? item[keyFields[0]]
+          : keyFields.map(field => item[field]),
+        message: DEFAULT_CONFLICT_MESSAGE
+      });
+    }
   }
 
   for (const uniqueField of collection.definition.uniqueFields) {
@@ -145,6 +157,9 @@ const findConflicts = (
     const tuple = encodeFieldTuple(uniqueField.fields, item);
     const duplicate = [...collection.items.entries()].some(([mapKey, existing]) => {
       if (ignoreKey !== undefined && mapKey === ignoreKey) {
+        return false;
+      }
+      if (isSoftDeleted(existing, softDelete)) {
         return false;
       }
       if (!itemHasAllFields(existing, uniqueField.fields)) {
@@ -311,6 +326,8 @@ export class StoreRegistry {
         return this.update(collection, req, true);
       case 'delete':
         return this.remove(collection, req);
+      case 'restore':
+        return this.restore(collection, req);
       default:
         return {
           ok: false,
@@ -329,6 +346,13 @@ export class StoreRegistry {
         continue;
       }
       items = items.filter(item => String(item[field]) === String(value));
+    }
+
+    if (
+      collection.definition.softDelete
+      && !isIncludeDeletedRequested(req)
+    ) {
+      items = filterOutSoftDeleted(items, collection.definition.softDelete);
     }
 
     const listConfig = collection.definition.list;
@@ -392,6 +416,13 @@ export class StoreRegistry {
       return { ok: false, kind: 'not_found' };
     }
 
+    if (
+      isSoftDeleted(item, collection.definition.softDelete)
+      && !isIncludeDeletedRequested(req)
+    ) {
+      return { ok: false, kind: 'not_found' };
+    }
+
     return { ok: true, body: cloneItem(item) };
   }
 
@@ -437,6 +468,10 @@ export class StoreRegistry {
     const key = encodeFieldTuple(collection.definition.keyFields, keyItem);
     const existing = collection.items.get(key);
     if (!existing) {
+      return { ok: false, kind: 'not_found' };
+    }
+
+    if (isSoftDeleted(existing, collection.definition.softDelete)) {
       return { ok: false, kind: 'not_found' };
     }
 
@@ -486,9 +521,59 @@ export class StoreRegistry {
       return { ok: false, kind: 'not_found' };
     }
 
+    const softDelete = collection.definition.softDelete;
+    if (softDelete) {
+      if (isSoftDeleted(existing, softDelete)) {
+        return { ok: false, kind: 'not_found' };
+      }
+
+      collection.items.set(key, markSoftDeleted(existing, softDelete));
+      this.persistCollection(collection);
+      return { ok: true, body: null, status: 204 };
+    }
+
     collection.items.delete(key);
     this.persistCollection(collection);
     return { ok: true, body: null, status: 204 };
+  }
+
+  private restore(collection: Collection, req: Request): StoreOperationResult {
+    const softDelete = collection.definition.softDelete;
+    if (!softDelete) {
+      return {
+        ok: false,
+        kind: 'bad_request',
+        message: 'Store softDelete is not enabled'
+      };
+    }
+
+    const keyItem = this.resolveKeyItem(collection, req);
+    if (!keyItem) {
+      return { ok: false, kind: 'not_found' };
+    }
+
+    const key = encodeFieldTuple(collection.definition.keyFields, keyItem);
+    const existing = collection.items.get(key);
+    if (!existing || !isSoftDeleted(existing, softDelete)) {
+      return { ok: false, kind: 'not_found' };
+    }
+
+    const restored = clearSoftDeleted(existing, softDelete);
+    const { conflicts, responseName, detail } = findConflicts(collection, restored, key);
+    if (conflicts.length > 0) {
+      return {
+        ok: false,
+        kind: 'conflict',
+        conflicts,
+        responseName,
+        detail
+      };
+    }
+
+    const stored = cloneItem(restored);
+    collection.items.set(key, stored);
+    this.persistCollection(collection);
+    return { ok: true, body: cloneItem(stored) };
   }
 }
 

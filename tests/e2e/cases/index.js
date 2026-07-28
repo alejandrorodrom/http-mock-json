@@ -41,7 +41,8 @@ const successCases = [
   require('./success/33-store-helpdesk'),
   require('./success/34-store-hr'),
   require('./success/35-store-unique-composite'),
-  require('./success/36-store-unique-redundant')
+  require('./success/36-store-unique-redundant'),
+  require('./success/37-store-soft-delete')
 ];
 
 const errorCases = [
@@ -100,7 +101,9 @@ const runtimeCases = [
   require('./runtime/store-commerce'),
   require('./runtime/store-helpdesk'),
   require('./runtime/store-hr'),
-  require('./runtime/store-unique-composite')
+  require('./runtime/store-unique-composite'),
+  require('./runtime/store-soft-delete'),
+  require('./runtime/store-soft-delete-persist')
 ];
 
 const unitCases = [

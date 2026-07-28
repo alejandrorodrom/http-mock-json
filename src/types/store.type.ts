@@ -1,6 +1,6 @@
 import { JsonValue } from './json.type';
 
-export type StoreAction = 'list' | 'get' | 'create' | 'update' | 'patch' | 'delete';
+export type StoreAction = 'list' | 'get' | 'create' | 'update' | 'patch' | 'delete' | 'restore';
 
 export type StoreItem = Record<string, JsonValue>;
 
@@ -43,6 +43,16 @@ export type RawStorePersist =
 export interface StorePersistConfig {
   enabled: boolean;
   file?: string;
+}
+
+export type RawStoreSoftDelete =
+  | boolean
+  | {
+    field?: string;
+  };
+
+export interface StoreSoftDeleteConfig {
+  field: string;
 }
 
 export type StoreListOrder = 'asc' | 'desc';
@@ -229,6 +239,7 @@ export interface RawStoreConfig {
   unique?: RawStoreUnique;
   persist?: RawStorePersist;
   list?: RawStoreList;
+  softDelete?: RawStoreSoftDelete;
 }
 
 export interface NormalizedUniqueField {
@@ -247,6 +258,7 @@ export interface StoreDefinition {
   uniqueConflict?: StoreConflictConfig;
   persist?: StorePersistConfig;
   list?: StoreListConfig;
+  softDelete?: StoreSoftDeleteConfig;
 }
 
 export type StoreResetOption = true | string[];

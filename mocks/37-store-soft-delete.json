@@ -1,0 +1,288 @@
+{
+  "api/notes": {
+    "store": {
+      "id": "notes",
+      "key": "id",
+      "softDelete": true,
+      "unique": ["title"],
+      "seed": [
+        { "id": 1, "title": "Keep", "done": false },
+        { "id": 2, "title": "Trash me", "done": false }
+      ],
+      "template": {
+        "id": 0,
+        "title": "",
+        "done": false
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        {
+          "name": "duplicate-title",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE",
+            "errores": "{{conflicts}}"
+          }
+        },
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  },
+  "api/notes/:id": {
+    "store": { "id": "notes" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        { "name": "get", "statusCode": 200, "action": "get" }
+      ]
+    },
+    "PUT": {
+      "nameResponse": "update",
+      "responses": [
+        {
+          "name": "duplicate-title",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE",
+            "errores": "{{conflicts}}"
+          }
+        },
+        { "name": "update", "statusCode": 200, "action": "update" }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "patch",
+      "responses": [
+        {
+          "name": "duplicate-title",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE",
+            "errores": "{{conflicts}}"
+          }
+        },
+        { "name": "patch", "statusCode": 200, "action": "patch" }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "restore",
+      "responses": [
+        {
+          "name": "duplicate-title",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE",
+            "errores": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "restore",
+          "statusCode": 200,
+          "action": "restore",
+          "body": { "ignored": true }
+        }
+      ]
+    }
+  },
+  "api/archived": {
+    "store": {
+      "id": "archived",
+      "key": "id",
+      "softDelete": { "field": "removedAt" },
+      "seed": [
+        { "id": 1, "name": "Keep" },
+        { "id": 2, "name": "Archive me" }
+      ]
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    }
+  },
+  "api/archived/:id": {
+    "store": { "id": "archived" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        { "name": "get", "statusCode": 200, "action": "get" }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "restore",
+      "responses": [
+        { "name": "restore", "statusCode": 200, "action": "restore" }
+      ]
+    }
+  },
+  "api/tasks": {
+    "store": {
+      "id": "tasks",
+      "key": "id",
+      "softDelete": true,
+      "seed": [
+        { "id": 1, "title": "A", "status": "open" },
+        { "id": 2, "title": "B", "status": "open" },
+        { "id": 3, "title": "C", "status": "done" }
+      ],
+      "list": {
+        "page": { "query": "page", "default": 1 },
+        "pageSize": {
+          "query": "pageSize",
+          "default": 10,
+          "max": 50
+        },
+        "sort": {
+          "query": "sort",
+          "default": "id",
+          "fields": ["id", "title"]
+        },
+        "filter": {
+          "fields": ["status"]
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list",
+          "body": {
+            "data": "{{items}}",
+            "total": "{{total}}"
+          }
+        }
+      ]
+    }
+  },
+  "api/tasks/:id": {
+    "store": { "id": "tasks" },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    }
+  },
+  "api/slots": {
+    "store": {
+      "id": "slots",
+      "key": "id",
+      "softDelete": true,
+      "seed": [
+        { "id": 1, "label": "first" }
+      ],
+      "template": {
+        "id": 0,
+        "label": ""
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        { "name": "create", "statusCode": 201, "action": "create" }
+      ]
+    }
+  },
+  "api/slots/:id": {
+    "store": { "id": "slots" },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    }
+  },
+  "api/persisted-notes": {
+    "store": {
+      "id": "persisted-notes",
+      "key": "id",
+      "softDelete": true,
+      "persist": true,
+      "seed": [
+        { "id": 1, "title": "Live" },
+        { "id": 2, "title": "Soft" }
+      ]
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    }
+  },
+  "api/persisted-notes/:id": {
+    "store": { "id": "persisted-notes" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        { "name": "get", "statusCode": 200, "action": "get" }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    }
+  },
+  "api/hard": {
+    "store": {
+      "id": "hard",
+      "key": "id",
+      "seed": [
+        { "id": 1, "name": "One" }
+      ]
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    }
+  },
+  "api/hard/:id": {
+    "store": { "id": "hard" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        { "name": "get", "statusCode": 200, "action": "get" }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    }
+  }
+}

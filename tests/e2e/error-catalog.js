@@ -677,7 +677,49 @@ const ERROR_CATALOG = [
   },
   {
     id: 'store.action-invalid',
-    message: 'The "action" must be one of: list, get, create, update, patch, delete',
+    message: 'The "action" must be one of: list, get, create, update, patch, delete, restore',
+    source: 'src/validators/action.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.soft-delete-type',
+    message: 'The "store.softDelete" property must be a boolean or an object',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.soft-delete-field',
+    message: 'The "store.softDelete.field" must be a non-empty string',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.soft-delete-unknown-key',
+    message: 'The "store.softDelete" property contains unknown key "foo"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.soft-delete-overlap-key',
+    message: 'The "store.softDelete.field" "id" cannot overlap store key fields',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.soft-delete-overlap-unique',
+    message: 'The "store.softDelete.field" "email" cannot overlap store unique fields',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.restore-requires-soft-delete',
+    message: 'The "action" "restore" requires "store.softDelete" to be enabled',
     source: 'src/validators/action.validator.ts',
     kind: 'validation',
     caseName: 'error/store-errors'
@@ -837,11 +879,18 @@ const ERROR_CATALOG = [
     caseName: 'error/store-errors'
   },
   {
-    id: 'http.store.409.unique',
+    id: 'http.store.soft-delete.404',
+    message: 'Not found',
+    source: 'src/scripts/store.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-soft-delete'
+  },
+  {
+    id: 'http.store.soft-delete.restore-conflict',
     message: 'DUPLICATE',
     source: 'src/scripts/store.script.ts',
     kind: 'http',
-    caseName: 'runtime/store-mutable'
+    caseName: 'runtime/store-soft-delete'
   },
   {
     id: 'http.store.404.not-found',

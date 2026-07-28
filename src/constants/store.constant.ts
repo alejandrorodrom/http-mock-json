@@ -8,12 +8,17 @@ export const STORE_ACTIONS: StoreAction[] = [
   'create',
   'update',
   'patch',
-  'delete'
+  'delete',
+  'restore'
 ];
 
 export const STORE_ACTION_SET = new Set<string>(STORE_ACTIONS);
 
 export const DEFAULT_STORE_KEY = 'id';
+
+export const DEFAULT_SOFT_DELETE_FIELD = 'deletedAt';
+
+export const INCLUDE_DELETED_QUERY = 'includeDeleted';
 
 export const DEFAULT_CONFLICT_STATUS = 409;
 

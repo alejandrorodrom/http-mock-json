@@ -108,7 +108,8 @@ export const validateResponse = (
   endpoint: string,
   method: string,
   response: RawMockResponse,
-  hasStore = false
+  hasStore = false,
+  hasSoftDelete = false
 ): ResponseValidationResult => {
   const errors: LocalIssue[] = [];
   const warnings: LocalIssue[] = [];
@@ -132,7 +133,7 @@ export const validateResponse = (
   }
 
   const hasProxy = hasProperty(response, 'proxy');
-  const actionResult = validateAction(endpoint, method, response, hasStore);
+  const actionResult = validateAction(endpoint, method, response, hasStore, hasSoftDelete);
   errors.push(...actionResult.errors);
   warnings.push(...actionResult.warnings);
   const hasAction = hasProperty(response, 'action') && isEmpty(actionResult.errors);
