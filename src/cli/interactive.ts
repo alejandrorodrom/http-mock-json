@@ -5,13 +5,14 @@ import { initialize } from "./commands/init/initialize";
 import { AddOptions, InitOptions, StartOptions } from "../types/options.type";
 import { addMock } from "./commands/add/add-mock";
 import { isHttpUrl } from "../scripts/http-url.script";
+import { DEFAULT_MOCKS_DIR } from '../constants/mocks-path.constant';
 
 export const interactive = () => {
   const mock = new Command();
 
   mock
     .name('mock-server')
-    .version('1.18.1', '-v, --version', 'Output the version number')
+    .version('2.0.0', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.');
 
@@ -19,8 +20,8 @@ export const interactive = () => {
     .command('init')
     .option(
       '-p, --path <path>',
-      'Indicates where the mocks folder will be created',
-      ''
+      `Path to the mocks directory to create (default: ${ DEFAULT_MOCKS_DIR })`,
+      DEFAULT_MOCKS_DIR
     )
     .option(
       '-m, --mock [value]',
@@ -67,8 +68,8 @@ export const interactive = () => {
     )
     .option(
       '-f, --path <path>',
-      'Indicates the location of the mocks in a specific folder.',
-      ''
+      `Path to the mocks directory (default: ${ DEFAULT_MOCKS_DIR })`,
+      DEFAULT_MOCKS_DIR
     )
     .option(
       '--proxy <url>',
@@ -121,8 +122,8 @@ export const interactive = () => {
     .command('add')
     .option(
       '-p, --path <path>',
-      'Indicates where the mocks folder is located',
-      ''
+      `Path to the mocks directory (default: ${ DEFAULT_MOCKS_DIR })`,
+      DEFAULT_MOCKS_DIR
     )
     .description('Create a mock.')
     .action((options: AddOptions) => {

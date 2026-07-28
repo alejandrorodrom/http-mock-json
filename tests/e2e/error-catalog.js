@@ -18,7 +18,7 @@ const ERROR_CATALOG = [
   // --- file / process ---
   {
     id: 'file.mocks-dir-missing',
-    message: 'The directory named mocks does not exist',
+    message: 'The mocks directory does not exist',
     source: 'src/cli/commands/start/files.ts',
     kind: 'cli',
     caseName: 'system/mocks-dir-missing'
@@ -1638,7 +1638,7 @@ const ERROR_CATALOG = [
   },
   {
     id: 'cli.version',
-    message: '1.18.1',
+    message: '2.0.0',
     source: 'src/cli/interactive.ts',
     kind: 'cli',
     caseName: 'system/cli-version-help'
@@ -1659,14 +1659,14 @@ const ERROR_CATALOG = [
   },
   {
     id: 'init.cli-create-mocks',
-    message: 'The directory named mocks was created successfully',
+    message: 'The mocks directory was created successfully',
     source: 'src/cli/commands/init/add-mocks-folder.ts',
     kind: 'init',
     caseName: 'system/init-cli'
   },
   {
     id: 'init.cli-mocks-already-exists',
-    message: 'The directory named mocks already exists',
+    message: 'The mocks directory already exists',
     source: 'src/cli/commands/init/add-mocks-folder.ts',
     kind: 'init',
     caseName: 'system/init-cli'

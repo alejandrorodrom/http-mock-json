@@ -48,7 +48,7 @@ module.exports = {
             failures.push(`[default-path] Expected exit 0, got ${ result.exitCode }`);
           }
           failures.push(...expectIncludes(result.stdout, [
-            'The directory named mocks was created successfully'
+            'The mocks directory was created successfully'
           ], 'default-path'));
 
           if (!fs.existsSync(path.join(workspaceDir, 'mocks'))) {
@@ -63,14 +63,14 @@ module.exports = {
       }
     }
 
-    // 2) init --path apps/demo --mock false --script false
+    // 2) init --path api-mocks --mock false --script false → creates ./api-mocks
     {
       const { workspaceDir, cleanup } = createWorkspace(null, { skipMocksDir: true });
 
       try {
         const result = await runCli({
           cwd: workspaceDir,
-          args: ['init', '--path', 'apps/demo', '--mock', 'false', '--script', 'false'],
+          args: ['init', '--path', 'api-mocks', '--mock', 'false', '--script', 'false'],
           timeoutMs: 12000
         });
 
@@ -81,11 +81,11 @@ module.exports = {
             failures.push(`[custom-path] Expected exit 0, got ${ result.exitCode }`);
           }
           failures.push(...expectIncludes(result.stdout, [
-            'The directory named mocks was created successfully'
+            'The mocks directory was created successfully'
           ], 'custom-path'));
 
-          if (!fs.existsSync(path.join(workspaceDir, 'apps', 'demo', 'mocks'))) {
-            failures.push('[custom-path] Expected apps/demo/mocks');
+          if (!fs.existsSync(path.join(workspaceDir, 'api-mocks'))) {
+            failures.push('[custom-path] Expected ./api-mocks directory');
           }
           if (fs.existsSync(path.join(workspaceDir, 'mocks'))) {
             failures.push('[custom-path] Did not expect ./mocks at workspace root');
@@ -117,7 +117,7 @@ module.exports = {
           failures.push(`[script-true] ${ result.spawnError }`);
         } else {
           failures.push(...expectIncludes(result.stdout, [
-            'The directory named mocks was created successfully',
+            'The mocks directory was created successfully',
             'The script was added successfully'
           ], 'script-true'));
 
@@ -151,7 +151,7 @@ module.exports = {
           failures.push(`[script-no-pkg] ${ result.spawnError }`);
         } else {
           failures.push(...expectIncludes(result.stdout, [
-            'The directory named mocks was created successfully',
+            'The mocks directory was created successfully',
             'The file "package.json" was not found'
           ], 'script-no-pkg'));
 
@@ -185,7 +185,7 @@ module.exports = {
           failures.push(`[idempotent] ${ result.spawnError }`);
         } else {
           failures.push(...expectIncludes(result.stdout, [
-            'The directory named mocks already exists'
+            'The mocks directory already exists'
           ], 'idempotent'));
         }
       } finally {

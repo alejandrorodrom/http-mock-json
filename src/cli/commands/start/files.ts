@@ -32,7 +32,7 @@ export const getMocksData = (
   loadedConfig?: LoadMockConfigResult
 ): MocksData => {
   if (!fs.existsSync(folderPath)) {
-    throw new Error('The directory named mocks does not exist');
+    throw new Error('The mocks directory does not exist');
   }
 
   const errorsByFile: Record<string, ValidationIssue[]> = {};

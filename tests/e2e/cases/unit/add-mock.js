@@ -31,12 +31,12 @@ module.exports = {
       try {
         process.chdir(workspaceDir);
 
-        // Custom path: apps/demo/mocks/<name>.json
-        const mocksDir = path.join(workspaceDir, 'apps', 'demo', 'mocks');
+        // Custom path: api-mocks/<name>.json
+        const mocksDir = path.join(workspaceDir, 'api-mocks');
         fs.mkdirSync(mocksDir, { recursive: true });
 
         prompts.inject(['users-api', 'users', ['get', 'post'], true]);
-        await addMock({ path: path.join('apps', 'demo') });
+        await addMock({ path: 'api-mocks' });
 
         const mockFile = path.join(mocksDir, 'users-api.json');
         if (!fs.existsSync(mockFile)) {
@@ -58,7 +58,7 @@ module.exports = {
         // Abort: confirm=false → no new file
         prompts.inject(['aborted-api', 'gone', ['get'], false]);
         const beforeAbort = fs.readdirSync(mocksDir);
-        await addMock({ path: path.join('apps', 'demo') });
+        await addMock({ path: 'api-mocks' });
         const afterAbort = fs.readdirSync(mocksDir);
 
         if (afterAbort.includes('aborted-api.json')) {

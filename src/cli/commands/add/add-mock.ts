@@ -9,12 +9,13 @@ import { AddOptions } from "../../../types/options.type";
 import { HttpVerbs } from "../../../constants/http-verbs.constant";
 import { structureMock } from "./structure-mock";
 import { PromptAddMock } from "../../../interfaces/mock.interface";
+import { resolveMocksDir } from "../../../scripts/mocks-path.script";
 
 export const addMock = async (
   { path }: AddOptions
 ) => {
   try {
-    const mocks = join(process.cwd(), path, 'mocks');
+    const mocks = resolveMocksDir(path);
 
     logMessage('Preparing mock', true)
     const { name, endpoint, httpVerbs, confirm }: PromptAddMock = await prompt([

@@ -8,7 +8,7 @@ module.exports = {
   run: () => runCliUseCase({
     name: 'system/port-out-of-range',
     description: 'CLI --port outside 1..65535 → Port must be between 1 and 65535',
-    args: ['start', '-p', '70000', '-f', ''],
+    args: ['start', '-p', '70000', '-f', 'mocks'],
     workspace: { emptyMocksDir: true },
     expected: {
       outcome: 'error',

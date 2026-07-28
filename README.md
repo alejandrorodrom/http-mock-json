@@ -19,6 +19,7 @@ Define the same endpoints your app will call. Switch success and failure scenari
 - [Quick Start](#quick-start)
 - [Installation and use](#installation-and-use-)
 - [Commands](#commands-)
+- [Changelog](CHANGELOG.md)
 - [Validation System](#validation-system-)
 - [Advanced examples](#advanced-examples)
 - [Real-world projects](#real-world-projects-)
@@ -257,13 +258,14 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
 
    | Flag        | Default | Description                                               |
    |-------------|---------|-----------------------------------------------------------|
-   | -p --path   | `root`  | Indicates the location of the mocks in a specific folder. |
+   | -p --path   | `mocks` | Path to the mocks directory to create                     |
    | -m --mock   | `true`  | Create a first mock.                                      |
    | -s --script | `true`  | Add script to start the mock in the package.json file.    |
 
    **Example:**
    ```
-   mock-server init --path apps/folder1 --mock false --script false
+   mock-server init --path api-mocks --mock false --script false
+   mock-server init --path apps/folder1/mocks --mock false --script false
    ```
 
 2. `start`
@@ -277,16 +279,20 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | Flag        | Default | Description                                                                 |
    |-------------|---------|-----------------------------------------------------------------------------|
    | -p --port   | -       | Listen port. Overrides `mock.config.json` `port` when set; otherwise config `port`, else `3000` |
-   | -f --path   | `root`  | Indicates the location of the mocks in a specific folder.                   |
+   | -f --path   | `mocks` | Path to the mocks directory (JSON files + optional `mock.config.json`)      |
    | --proxy     | -       | Global proxy target (`http`/`https`). Used by `"proxy": true` and unmatched routes |
    | --reset-store | -     | Delete persisted store files **before the initial start** (all stores, or comma-separated ids). Not re-applied on watch reloads |
 
    **Example:**
    ```
-   mock-server start --port 3001 --path apps/folder1 --proxy https://api.staging.com
+   mock-server start --port 3001 --path api-mocks --proxy https://api.staging.com
+   mock-server start --path apps/folder1/mocks
    mock-server start --reset-store
    mock-server start --reset-store notes,users
    ```
+
+   **Breaking (≥ 2.0.0):** `--path` / `-f` is the mocks directory itself (default `mocks`).  
+   Before 2.0.0, `-f apps/folder1` meant `apps/folder1/mocks`. Use `-f apps/folder1/mocks` now.
 
 3. `add`
 
@@ -298,11 +304,12 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
 
    | Flag      | Default | Description                                               |
    |-----------|---------|-----------------------------------------------------------|
-   | -p --path | `root`  | Indicates the location of the mocks in a specific folder. |
+   | -p --path | `mocks` | Path to the mocks directory                               |
 
    **Example:**
     ```
-    mock-server add --path apps/folder1
+    mock-server add --path api-mocks
+    mock-server add --path apps/folder1/mocks
     ```
 
 ---
@@ -7726,7 +7733,7 @@ These errors occur when there are issues with the file structure or file system:
 
 | Error Message                               | Description                             | Solution                                                            |
 |---------------------------------------------|-----------------------------------------|---------------------------------------------------------------------|
-| `The directory named mocks does not exist`  | The mock files directory is missing     | Run `mock-server init` to create it                                 |
+| `The mocks directory does not exist`        | The mock files directory is missing     | Run `mock-server init` (or pass `-f` / `--path` to an existing dir) |
 | `No files found`                            | No JSON files found in that directory   | Create at least one `.json` mock file there                         |
 | `JSON syntax error: ...`                    | Invalid JSON syntax in the file         | Check for missing commas, brackets, or quotes. Use a JSON validator |
 | `Error processing file: ...`                | General file processing error           | Check file permissions and ensure the file is readable              |

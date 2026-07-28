@@ -344,7 +344,7 @@ module.exports = {
 
       const cli = await runCli({
         cwd: workspaceDir,
-        args: ['start', '-f', ''],
+        args: ['start', '-f', 'mocks'],
         timeoutMs: 15000,
         resolveWhen: (stdout) => stdout.includes('Mock server is running')
       });

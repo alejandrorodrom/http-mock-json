@@ -8,7 +8,7 @@ module.exports = {
   run: () => runCliUseCase({
     name: 'system/reset-store-invalid',
     description: 'CLI --reset-store with empty ids → Reset store ids must be a non-empty comma-separated list',
-    args: ['start', '-p', '34104', '-f', '', '--reset-store', ',,,'],
+    args: ['start', '-p', '34104', '-f', 'mocks', '--reset-store', ',,,'],
     workspace: { emptyMocksDir: true },
     expected: {
       outcome: 'error',

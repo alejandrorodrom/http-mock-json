@@ -3,11 +3,11 @@ import { logError, logSuccess } from "../../../scripts/log.script";
 
 export const addMocksFolder = (mocks: string) => {
   if (fs.existsSync(mocks)) {
-    logSuccess('The directory named mocks already exists');
+    logSuccess('The mocks directory already exists');
   } else {
     try {
       fs.mkdirSync(mocks, { recursive: true });
-      logSuccess('The directory named mocks was created successfully');
+      logSuccess('The mocks directory was created successfully');
     } catch (e) {
       logError(e);
     }

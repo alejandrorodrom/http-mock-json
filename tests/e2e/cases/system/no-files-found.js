@@ -8,7 +8,7 @@ module.exports = {
   run: () => runCliUseCase({
     name: 'system/no-files-found',
     description: 'CLI start with empty mocks/ folder → No files found',
-    args: ['start', '-p', '34102', '-f', ''],
+    args: ['start', '-p', '34102', '-f', 'mocks'],
     workspace: { emptyMocksDir: true },
     expected: {
       outcome: 'error',

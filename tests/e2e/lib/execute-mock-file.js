@@ -113,7 +113,7 @@ async function executeMockFile(options) {
   const { workspaceDir, cleanup } = createWorkspace(options.mockRelativePath);
 
   try {
-    const args = ['start', '-p', String(options.port ?? 0), '-f', ''];
+    const args = ['start', '-p', String(options.port ?? 0), '-f', 'mocks'];
 
     // port 0 is invalid for our CLI (must be 1-65535). Prefer explicit free-like high ports.
     if (!options.port) {

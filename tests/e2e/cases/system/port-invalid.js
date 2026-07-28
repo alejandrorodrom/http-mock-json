@@ -8,7 +8,7 @@ module.exports = {
   run: () => runCliUseCase({
     name: 'system/port-invalid',
     description: 'CLI --port NaN → Port must be a valid number',
-    args: ['start', '-p', 'abc', '-f', ''],
+    args: ['start', '-p', 'abc', '-f', 'mocks'],
     workspace: { emptyMocksDir: true },
     expected: {
       outcome: 'error',

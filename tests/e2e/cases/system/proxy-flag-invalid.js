@@ -8,7 +8,7 @@ module.exports = {
   run: () => runCliUseCase({
     name: 'system/proxy-flag-invalid',
     description: 'CLI --proxy invalid URL → Proxy must be a valid http or https URL',
-    args: ['start', '-p', '34103', '-f', '', '--proxy', 'not-a-url'],
+    args: ['start', '-p', '34103', '-f', 'mocks', '--proxy', 'not-a-url'],
     workspace: { emptyMocksDir: true },
     expected: {
       outcome: 'error',

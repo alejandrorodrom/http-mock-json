@@ -33,16 +33,16 @@ module.exports = {
         prompts.inject(['welcome', 'hello', ['get'], true]);
 
         await initialize({
-          path: path.join('apps', 'demo'),
+          path: 'api-mocks',
           mock: true,
           script: false
         });
 
-        const mocksDir = path.join(workspaceDir, 'apps', 'demo', 'mocks');
+        const mocksDir = path.join(workspaceDir, 'api-mocks');
         const mockFile = path.join(mocksDir, 'welcome.json');
 
         if (!fs.existsSync(mocksDir)) {
-          failures.push('Expected apps/demo/mocks after initialize');
+          failures.push('Expected api-mocks after initialize');
         }
         if (!fs.existsSync(mockFile)) {
           failures.push(`Expected first mock at ${ mockFile }`);
@@ -54,7 +54,7 @@ module.exports = {
         }
 
         const joined = logs.join('\n');
-        if (!joined.includes('The directory named mocks was created successfully')) {
+        if (!joined.includes('The mocks directory was created successfully')) {
           failures.push(`Expected mocks created message. Logs:\n${ joined }`);
         }
         if (!joined.includes('Mock ready')) {

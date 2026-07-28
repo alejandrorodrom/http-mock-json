@@ -22,7 +22,7 @@ module.exports = {
       return await runCliUseCase({
         name: 'system/port-in-use',
         description: 'CLI start on occupied port → Port X is already in use',
-        args: ['start', '-p', String(port), '-f', ''],
+        args: ['start', '-p', String(port), '-f', 'mocks'],
         workspace: {
           mockRelativePath: 'mocks/01-basic-multiple-responses.json'
         },

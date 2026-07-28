@@ -24,7 +24,7 @@ async function expectPersistStartupError(content, expectedSnippet) {
     const port = await getFreePort();
     const result = await runCli({
       cwd: workspaceDir,
-      args: ['start', '-p', String(port), '-f', ''],
+      args: ['start', '-p', String(port), '-f', 'mocks'],
       timeoutMs: 12000
     });
 
