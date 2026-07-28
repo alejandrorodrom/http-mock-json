@@ -61,7 +61,8 @@ const errorCases = [
   require('./error/request-errors'),
   require('./error/store-errors'),
   require('./error/store-relations-errors'),
-  require('./error/store-persist-corrupt')
+  require('./error/store-persist-corrupt'),
+  require('./error/mock-config-errors')
 ];
 
 const systemCases = [
@@ -111,7 +112,11 @@ const runtimeCases = [
   require('./runtime/store-soft-delete-persist'),
   require('./runtime/store-relations'),
   require('./runtime/store-relations-matrix'),
-  require('./runtime/store-relations-persist')
+  require('./runtime/store-relations-persist'),
+  require('./runtime/mock-config-folders'),
+  require('./runtime/mock-config-proxy-unmatched'),
+  require('./runtime/mock-config-cascades'),
+  require('./runtime/mock-config-exhaustive')
 ];
 
 const unitCases = [
@@ -121,7 +126,11 @@ const unitCases = [
   require('./unit/package-json-missing'),
   require('./unit/mocks-folder-mkdir-failed'),
   require('./unit/invalid-mock-configuration'),
-  require('./unit/store-response-clone')
+  require('./unit/store-response-clone'),
+  require('./unit/mock-config-folders'),
+  require('./unit/mock-config-invalid'),
+  require('./unit/mock-config-filters'),
+  require('./unit/mock-config-advanced')
 ];
 
 /** @type {{ name: string, description: string, run: () => Promise<import('../lib/reporter').CaseResult> }[]} */

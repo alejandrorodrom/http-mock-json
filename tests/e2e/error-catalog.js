@@ -1633,7 +1633,7 @@ const ERROR_CATALOG = [
   // --- runtime ---
   {
     id: 'runtime.proxy-orphan',
-    message: 'Proxy is set to true but no method-level proxy or --proxy target is configured',
+    message: 'Proxy is set to true but no method, folder, root config, or --proxy target is configured',
     source: 'src/cli/commands/start/start-mock.ts',
     kind: 'runtime',
     caseName: 'runtime/proxy-orphan-502'
@@ -2014,6 +2014,274 @@ const ERROR_CATALOG = [
     source: 'src/cli/commands/start/files.ts',
     kind: 'defensive',
     caseName: 'unit/invalid-mock-configuration'
+  },
+
+  // --- mock.config.json ---
+  {
+    id: 'mock-config.prefix-root-forbidden',
+    message: 'The "prefix" is only allowed inside "folders"',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.delay-negative',
+    message: 'The "delay" must be greater than or equal to 0',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.delay-not-number',
+    message: 'The "delay" "abc" is not a valid number',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.proxy-true-forbidden',
+    message: 'The "proxy" must be a URL string or an object with "target"',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.headers-value-not-string',
+    message: 'The "headers.X-Bad" must be a string',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.headers-not-object',
+    message: 'The "headers" must be an object',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.strictDuplicates-not-boolean',
+    message: 'The "strictDuplicates" must be a boolean',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.port-out-of-range',
+    message: 'The "port" must be between 1 and 65535',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.port-not-number',
+    message: 'The "port" must be a valid number',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.folders-not-object',
+    message: 'The "folders" must be an object',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.folder-name-invalid',
+    message: 'The folder name "bad/name" is invalid',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.folder-not-object',
+    message: 'The "folders.bad/name" must be an object',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.prefix-empty',
+    message: 'The "folders.broken.prefix" must be a non-empty path',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.prefix-not-string',
+    message: 'The "folders.broken.prefix" must be a string',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.prefix-invalid-chars',
+    message: 'Invalid "folders.bad-chars.prefix"',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.prefix-route-params-forbidden',
+    message: 'The "folders.with-params.prefix" cannot contain route parameters',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.port-not-integer',
+    message: 'The "port" must be an integer',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.folder-delay-not-number',
+    message: 'The "folders.broken.delay" "nope" is not a valid number',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.folder-headers-not-object',
+    message: 'The "folders.broken.headers" must be an object',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.enabled-not-boolean',
+    message: 'The "folders.broken.enabled" must be a boolean',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.include-not-array',
+    message: 'The "folders.broken.include" must be an array of strings',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.exclude-empty-item',
+    message: 'The "folders.broken.exclude[0]" must be a non-empty string',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.include-item-not-string',
+    message: 'The "folders.empty-include-item.include[0]" must be a non-empty string',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.stripPrefix-not-boolean',
+    message: 'The "folders.broken.stripPrefix" must be a boolean',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.stripPrefix-requires-prefix',
+    message: 'The "folders.needs-prefix.stripPrefix" requires "folders.needs-prefix.prefix"',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.proxyUnmatched-invalid-url',
+    message: 'The "folders.broken.proxyUnmatched" must be a valid http or https URL',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.proxyUnmatched-requires-prefix',
+    message: 'The "folders.needs-prefix.proxyUnmatched" requires "folders.needs-prefix.prefix"',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.storeNamespace-invalid',
+    message: 'The "folders.broken.storeNamespace" must be a non-empty string using letters, numbers, "-", "_", and "."',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.proxy-target-invalid',
+    message: 'The "proxy.target" must be a valid http or https URL',
+    source: 'src/validators/mock-config.validator.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.not-object',
+    message: 'The file must contain a valid JSON object',
+    source: 'src/scripts/mock-config.script.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.syntax-error',
+    message: 'JSON syntax error:',
+    source: 'src/scripts/mock-config.script.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.folder-missing',
+    message: 'The folder "missing" does not exist inside mocks',
+    source: 'src/scripts/mock-config.script.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'mock-config.strictDuplicates-route',
+    message: 'Duplicate route [GET] /api/users/login',
+    source: 'src/cli/commands/start/process-file.ts',
+    kind: 'validation',
+    caseName: 'error/mock-config-errors'
+  },
+  {
+    id: 'http.mock-config.auth-login',
+    message: 'tok_demo',
+    source: 'tests/e2e/cases/runtime/mock-config-exhaustive.js',
+    kind: 'http',
+    caseName: 'runtime/mock-config-exhaustive'
+  },
+  {
+    id: 'http.mock-config.cart-conflict',
+    message: 'ITEM_ALREADY_IN_CART',
+    source: 'tests/e2e/cases/runtime/mock-config-exhaustive.js',
+    kind: 'http',
+    caseName: 'runtime/mock-config-exhaustive'
+  },
+  {
+    id: 'http.mock-config.payments-declined',
+    message: 'CARD_DECLINED',
+    source: 'tests/e2e/cases/runtime/mock-config-exhaustive.js',
+    kind: 'http',
+    caseName: 'runtime/mock-config-exhaustive'
+  },
+  {
+    id: 'http.mock-config.stripPrefix-live',
+    message: '/intents?mode=live',
+    source: 'tests/e2e/cases/runtime/mock-config-exhaustive.js',
+    kind: 'http',
+    caseName: 'runtime/mock-config-exhaustive'
+  },
+  {
+    id: 'http.mock-config.proxyUnmatched',
+    message: '/methods?x=1',
+    source: 'tests/e2e/cases/runtime/mock-config-exhaustive.js',
+    kind: 'http',
+    caseName: 'runtime/mock-config-exhaustive'
   }
 ];
 

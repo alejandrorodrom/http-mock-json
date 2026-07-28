@@ -38,7 +38,7 @@ export const resolvePersistFilePath = (
     return normalize(join(mocksDir, persist.file));
   }
 
-  return join(mocksDir, STORE_PERSIST_DIR, `${ storeId }.json`);
+  return join(mocksDir, STORE_PERSIST_DIR, `${ storeId.replace(/:/g, '__') }.json`);
 };
 
 export const buildPersistWatchIgnored = (

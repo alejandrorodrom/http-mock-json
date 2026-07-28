@@ -43,17 +43,32 @@ export const resolveProxy = (
 
 const buildProxyUrl = (
   proxy: ProxyTarget,
-  req: Request
+  req: Request,
+  stripPrefix?: string
 ): string => {
-  if (!proxy.path) {
-    return new URL(req.originalUrl, proxy.target).toString();
+  if (proxy.path) {
+    const queryIndex = req.originalUrl.indexOf('?');
+    const query = queryIndex >= 0 ? req.originalUrl.slice(queryIndex) : '';
+    const path = proxy.path.startsWith('/') ? proxy.path : `/${ proxy.path }`;
+
+    return new URL(`${ path }${ query }`, proxy.target).toString();
   }
 
-  const queryIndex = req.originalUrl.indexOf('?');
-  const query = queryIndex >= 0 ? req.originalUrl.slice(queryIndex) : '';
-  const path = proxy.path.startsWith('/') ? proxy.path : `/${ proxy.path }`;
+  let pathWithQuery = req.originalUrl;
 
-  return new URL(`${ path }${ query }`, proxy.target).toString();
+  if (stripPrefix) {
+    const normalizedPrefix = stripPrefix.startsWith('/') ? stripPrefix : `/${ stripPrefix }`;
+    const queryIndex = req.originalUrl.indexOf('?');
+    const pathname = queryIndex >= 0 ? req.originalUrl.slice(0, queryIndex) : req.originalUrl;
+    const query = queryIndex >= 0 ? req.originalUrl.slice(queryIndex) : '';
+
+    if (pathname === normalizedPrefix || pathname.startsWith(`${ normalizedPrefix }/`)) {
+      const rest = pathname.slice(normalizedPrefix.length) || '/';
+      pathWithQuery = `${ rest }${ query }`;
+    }
+  }
+
+  return new URL(pathWithQuery, proxy.target).toString();
 };
 
 const buildOutgoingHeaders = (req: Request): Record<string, string> => {
@@ -83,9 +98,10 @@ const buildOutgoingBody = (req: Request): string | undefined => {
 export const proxyRequest = async (
   proxy: ProxyTarget,
   req: Request,
-  res: Response
+  res: Response,
+  options?: { stripPrefix?: string }
 ): Promise<void> => {
-  const url = buildProxyUrl(proxy, req);
+  const url = buildProxyUrl(proxy, req, options?.stripPrefix);
   const headers = buildOutgoingHeaders(req);
   const body = buildOutgoingBody(req);
 

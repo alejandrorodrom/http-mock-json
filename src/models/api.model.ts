@@ -13,6 +13,7 @@ export class Api {
   proxy?: MethodProxyValue;
   request?: MockRequest;
   storeId?: string;
+  stripPrefix?: string;
   responses: MockResponseConfig[];
 
   constructor(data: MockHttp) {
@@ -23,6 +24,7 @@ export class Api {
     this.proxy = data.proxy;
     this.request = data.request;
     this.storeId = data.storeId;
+    this.stripPrefix = data.stripPrefix;
     this.responses = data.responses;
   }
 

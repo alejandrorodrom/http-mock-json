@@ -1,9 +1,11 @@
 import { Server } from "node:net";
 import { HttpVerbs } from "../constants/http-verbs.constant";
+import { MockConfig } from "../types/mock-config.type";
 import { StoreResetOption } from "../types/store.type";
+import { LocalIssue } from "../types/validation.type";
 
 export interface ExecuteMock {
-  port: number,
+  port?: number,
   folderPath: string;
   proxy?: string;
   resetStore?: StoreResetOption;
@@ -14,6 +16,10 @@ export interface StartMock {
   folderPath: string;
   proxy?: string;
   resetStore?: StoreResetOption;
+  loadedConfig?: {
+    config: MockConfig | null;
+    errors: LocalIssue[];
+  };
 }
 
 export interface StartMockResult {

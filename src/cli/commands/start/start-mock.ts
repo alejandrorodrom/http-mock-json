@@ -19,9 +19,10 @@ import {
 import { buildPersistWatchIgnored } from '../../../scripts/store-persist.script';
 import { MockResponseConfig } from '../../../interfaces/data.interface';
 import { StartMock, StartMockResult } from '../../../interfaces/mock.interface';
+import { getProxyUnmatchedMounts } from '../../../scripts/mock-config.script';
 
 export const startMock = async (
-  { port, folderPath, proxy, resetStore }: StartMock
+  { port, folderPath, proxy, resetStore, loadedConfig }: StartMock
 ): Promise<StartMockResult> => {
   await validatePortAvailable(port);
 
@@ -33,7 +34,7 @@ export const startMock = async (
   app.use(express.json({ strict: false }));
   app.use(express.urlencoded({ extended: true }));
 
-  const { apis, stores } = getMocksData(folderPath);
+  const { apis, stores, config } = getMocksData(folderPath, loadedConfig);
   resetCallCounters();
   const registry = new StoreRegistry(stores, {
     mocksDir: folderPath,
@@ -99,12 +100,14 @@ export const startMock = async (
 
         if (!resolvedProxy) {
           res.status(502).json({
-            message: 'Proxy is set to true but no method-level proxy or --proxy target is configured'
+            message: 'Proxy is set to true but no method, folder, root config, or --proxy target is configured'
           });
           return;
         }
 
-        await proxyRequest(resolvedProxy, req, res);
+        await proxyRequest(resolvedProxy, req, res, {
+          stripPrefix: value.stripPrefix
+        });
         return;
       }
 
@@ -165,6 +168,17 @@ export const startMock = async (
       res.set(selectedResponse.headers).status(selectedResponse.status).json(selectedResponse.body);
     });
   });
+
+  for (const mount of getProxyUnmatchedMounts(config)) {
+    app.use(mount.prefix, async (req: Request, res: Response) => {
+      await proxyRequest(
+        { target: mount.target },
+        req,
+        res,
+        { stripPrefix: mount.stripPrefix }
+      );
+    });
+  }
 
   if (proxy) {
     app.use(async (req: Request, res: Response) => {

@@ -11,7 +11,7 @@ export const interactive = () => {
 
   mock
     .name('mock-server')
-    .version('1.17.2', '-v, --version', 'Output the version number')
+    .version('1.18.0', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.');
 
@@ -53,7 +53,7 @@ export const interactive = () => {
     .command('start')
     .option(
       '-p, --port <port>',
-      'Indicates the port where the mock will be executed',
+      'Indicates the port where the mock will be executed (overrides mock.config.json port)',
       (value: string): number => {
         const port = parseInt(value, 10);
         if (isNaN(port)) {
@@ -63,8 +63,7 @@ export const interactive = () => {
           throw new Error('Port must be between 1 and 65535');
         }
         return port;
-      },
-      3000
+      }
     )
     .option(
       '-f, --path <path>',

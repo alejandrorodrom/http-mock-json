@@ -16,6 +16,8 @@ import { STORE_PROPERTY } from '../../../constants/store.constant';
 import { RawStoreConfig, StoreDefinition } from '../../../types/store.type';
 import { isStoreReference } from '../../../scripts/store-normalize.script';
 import { normalizeRequest } from '../../../scripts/request-norm.script';
+import { MockFileDefaults } from '../../../types/mock-config.type';
+import { joinRoutePrefix, mergeHeaders, applyStoreNamespace, namespaceStoreDefinition } from '../../../scripts/mock-config.script';
 
 const collectConflictResponseNames = (definition: StoreDefinition): string[] => {
   const names = new Set<string>();
@@ -122,7 +124,8 @@ export const collectStoresFromData = (
   errorsByFile: Record<string, LocalIssue[]>,
   warningsByFile: Record<string, LocalIssue[]>,
   stores: Map<string, StoreDefinition>,
-  mocksDir: string
+  mocksDir: string,
+  storeNamespace?: string
 ): void => {
   for (const [route, endpointData] of iterateEntries(data)) {
     if (!isObject(endpointData) || !hasProperty(endpointData, STORE_PROPERTY)) {
@@ -142,15 +145,17 @@ export const collectStoresFromData = (
       continue;
     }
 
-    if (stores.has(definition.id)) {
+    const namespacedDefinition = namespaceStoreDefinition(definition, storeNamespace);
+
+    if (stores.has(namespacedDefinition.id)) {
       addIssues(errorsByFile, file, [{
         endpoint: route,
-        message: `The store "${ definition.id }" is already defined`
+        message: `The store "${ namespacedDefinition.id }" is already defined`
       }]);
       continue;
     }
 
-    stores.set(definition.id, definition);
+    stores.set(namespacedDefinition.id, namespacedDefinition);
   }
 };
 
@@ -160,7 +165,9 @@ export const processMockData = (
   errorsByFile: Record<string, LocalIssue[]>,
   warningsByFile: Record<string, LocalIssue[]>,
   apis: Api[],
-  stores: Map<string, StoreDefinition>
+  stores: Map<string, StoreDefinition>,
+  fileDefaults?: MockFileDefaults,
+  routeOwners?: Map<string, string>
 ): void => {
   for (const [route, endpointData] of iterateEntries(data)) {
     const endpointResult = validateEndpoint(route, endpointData);
@@ -182,13 +189,13 @@ export const processMockData = (
         const config = rawStore as RawStoreConfig;
 
         if (typeof config.id === 'string' && config.id.length > 0) {
-          storeId = config.id;
-          storeDefinition = stores.get(config.id);
+          storeId = applyStoreNamespace(config.id, fileDefaults?.storeNamespace);
+          storeDefinition = stores.get(storeId);
 
           if (isStoreReference(config) && !storeDefinition) {
             addIssues(errorsByFile, file, [{
               endpoint: route,
-              message: `The store "${ config.id }" is referenced but not defined`
+              message: `The store "${ storeId }" is referenced but not defined`
             }]);
           }
         }
@@ -295,7 +302,7 @@ export const processMockData = (
         const responses: MockResponseConfig[] = typedMethod.responses.map(response => ({
           name: response.name,
           status: Number(response.statusCode),
-          headers: response.headers ?? {},
+          headers: mergeHeaders(fileDefaults?.headers, response.headers),
           body: (hasProperty(response, 'body') ? response.body : null) as JsonValue,
           delay: response.delay !== undefined ? Number(response.delay) : undefined,
           match: response.match,
@@ -303,20 +310,41 @@ export const processMockData = (
           action: response.action
         }));
 
-        apis.push(
-          new Api({
-            route: route,
-            method: method,
-            nameResponse: typedMethod.nameResponse,
-            delay: typedMethod.delay !== undefined ? Number(typedMethod.delay) : undefined,
-            proxy: typedMethod.proxy,
-            request: typedMethod.request
-              ? normalizeRequest(typedMethod.request)
-              : undefined,
-            storeId,
-            responses
-          })
-        );
+        const methodDelay = typedMethod.delay !== undefined
+          ? Number(typedMethod.delay)
+          : fileDefaults?.delay;
+        const methodProxy = typedMethod.proxy ?? fileDefaults?.proxy;
+
+        const api = new Api({
+          route: joinRoutePrefix(fileDefaults?.prefix, route),
+          method: method,
+          nameResponse: typedMethod.nameResponse,
+          delay: methodDelay,
+          proxy: methodProxy,
+          request: typedMethod.request
+            ? normalizeRequest(typedMethod.request)
+            : undefined,
+          storeId,
+          stripPrefix: fileDefaults?.stripPrefix,
+          responses
+        });
+
+        if (routeOwners) {
+          const routeKey = `${ api.method }:${ api.route }`;
+          const existingFile = routeOwners.get(routeKey);
+
+          if (existingFile) {
+            addIssues(errorsByFile, file, [{
+              endpoint: api.route,
+              method: api.method.toUpperCase(),
+              message: `Duplicate route [${ api.method.toUpperCase() }] ${ api.route } (also defined in ${ existingFile })`
+            }]);
+          } else {
+            routeOwners.set(routeKey, file);
+          }
+        }
+
+        apis.push(api);
       }
     }
   }

@@ -18,7 +18,7 @@ module.exports = {
       failures.push(...expectEqual(
         orphan.body,
         {
-          message: 'Proxy is set to true but no method-level proxy or --proxy target is configured'
+          message: 'Proxy is set to true but no method, folder, root config, or --proxy target is configured'
         },
         'orphan proxy body'
       ));

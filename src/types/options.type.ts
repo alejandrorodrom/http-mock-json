@@ -1,7 +1,7 @@
 import { StoreResetOption } from './store.type';
 
 export type StartOptions = {
-  port: number;
+  port?: number;
   path: string;
   proxy?: string;
   resetStore?: StoreResetOption;

@@ -42,6 +42,7 @@ export interface MockHttp {
   proxy?: MethodProxyValue;
   request?: MockRequest;
   storeId?: string;
+  stripPrefix?: string;
   responses: MockResponseConfig[];
 }
 

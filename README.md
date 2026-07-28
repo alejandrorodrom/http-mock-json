@@ -76,6 +76,7 @@ Define the same endpoints your app will call. Switch success and failure scenari
 - **Custom Headers** - Support for custom HTTP headers in responses
 - **Parameter Support** - Dynamic routes with parameters (e.g., `/users/:id`)
 - **Proxy** - Forward selected responses (or unmatched routes) to a real backend
+- **Folder organization (optional)** - Group mocks by microservice/folder with a single `mock.config.json` (`prefix`, `delay`, `proxy`, `headers`, `enabled`, `include`/`exclude`, `strictDuplicates`, `stripPrefix`, `proxyUnmatched`, `storeNamespace`, `port`)
 
 ## Quick Start
 
@@ -275,7 +276,7 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
 
    | Flag        | Default | Description                                                                 |
    |-------------|---------|-----------------------------------------------------------------------------|
-   | -p --port   | `3000`  | Indicates the port where the mock will be executed                          |
+   | -p --port   | -       | Listen port. Overrides `mock.config.json` `port` when set; otherwise config `port`, else `3000` |
    | -f --path   | `root`  | Indicates the location of the mocks in a specific folder.                   |
    | --proxy     | -       | Global proxy target (`http`/`https`). Used by `"proxy": true` and unmatched routes |
    | --reset-store | -     | Delete persisted store files **before the initial start** (all stores, or comma-separated ids). Not re-applied on watch reloads |
@@ -323,7 +324,8 @@ When you run `mock-server start`, the system automatically validates in this ord
 6. **Optional match/delay/proxy**: Validates `match`, non-negative `delay`, and `proxy` URL shapes
 7. **Optional request validation**: Validates `request.body` / `request.query` rule shapes, formats, and `invalidResponse` references
 8. **Optional store / action**: Validates `store` schema, unique/key/seed rules, `action` values, and conflict response names
-9. **JSON structure**: Ensures files contain valid JSON objects
+9. **Optional mock.config.json**: Validates folder organization config (`prefix`, `delay`, `proxy`, `headers`, `enabled`, `include`/`exclude`, `strictDuplicates`, `stripPrefix`, `proxyUnmatched`, `storeNamespace`, `port`, declared folders)
+10. **JSON structure**: Ensures files contain valid JSON objects
 
 ### Error Handling
 
@@ -354,6 +356,7 @@ When files change during watch mode:
 * Review the advanced examples and the [mutable store guide](#mutable-store-) if you need mutable CRUD.
 * A single json file can contain many mocks.
 * There can be many json files each with their respective mocks.
+* For microservices or large APIs, use optional [folder organization](#example-11-folder-organization-mockconfigjson) with `mock.config.json`.
 * The server validates your mocks automatically - fix any errors before the server can start.
 * Prefer `request` for input shape and `store.unique` / conflict responses for business uniqueness (`409`).
 
@@ -1347,7 +1350,477 @@ Proxy values:
 | `{ "target": "https://api.com", "path": "/v2/users" }` | Rewrite path to `/v2/users`; keep the original query |
 | `true` | Use method-level `proxy`, or `--proxy` if method has none |
 
-### Example 11: Mutable store
+### Example 11: Folder organization (`mock.config.json`)
+
+Optional mode (≥ `1.18.0`) for backends split into microservices (or large APIs). Group mocks into folders and declare shared settings in a single `mocks/mock.config.json`.
+
+Useful when you want to:
+
+- Mirror each microservice (`users`, `orders`, `payments`) as a folder
+- Apply a shared route prefix per service (`/api/users`, `/api/orders`)
+- Set default `delay`, `proxy`, or `headers` per group without repeating them in every mock
+- Enable/disable a folder, filter files with `include`/`exclude`, and optionally fail on duplicate routes
+- Keep a large mock set readable and easy to navigate
+
+Without `mock.config.json`, mocks work as before: flat JSON files in `mocks/`.
+
+#### Basic layout (prefix, delay, headers, include/exclude, enabled)
+
+```text
+mocks/
+  mock.config.json
+  users/
+    auth.json
+    profile.json
+    auth-draft.json
+  users-v2/
+    login.json
+  health.json
+```
+
+`mocks/mock.config.json`:
+
+```json
+{
+  "delay": 100,
+  "headers": {
+    "X-Mock-Env": "local"
+  },
+  "folders": {
+    "users": {
+      "prefix": "/api/users",
+      "delay": 200,
+      "headers": {
+        "X-Service": "users"
+      },
+      "include": ["auth.json", "profile.json"],
+      "exclude": ["*-draft.json"]
+    },
+    "users-v2": {
+      "prefix": "/api/users",
+      "enabled": false
+    }
+  }
+}
+```
+
+`mocks/users/auth.json` (routes are relative to the folder prefix):
+
+```json
+{
+  "login": {
+    "POST": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "headers": {
+            "X-Request-Id": "req-1"
+          },
+          "body": {
+            "token": "abc"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Behavior:
+
+- `POST /api/users/login` → from `users/auth.json` (prefix + delay `200` + headers `X-Mock-Env`, `X-Service`, `X-Request-Id`)
+- `users/auth-draft.json` skipped by `exclude`; `users-v2/` skipped by `enabled: false`
+- Root `health.json` → `/health` with root delay `100`
+
+#### Example: `strictDuplicates`
+
+Fail startup if two files resolve to the same method + final route:
+
+```json
+{
+  "strictDuplicates": true,
+  "folders": {
+    "users": { "prefix": "/api/users" },
+    "auth": { "prefix": "/api/users" }
+  }
+}
+```
+
+If both folders define `POST login`, the server does not start and reports the duplicate `/api/users/login`.
+
+#### Example: `port`
+
+Default listen port from config (CLI `-p` / `--port` wins when provided):
+
+```json
+{
+  "port": 3500,
+  "folders": {
+    "users": {
+      "prefix": "/api/users"
+    }
+  }
+}
+```
+
+```bash
+mock-server start              # uses 3500 from config
+mock-server start -p 4000      # uses 4000 (CLI overrides config)
+```
+
+Priority: **CLI `-p` > `mock.config.json` `port` > `3000`**.
+
+#### Example: `delay` overrides
+
+Latency resolves from most specific to least specific:
+
+**response → method → folder → root → `0`**
+
+```json
+{
+  "delay": 100,
+  "folders": {
+    "users": {
+      "prefix": "/api/users",
+      "delay": 200
+    }
+  }
+}
+```
+
+`mocks/users/profile.json`:
+
+```json
+{
+  "me": {
+    "GET": {
+      "nameResponse": "ok",
+      "delay": 50,
+      "responses": [
+        {
+          "name": "slow",
+          "statusCode": 200,
+          "delay": 500,
+          "match": { "query": { "slow": "1" } },
+          "body": { "ok": true, "slow": true }
+        },
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": { "ok": true }
+        }
+      ]
+    }
+  }
+}
+```
+
+| Request | Delay used | Why |
+|---------|------------|-----|
+| `GET /api/users/me?slow=1` | **500** | response `delay` |
+| `GET /api/users/me` | **50** | method `delay` (no response delay) |
+| Root file with no method/response delay | **100** | root config `delay` |
+| No delay anywhere | **0** | default |
+
+If the method omitted `delay: 50`, `GET /api/users/me` would use folder **200**.
+
+#### Example: `headers` merge / override
+
+Headers are **merged**. Same key: more specific wins.
+
+**`{ ...root, ...folder, ...response }`**
+
+```json
+{
+  "headers": {
+    "X-Mock-Env": "local",
+    "X-Owner": "root"
+  },
+  "folders": {
+    "users": {
+      "prefix": "/api/users",
+      "headers": {
+        "X-Service": "users",
+        "X-Owner": "folder"
+      }
+    }
+  }
+}
+```
+
+`mocks/users/profile.json`:
+
+```json
+{
+  "me": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "headers": {
+            "X-Request-Id": "req-1",
+            "X-Owner": "response"
+          },
+          "body": { "ok": true }
+        }
+      ]
+    }
+  }
+}
+```
+
+Final headers on `GET /api/users/me`:
+
+| Header | Value | From |
+|--------|-------|------|
+| `X-Mock-Env` | `local` | root |
+| `X-Service` | `users` | folder |
+| `X-Request-Id` | `req-1` | response |
+| `X-Owner` | **`response`** | response overrides folder (which had overridden root) |
+
+A root-only mock file (no folder) gets only root headers (+ its own response headers).
+
+#### Example: `proxy` overrides (`proxy: true`)
+
+When a response sets `"proxy": true`, the target is resolved as:
+
+**method `proxy` → folder `proxy` → root config `proxy` → CLI `--proxy`**
+
+```json
+{
+  "proxy": "http://localhost:4000",
+  "folders": {
+    "users": {
+      "prefix": "/api/users",
+      "proxy": "http://localhost:3001"
+    }
+  }
+}
+```
+
+With a method-level target (`mocks/users/profile.json`):
+
+```json
+{
+  "me": {
+    "GET": {
+      "nameResponse": "mock",
+      "proxy": "http://localhost:3002",
+      "responses": [
+        {
+          "name": "via-method",
+          "proxy": true,
+          "match": { "query": { "via": "method" } }
+        },
+        {
+          "name": "mock",
+          "statusCode": 200,
+          "body": { "source": "local" }
+        }
+      ]
+    }
+  }
+}
+```
+
+`GET /api/users/me?via=method` → upstream **`http://localhost:3002`** (method wins).
+
+Without method `proxy`, the same `"proxy": true` uses folder **`3001`**.  
+Without method and folder `proxy`, it uses root config **`4000`**.  
+Without any of those:
+
+```bash
+mock-server start --proxy https://api.staging.com
+```
+
+…uses the CLI target. If nothing defines a target → **502** (orphan `proxy: true`).
+
+| Priority | Source | Example target |
+|----------|--------|----------------|
+| 1 | Method `proxy` | `http://localhost:3002` |
+| 2 | Folder `proxy` | `http://localhost:3001` |
+| 3 | Root config `proxy` | `http://localhost:4000` |
+| 4 | CLI `--proxy` | `https://api.staging.com` |
+
+Notes:
+
+- A response can set `"proxy": "http://..."` or `{ "target", "path?" }` directly — that **skips** the cascade (explicit target on the response).
+- Folder **`proxyUnmatched`** is separate: it only applies to requests under that prefix with **no mock route**. It does not replace CLI `--proxy` for paths outside the prefix.
+- Global CLI `--proxy` still catch-alls remaining unmatched routes (see [Global `--proxy`](#example-global---proxy-for-unmocked-routes)).
+
+#### Example: `stripPrefix` (gateway → microservice path)
+
+Front calls `/api/users/:id`, but the real users service expects `/:id`:
+
+```json
+{
+  "folders": {
+    "users": {
+      "prefix": "/api/users",
+      "proxy": "http://localhost:3001",
+      "stripPrefix": true
+    }
+  }
+}
+```
+
+`mocks/users/profile.json`:
+
+```json
+{
+  ":id": {
+    "GET": {
+      "nameResponse": "live",
+      "responses": [
+        {
+          "name": "live",
+          "proxy": true
+        }
+      ]
+    }
+  }
+}
+```
+
+Behavior:
+
+- Incoming `GET /api/users/42`
+- Upstream request goes to `http://localhost:3001/42` (prefix stripped)
+- If `stripPrefix` were `false`, upstream would receive `/api/users/42`
+
+#### Example: `proxyUnmatched` (partial mock + live API)
+
+Mock only some routes; forward the rest of that service to a real backend:
+
+```json
+{
+  "folders": {
+    "users": {
+      "prefix": "/api/users",
+      "stripPrefix": true,
+      "proxyUnmatched": "http://localhost:3001"
+    }
+  }
+}
+```
+
+`mocks/users/auth.json` only mocks login:
+
+```json
+{
+  "login": {
+    "POST": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "token": "mock"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Behavior:
+
+- `POST /api/users/login` → local mock
+- `GET /api/users/settings` (no mock) → proxied to `http://localhost:3001/settings` (`stripPrefix` on)
+- Routes outside `/api/users` are not handled by this catch-all (use CLI `--proxy` for a global fallback)
+
+#### Example: `storeNamespace` (avoid store id collisions)
+
+Two folders both want a store named `session`:
+
+```json
+{
+  "folders": {
+    "users": {
+      "prefix": "/api/users",
+      "storeNamespace": "users"
+    },
+    "orders": {
+      "prefix": "/api/orders",
+      "storeNamespace": "orders"
+    }
+  }
+}
+```
+
+In `mocks/users/session.json` you still write a local id:
+
+```json
+{
+  "session": {
+    "store": {
+      "id": "session",
+      "key": "id",
+      "seed": []
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "action": "list",
+          "body": []
+        }
+      ]
+    }
+  }
+}
+```
+
+At load time the store becomes `users:session` (and `orders:session` in the other folder). References in the same folder keep using `"id": "session"`. Cross-folder relations use the full id (`"store": "users:session"`).
+
+With `storeNamespace`, `--reset-store` must use the **runtime** id:
+
+```bash
+mock-server start --reset-store users:session
+# or clear everything:
+mock-server start --reset-store
+```
+
+**Options reference:**
+
+| Option | Level | Default | Purpose |
+|--------|-------|---------|---------|
+| `folders` | root | — | Declares which subfolders under `mocks/` to load and their settings |
+| `prefix` | folder | — | Route prefix for every endpoint in that folder (`/api/users` + `login` → `/api/users/login`). Cannot contain route parameters (`:id`) |
+| `delay` | root / folder | — | Default latency (ms). Folder overrides root; method/response can override both |
+| `proxy` | root / folder | — | Default proxy target (URL or `{ target, path? }`). Folder overrides root; method can override |
+| `headers` | root / folder | — | Default response headers. Merged as `{ ...root, ...folder, ...response }` (response wins on conflicts) |
+| `enabled` | folder | `true` | Set `false` to skip the folder without deleting it (skipped folders are ignored by `strictDuplicates`) |
+| `include` | folder | all `.json` | Basename patterns (`*`, `?`); if set, only matching files in the folder are loaded |
+| `exclude` | folder | none | Basename patterns to skip after `include` (e.g. `*-draft.json`) |
+| `strictDuplicates` | root | `false` | When `true`, startup fails if the same HTTP method + final route is registered twice |
+| `stripPrefix` | folder | `false` | When proxying, remove the folder `prefix` from the upstream path (requires `prefix`) |
+| `proxyUnmatched` | folder | — | Catch-all proxy URL for requests under this folder `prefix` that have no mock (requires `prefix`) |
+| `storeNamespace` | folder | — | Prefixes store ids in that folder (`session` → `users:session`). Ids that already contain `:` are left as-is |
+| `port` | root | `3000` | Default listen port. CLI `-p` / `--port` overrides this value |
+
+Rules:
+
+- Opt-in: only activates when `mocks/mock.config.json` exists
+- Only folders declared in `folders` are loaded; undeclared folders are ignored
+- JSON files in the root of `mocks/` still load and receive root `delay` / `proxy` / `headers` defaults
+- One folder level only (`mocks/users/*.json`)
+- **Priority cheat-sheet** (see examples above for full walkthroughs):
+  - `port`: CLI `-p` → config `port` → `3000`
+  - `delay`: response → method → folder → root → `0`
+  - `proxy` when response is `true`: method → folder → root config → CLI `--proxy`
+  - `headers`: merge `{ ...root, ...folder, ...response }` (same key → more specific wins)
+- Create folders manually; `mock-server add` / `init` still write to the root of `mocks/`
+
+### Example 12: Mutable store
 
 Opt-in collections that mutate while the server runs. Declare `store` on the endpoint and mark responses with `action`.
 
@@ -6353,6 +6826,9 @@ The [Advanced examples](#advanced-examples) teach one feature at a time. This se
 | Request + proxy | `request` + `proxy` | Validate locally, forward only when valid |
 | Global `--proxy` | CLI `--proxy` | Unmocked routes go to a real backend |
 | Webhooks | `request` (array + enum) | Register callback URLs and event lists |
+| [Food delivery — simple folders](#example-food-delivery-simple-folder-mocks) | `mock.config.json` + `prefix` + `delay` + `headers` | Split auth / restaurants like microservices |
+| [Food delivery — cart + store](#example-food-delivery-cart--store-namespaces) | folders + `store` + `storeNamespace` + `request` + `persist` | Mutable cart per service namespace |
+| [Food delivery — hybrid live payments](#example-food-delivery-hybrid-live-payments) | `proxyUnmatched` + `stripPrefix` + `match` + `enabled` + `strictDuplicates` | Mock catalog/orders; live payment gateway |
 
 ### Example: SaaS signup + org invite
 
@@ -6868,12 +7344,375 @@ Validate callback URL, event list, and secret before returning a webhook id.
 | Valid registration | `201` + `webhookId` |
 | `GET .../webhooks/wh_1/deliveries` | Delivery history for UI |
 
+### Example: Food delivery — simple folder mocks
+
+**App:** a food-delivery frontend that already talks to gateway paths (`/api/auth/...`, `/api/restaurants/...`). Start by mirroring two microservices with `mock.config.json` — no store yet.
+
+```text
+mocks/
+  mock.config.json
+  auth/
+    login.json
+  restaurants/
+    list.json
+```
+
+`mocks/mock.config.json`:
+
+```json
+{
+  "port": 3100,
+  "headers": {
+    "X-Mock-App": "food-delivery"
+  },
+  "folders": {
+    "auth": {
+      "prefix": "/api/auth",
+      "delay": 120,
+      "headers": { "X-Service": "auth" }
+    },
+    "restaurants": {
+      "prefix": "/api/restaurants",
+      "delay": 80,
+      "headers": { "X-Service": "restaurants" }
+    }
+  }
+}
+```
+
+`mocks/auth/login.json`:
+
+```json
+{
+  "login": {
+    "POST": {
+      "nameResponse": "ok",
+      "request": {
+        "body": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 6 }
+        },
+        "invalidResponse": "invalid"
+      },
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": { "token": "tok_demo", "userId": "u_1" }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 422,
+          "body": { "message": "Invalid login", "errors": [] }
+        }
+      ]
+    }
+  }
+}
+```
+
+`mocks/restaurants/list.json`:
+
+```json
+{
+  "nearby": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "data": [
+              { "id": "r_1", "name": "Pasta Place", "etaMin": 25 },
+              { "id": "r_2", "name": "Burger Lab", "etaMin": 35 }
+            ]
+          }
+        },
+        {
+          "name": "empty-area",
+          "statusCode": 200,
+          "match": { "query": { "area": "desert" } },
+          "body": { "data": [] }
+        }
+      ]
+    }
+  }
+}
+```
+
+| Call | Result |
+|------|--------|
+| `POST /api/auth/login` (valid) | `200` + token, ~120ms, headers `X-Mock-App` + `X-Service: auth` |
+| Invalid login body | `422` from `request` |
+| `GET /api/restaurants/nearby` | Restaurant list (~80ms) |
+| `GET /api/restaurants/nearby?area=desert` | Empty list via `match.query` |
+| `mock-server start` (no `-p`) | Listens on **3100** from config |
+
+### Example: Food delivery — cart + store namespaces
+
+**Next step:** add an orders microservice with a mutable cart. Use `storeNamespace` so `cart` in orders does not collide with a future `cart` in another service.
+
+```text
+mocks/
+  mock.config.json
+  auth/
+    login.json
+  restaurants/
+    list.json
+  orders/
+    cart.json
+```
+
+`mocks/mock.config.json`:
+
+```json
+{
+  "port": 3100,
+  "strictDuplicates": true,
+  "headers": { "X-Mock-App": "food-delivery" },
+  "folders": {
+    "auth": {
+      "prefix": "/api/auth",
+      "delay": 120
+    },
+    "restaurants": {
+      "prefix": "/api/restaurants",
+      "delay": 80
+    },
+    "orders": {
+      "prefix": "/api/orders",
+      "delay": 100,
+      "headers": { "X-Service": "orders" },
+      "storeNamespace": "orders",
+      "include": ["cart.json"]
+    }
+  }
+}
+```
+
+`mocks/orders/cart.json`:
+
+```json
+{
+  "cart/items": {
+    "store": {
+      "id": "cart",
+      "key": "id",
+      "persist": true,
+      "unique": {
+        "fields": ["menuItemId"],
+        "conflict": { "response": "duplicate" }
+      },
+      "seed": [
+        { "id": 1, "menuItemId": "m_pasta", "qty": 1, "name": "Carbonara" }
+      ]
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "action": "list", "body": [] }
+      ]
+    },
+    "POST": {
+      "nameResponse": "created",
+      "request": {
+        "body": {
+          "menuItemId": { "type": "string", "minLength": 1 },
+          "qty": { "type": "number", "min": 1, "max": 20 },
+          "name": { "type": "string", "minLength": 1 }
+        },
+        "invalidResponse": "invalid"
+      },
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": 201,
+          "action": "create",
+          "body": {}
+        },
+        {
+          "name": "duplicate",
+          "statusCode": 409,
+          "body": { "code": "ITEM_ALREADY_IN_CART" }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 422,
+          "body": { "message": "Invalid cart item", "errors": [] }
+        }
+      ]
+    }
+  },
+  "cart/items/:id": {
+    "store": { "id": "cart" },
+    "PATCH": {
+      "nameResponse": "ok",
+      "request": {
+        "body": {
+          "qty": { "type": "number", "min": 1, "max": 20 }
+        },
+        "invalidResponse": "invalid"
+      },
+      "responses": [
+        { "name": "ok", "statusCode": 200, "action": "patch", "body": {} },
+        { "name": "invalid", "statusCode": 422, "body": { "message": "Invalid qty", "errors": [] } }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "ok",
+      "responses": [
+        { "name": "ok", "statusCode": 200, "action": "delete", "body": { "deleted": true } }
+      ]
+    }
+  }
+}
+```
+
+With `storeNamespace: "orders"`, the runtime store id is `orders:cart` while JSON still uses `"id": "cart"`.
+
+| Call | Result |
+|------|--------|
+| `GET /api/orders/cart/items` | Seeded cart lines (store list) |
+| `POST` new item | `201` create; survives restart (`persist`) |
+| `POST` same `menuItemId` again | `409` unique conflict (`duplicate`) |
+| Invalid `qty` | `422` from `request` |
+| Duplicate final routes across folders | Blocked by `strictDuplicates` |
+
+### Example: Food delivery — hybrid live payments
+
+**Full flow for the payments UI:** keep auth/restaurants/orders mocked locally; only the payments microservice is partially live. Draft mocks stay on disk but out of the load set.
+
+```text
+mocks/
+  mock.config.json
+  auth/
+    login.json
+  restaurants/
+    list.json
+  orders/
+    cart.json
+  payments/
+    intent.json
+    intent-draft.json
+  payments-v2/
+    intent.json
+```
+
+`mocks/mock.config.json`:
+
+```json
+{
+  "port": 3100,
+  "strictDuplicates": true,
+  "headers": { "X-Mock-App": "food-delivery" },
+  "folders": {
+    "auth": {
+      "prefix": "/api/auth",
+      "delay": 120
+    },
+    "restaurants": {
+      "prefix": "/api/restaurants",
+      "delay": 80
+    },
+    "orders": {
+      "prefix": "/api/orders",
+      "storeNamespace": "orders",
+      "include": ["cart.json"]
+    },
+    "payments": {
+      "prefix": "/api/payments",
+      "delay": 150,
+      "headers": { "X-Service": "payments" },
+      "include": ["intent.json"],
+      "exclude": ["*-draft.json"],
+      "stripPrefix": true,
+      "proxyUnmatched": "http://localhost:3005",
+      "proxy": "http://localhost:3005"
+    },
+    "payments-v2": {
+      "prefix": "/api/payments",
+      "enabled": false
+    }
+  }
+}
+```
+
+`mocks/payments/intent.json` — controlled local scenarios, then proxy when you want the real gateway:
+
+```json
+{
+  "intents": {
+    "POST": {
+      "nameResponse": "created",
+      "delay": 200,
+      "request": {
+        "body": {
+          "orderId": { "type": "string", "minLength": 1 },
+          "amount": { "type": "number", "min": 1 },
+          "currency": { "type": "string", "enum": ["USD", "EUR", "MXN"] }
+        },
+        "invalidResponse": "invalid"
+      },
+      "responses": [
+        {
+          "name": "card-declined",
+          "statusCode": 402,
+          "match": {
+            "body": { "orderId": "ord_declined" }
+          },
+          "body": { "code": "CARD_DECLINED" }
+        },
+        {
+          "name": "rate-limited",
+          "statusCode": 429,
+          "match": { "query": { "scenario": "rate_limit" } },
+          "headers": { "Retry-After": "3" },
+          "body": { "code": "RATE_LIMITED" }
+        },
+        {
+          "name": "live",
+          "proxy": true,
+          "match": { "query": { "mode": "live" } }
+        },
+        {
+          "name": "created",
+          "statusCode": 201,
+          "body": {
+            "intentId": "pi_mock_1",
+            "status": "requires_confirmation"
+          }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 422,
+          "body": { "message": "Invalid payment intent", "errors": [] }
+        }
+      ]
+    }
+  }
+}
+```
+
+| Call | Result |
+|------|--------|
+| `POST /api/payments/intents` (happy path) | Local `201` mock intent |
+| Body `orderId: "ord_declined"` | Local `402 CARD_DECLINED` |
+| `?scenario=rate_limit` | Local `429` + `Retry-After` |
+| `?mode=live` | Proxied to `http://localhost:3005/intents` (`stripPrefix`) |
+| `GET /api/payments/methods` (no mock) | `proxyUnmatched` → `http://localhost:3005/methods` |
+| `payments/intent-draft.json` | Ignored (`exclude`) |
+| `payments-v2/` | Ignored (`enabled: false`), no clash with `strictDuplicates` |
+
+This is the usual frontend setup while payments is still owned by another team: you own auth/catalog/cart mocks, and only open a pipe to the real payments service when needed.
+
 ### Tips for your project
 
 1. Paste the JSON into a mock JSON file in the directory created by `mock-server init` (or the path you pass to `start`).
-2. Rename route prefixes (`api/saas/...`) to match your frontend base URL.
-3. Keep `request` for contract checks and `match` for business branches — they stack, they don’t replace each other.
-4. Prefer one JSON file per product area (auth, billing, orgs) so hot reload stays fast while editing.
+2. For microservices, prefer folders + `mocks/mock.config.json` (see the food-delivery examples above) instead of one giant flat file.
+3. Rename route prefixes (`api/saas/...`, `/api/auth`) to match your frontend base URL.
+4. Keep `request` for contract checks and `match` for business branches — they stack, they don’t replace each other.
+5. Prefer one JSON file per product area (auth, billing, orgs) so hot reload stays fast while editing.
 
 ---
 
@@ -7175,7 +8014,7 @@ These responses happen while the server is running (HTTP `502`), not during mock
 
 | Response / Message | When it happens | Solution |
 |--------------------|-----------------|----------|
-| `{ "message": "Proxy is set to true but no method-level proxy or --proxy target is configured" }` | A response uses `"proxy": true` but neither the method nor CLI defines a target | Set method-level `"proxy": "https://..."` or start with `--proxy https://...` |
+| `{ "message": "Proxy is set to true but no method, folder, root config, or --proxy target is configured" }` | A response uses `"proxy": true` but no method, folder, root config, or CLI target is set | Set method/folder/root `"proxy": "https://..."` or start with `--proxy https://...` |
 | `{ "message": "Proxy request failed" }` | Upstream is unreachable or the proxied request fails | Check the target URL, network/DNS, and that the upstream accepts the forwarded path |
 
 ### Watch Mode Issues

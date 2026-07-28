@@ -213,7 +213,10 @@ function runCli(options) {
  * @param {number} [options.timeoutMs]
  */
 async function startMockServer(options) {
-  const port = await getFreePort();
+  const omitCliPort = options.omitCliPort === true;
+  const port = omitCliPort
+    ? null
+    : (options.cliPort ?? await getFreePort());
   let workspaceDir;
   let cleanup;
 
@@ -225,7 +228,11 @@ async function startMockServer(options) {
   }
 
   const mocksDir = path.join(workspaceDir, 'mocks');
-  const args = ['start', '-p', String(port), '-f', ''];
+  const args = ['start', '-f', ''];
+
+  if (!omitCliPort) {
+    args.splice(1, 0, '-p', String(port));
+  }
 
   if (options.proxy) {
     args.push('--proxy', options.proxy);
@@ -301,15 +308,26 @@ async function startMockServer(options) {
     );
   }
 
+  const portMatch = liveOutput.stdout.match(/http:\/\/localhost:(\d+)/);
+  const resolvedPort = portMatch ? Number(portMatch[1]) : port;
+
+  if (!resolvedPort) {
+    cleanup();
+    killProcessTree(child);
+    throw new Error(
+      `Could not resolve listen port from server output.\nstdout:\n${ liveOutput.stdout }`
+    );
+  }
+
   return {
-    port,
+    port: resolvedPort,
     workspaceDir,
     mocksDir,
     getStdout: () => liveOutput.stdout,
     getStderr: () => liveOutput.stderr,
     stdout: liveOutput.stdout,
     stderr: liveOutput.stderr,
-    baseUrl: `http://127.0.0.1:${ port }`,
+    baseUrl: `http://127.0.0.1:${ resolvedPort }`,
     async stop() {
       killProcessTree(child);
       await new Promise((resolve) => setTimeout(resolve, 100));
