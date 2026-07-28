@@ -2,7 +2,11 @@ import {
   DEFAULT_STORE_KEY,
   STORE_LIST_FILTER_OPS_LABEL,
   STORE_LIST_FILTER_OP_SET,
-  STORE_PROPERTY
+  STORE_PROPERTY,
+  STORE_RELATION_ON_DELETE_LABEL,
+  STORE_RELATION_ON_DELETE_SET,
+  STORE_RELATION_TYPE_LABEL,
+  STORE_RELATION_TYPE_SET
 } from '../constants/store.constant';
 import { LocalIssue } from '../types/validation.type';
 import {
@@ -11,6 +15,8 @@ import {
   RawStoreList,
   RawStoreListObject,
   RawStorePersist,
+  RawStoreRelation,
+  RawStoreRelations,
   RawStoreSoftDelete,
   RawStoreUnique,
   StoreConflictConfig,
@@ -30,11 +36,13 @@ import { getKeys } from '../scripts/objects.script';
 import {
   isStoreReference,
   normalizeKey,
+  normalizeRelations,
   normalizeSoftDelete,
   normalizeStoreDefinition
 } from '../scripts/store-normalize.script';
 import { isPersistFileInsideMocks } from '../scripts/store-persist.script';
-import { validateStoreItems, uniqueConstraintLabel } from '../scripts/store-items.script';
+import { validateStoreItems, uniqueConstraintLabel, encodeFieldTuple } from '../scripts/store-items.script';
+import { isSoftDeleted } from '../scripts/store-soft-delete.script';
 
 export interface StoreValidationResult {
   errors: LocalIssue[];
@@ -938,6 +946,479 @@ const collectUniqueFieldNames = (unique: RawStoreUnique): string[] => {
   return entries.flatMap((entry) => uniqueEntryFields(entry) ?? []);
 };
 
+const validateRelations = (
+  errors: LocalIssue[],
+  endpoint: string,
+  relations: RawStoreRelations,
+  keyFields: string[],
+  softDelete: ReturnType<typeof normalizeSoftDelete>
+): void => {
+  if (!isObject(relations)) {
+    push(errors, endpoint, 'The "store.relations" property must be an object');
+    return;
+  }
+
+  const softDeleteField = softDelete && softDelete !== null ? softDelete.field : undefined;
+  const names = new Set<string>();
+
+  for (const [name, raw] of Object.entries(relations)) {
+    if (name.length === 0) {
+      push(errors, endpoint, 'The "store.relations" property contains an empty field name');
+      continue;
+    }
+
+    if (names.has(name)) {
+      push(errors, endpoint, `The "store.relations" property contains duplicate field "${ name }"`);
+    }
+    names.add(name);
+
+    validateRelationEntry(errors, endpoint, name, raw as RawStoreRelation, keyFields, softDeleteField);
+  }
+
+  if (isEmpty(errors) && normalizeRelations(relations) === null) {
+    push(errors, endpoint, 'The "store.relations" configuration is invalid');
+  }
+};
+
+const validateRelationEntry = (
+  errors: LocalIssue[],
+  endpoint: string,
+  name: string,
+  raw: RawStoreRelation,
+  keyFields: string[],
+  softDeleteField: string | undefined
+): void => {
+  const label = `store.relations.${ name }`;
+
+  if (typeof raw === 'string') {
+    if (raw.length === 0) {
+      push(errors, endpoint, `The "${ label }" must be a non-empty string or an object`);
+      return;
+    }
+
+    if (keyFields.includes(name)) {
+      push(errors, endpoint, `The "${ label }" local field cannot overlap store key fields`);
+    }
+    if (softDeleteField && name === softDeleteField) {
+      push(
+        errors,
+        endpoint,
+        `The "${ label }" local field cannot overlap store.softDelete.field`
+      );
+    }
+    return;
+  }
+
+  if (!isObject(raw)) {
+    push(errors, endpoint, `The "${ label }" must be a non-empty string or an object`);
+    return;
+  }
+
+  const allowed = [
+    'store',
+    'type',
+    'join',
+    'required',
+    'onDelete',
+    'embed',
+    'conflict'
+  ];
+  const keys = getKeys(raw as unknown as Record<string, unknown>);
+  for (const key of keys) {
+    if (!allowed.includes(key)) {
+      push(errors, endpoint, `The "${ label }" property contains unknown key "${ key }"`);
+    }
+  }
+
+  if (!hasProperty(raw, 'store') || typeof raw.store !== 'string' || raw.store.length === 0) {
+    push(errors, endpoint, `The "${ label }.store" must be a non-empty string`);
+  }
+
+  if (hasProperty(raw, 'type')) {
+    if (typeof raw.type !== 'string' || !STORE_RELATION_TYPE_SET.has(raw.type)) {
+      push(
+        errors,
+        endpoint,
+        `The "${ label }.type" must be one of: ${ STORE_RELATION_TYPE_LABEL }`
+      );
+    }
+  }
+
+  const type = raw.type === 'many' ? 'many' : 'one';
+  validateRelationEmbed(errors, endpoint, label, raw.embed);
+
+  if (type === 'many') {
+    if (hasProperty(raw, 'required') || hasProperty(raw, 'onDelete') || hasProperty(raw, 'conflict')) {
+      push(
+        errors,
+        endpoint,
+        `The "${ label }" with type "many" cannot include required, onDelete, or conflict`
+      );
+    }
+
+    if (!hasProperty(raw, 'join') || !isObject(raw.join)) {
+      push(errors, endpoint, `The "${ label }" with type "many" must include "join" with "from"`);
+      return;
+    }
+
+    const joinKeys = getKeys(raw.join as unknown as Record<string, unknown>);
+    for (const key of joinKeys) {
+      if (key !== 'from' && key !== 'to') {
+        push(errors, endpoint, `The "${ label }.join" property contains unknown key "${ key }"`);
+      }
+    }
+
+    if (hasProperty(raw.join, 'to')) {
+      push(errors, endpoint, `The "${ label }.join" with type "many" cannot include "to"`);
+    }
+
+    if (!hasProperty(raw.join, 'from')) {
+      push(errors, endpoint, `The "${ label }.join.from" must be a non-empty string or string array`);
+    } else {
+      validateJoinColumns(errors, endpoint, `${ label }.join.from`, raw.join.from);
+    }
+
+    return;
+  }
+
+  let localFields = [name];
+
+  if (hasProperty(raw, 'join')) {
+    if (!isObject(raw.join)) {
+      push(errors, endpoint, `The "${ label }.join" must be an object`);
+    } else {
+      const joinKeys = getKeys(raw.join as unknown as Record<string, unknown>);
+      for (const key of joinKeys) {
+        if (key !== 'from' && key !== 'to') {
+          push(errors, endpoint, `The "${ label }.join" property contains unknown key "${ key }"`);
+        }
+      }
+
+      if (hasProperty(raw.join, 'from')) {
+        validateJoinColumns(errors, endpoint, `${ label }.join.from`, raw.join.from);
+        if (typeof raw.join.from === 'string' && raw.join.from.length > 0) {
+          localFields = [raw.join.from];
+        } else if (isArray(raw.join.from)) {
+          localFields = (raw.join.from as string[]).filter(
+            item => typeof item === 'string' && item.length > 0
+          );
+        }
+      }
+
+      if (hasProperty(raw.join, 'to')) {
+        validateJoinColumns(errors, endpoint, `${ label }.join.to`, raw.join.to);
+        const fromLen = hasProperty(raw.join, 'from')
+          ? (typeof raw.join.from === 'string' ? 1 : isArray(raw.join.from) ? raw.join.from.length : 0)
+          : 1;
+        const toLen = typeof raw.join.to === 'string'
+          ? 1
+          : isArray(raw.join.to) ? raw.join.to.length : 0;
+        if (fromLen > 0 && toLen > 0 && fromLen !== toLen) {
+          push(
+            errors,
+            endpoint,
+            `The "${ label }.join.from" and "${ label }.join.to" must have the same length`
+          );
+        }
+      }
+    }
+  }
+
+  if (!hasProperty(raw, 'join') && keyFields.includes(name)) {
+    push(errors, endpoint, `The "${ label }" local field cannot overlap store key fields`);
+  }
+
+  for (const field of localFields) {
+    if (softDeleteField && field === softDeleteField) {
+      push(
+        errors,
+        endpoint,
+        `The "${ label }" local field "${ field }" cannot overlap store.softDelete.field`
+      );
+    }
+  }
+
+  if (hasProperty(raw, 'required') && typeof raw.required !== 'boolean') {
+    push(errors, endpoint, `The "${ label }.required" must be a boolean`);
+  }
+
+  validateRelationOnDelete(errors, endpoint, label, raw.onDelete);
+
+  const embedAs = typeof raw.embed === 'string'
+    ? raw.embed
+    : isObject(raw.embed) && typeof (raw.embed as { as?: unknown }).as === 'string'
+      ? (raw.embed as { as: string }).as
+      : undefined;
+
+  if (embedAs && localFields.includes(embedAs)) {
+    push(
+      errors,
+      endpoint,
+      `The "${ label }.embed.as" cannot be the same as a local relation field`
+    );
+  }
+
+  const onDeleteAction = typeof raw.onDelete === 'string'
+    ? raw.onDelete
+    : isObject(raw.onDelete) && typeof (raw.onDelete as { action?: unknown }).action === 'string'
+      ? (raw.onDelete as { action: string }).action
+      : undefined;
+
+  if (raw.required === true && onDeleteAction === 'setNull') {
+    push(
+      errors,
+      endpoint,
+      `The "${ label }" cannot use onDelete "setNull" when required is true`
+    );
+  }
+
+  validateConflict(errors, endpoint, `${ label }.conflict`, raw.conflict);
+  if (isObject(raw.onDelete)) {
+    validateConflict(
+      errors,
+      endpoint,
+      `${ label }.onDelete.conflict`,
+      (raw.onDelete as { conflict?: unknown }).conflict
+    );
+  }
+};
+
+const validateJoinColumns = (
+  errors: LocalIssue[],
+  endpoint: string,
+  label: string,
+  value: unknown
+): void => {
+  if (typeof value === 'string') {
+    if (value.length === 0) {
+      push(errors, endpoint, `The "${ label }" must be a non-empty string or string array`);
+    }
+    return;
+  }
+
+  if (!isArray(value) || value.length === 0) {
+    push(errors, endpoint, `The "${ label }" must be a non-empty string or string array`);
+    return;
+  }
+
+  if (value.some(item => typeof item !== 'string' || item.length === 0)) {
+    push(errors, endpoint, `The "${ label }" must be a non-empty string or string array`);
+  }
+};
+
+const validateRelationEmbed = (
+  errors: LocalIssue[],
+  endpoint: string,
+  label: string,
+  embed: unknown
+): void => {
+  if (!isExisting(embed)) {
+    return;
+  }
+
+  if (typeof embed === 'string') {
+    if (embed.length === 0) {
+      push(errors, endpoint, `The "${ label }.embed" must be a non-empty string or { "as": "..." }`);
+    }
+    return;
+  }
+
+  if (!isObject(embed)) {
+    push(errors, endpoint, `The "${ label }.embed" must be a non-empty string or { "as": "..." }`);
+    return;
+  }
+
+  const embedObject = embed as Record<string, unknown>;
+  for (const key of getKeys(embedObject)) {
+    if (key !== 'as') {
+      push(errors, endpoint, `The "${ label }.embed" property contains unknown key "${ key }"`);
+    }
+  }
+
+  if (!hasProperty(embedObject, 'as') || typeof embedObject.as !== 'string' || embedObject.as.length === 0) {
+    push(errors, endpoint, `The "${ label }.embed.as" must be a non-empty string`);
+  }
+};
+
+const validateRelationOnDelete = (
+  errors: LocalIssue[],
+  endpoint: string,
+  label: string,
+  onDelete: unknown
+): void => {
+  if (!isExisting(onDelete)) {
+    return;
+  }
+
+  if (typeof onDelete === 'string') {
+    if (!STORE_RELATION_ON_DELETE_SET.has(onDelete)) {
+      push(
+        errors,
+        endpoint,
+        `The "${ label }.onDelete" must be one of: ${ STORE_RELATION_ON_DELETE_LABEL }`
+      );
+    }
+    return;
+  }
+
+  if (!isObject(onDelete)) {
+    push(
+      errors,
+      endpoint,
+      `The "${ label }.onDelete" must be one of: ${ STORE_RELATION_ON_DELETE_LABEL }, or an object with "action"`
+    );
+    return;
+  }
+
+  const onDeleteObject = onDelete as Record<string, unknown>;
+  for (const key of getKeys(onDeleteObject)) {
+    if (key !== 'action' && key !== 'conflict') {
+      push(errors, endpoint, `The "${ label }.onDelete" property contains unknown key "${ key }"`);
+    }
+  }
+
+  if (
+    !hasProperty(onDeleteObject, 'action')
+    || typeof onDeleteObject.action !== 'string'
+    || !STORE_RELATION_ON_DELETE_SET.has(onDeleteObject.action)
+  ) {
+    push(
+      errors,
+      endpoint,
+      `The "${ label }.onDelete.action" must be one of: ${ STORE_RELATION_ON_DELETE_LABEL }`
+    );
+  }
+};
+
+const sameStringArray = (left: string[], right: string[]): boolean => {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+};
+
+/**
+ * Cross-store checks after all store definitions are collected.
+ * Resolves target key fields and validates seed foreign keys.
+ */
+export const validateStoreRelationsIntegrity = (
+  stores: Map<string, StoreDefinition>
+): LocalIssue[] => {
+  const errors: LocalIssue[] = [];
+
+  for (const definition of stores.values()) {
+    for (const relation of definition.relations) {
+      const target = stores.get(relation.storeId);
+      if (!target) {
+        errors.push({
+          message: `The store relation "${ definition.id }.${ relation.name }" targets unknown store "${ relation.storeId }"`
+        });
+        continue;
+      }
+
+      if (relation.embedAs) {
+        if (
+          definition.keyFields.includes(relation.embedAs)
+          || definition.relations.some(item => (
+            item !== relation
+            && (item.name === relation.embedAs || item.localFields.includes(relation.embedAs as string))
+          ))
+          || definition.softDelete?.field === relation.embedAs
+        ) {
+          errors.push({
+            message: `The store relation "${ definition.id }.${ relation.name }.embed" "${ relation.embedAs }" conflicts with an existing field`
+          });
+        }
+      }
+
+      if (relation.type === 'many') {
+        if (relation.foreignFields.length !== definition.keyFields.length) {
+          errors.push({
+            message: `The store relation "${ definition.id }.${ relation.name }.join.from" length must match this store key (${ definition.keyFields.join(', ') })`
+          });
+          continue;
+        }
+
+        const reverse = target.relations.find(item => (
+          item.type === 'one'
+          && item.storeId === definition.id
+          && sameStringArray(item.localFields, relation.foreignFields)
+        ));
+
+        if (!reverse) {
+          errors.push({
+            message: `The store relation "${ definition.id }.${ relation.name }" requires store "${ relation.storeId }" to declare a type "one" relation to "${ definition.id }" with join.from [${ relation.foreignFields.join(', ') }]`
+          });
+        }
+        continue;
+      }
+
+      if (relation.targetFields.length === 0) {
+        if (target.keyFields.length !== 1) {
+          errors.push({
+            message: `The store relation "${ definition.id }.${ relation.name }" targets composite key store "${ relation.storeId }" and must set "join.from" and "join.to"`
+          });
+          continue;
+        }
+        relation.targetFields = [...target.keyFields];
+      } else if (!sameStringArray(relation.targetFields, target.keyFields)) {
+        errors.push({
+          message: `The store relation "${ definition.id }.${ relation.name }.join.to" must match target key [${ target.keyFields.join(', ') }]`
+        });
+        continue;
+      }
+
+      if (relation.localFields.length !== relation.targetFields.length) {
+        errors.push({
+          message: `The store relation "${ definition.id }.${ relation.name }" join.from/join.to length mismatch`
+        });
+        continue;
+      }
+
+      definition.seed.forEach((item, index) => {
+        const values = relation.localFields.map(field => item[field]);
+        const missingCount = values.filter(
+          value => value === undefined || value === null || value === ''
+        ).length;
+
+        if (missingCount === relation.localFields.length) {
+          if (relation.required) {
+            errors.push({
+              message: `The store "${ definition.id }" seed[${ index }] is missing required relation "${ relation.name }"`
+            });
+          }
+          return;
+        }
+
+        if (missingCount > 0) {
+          errors.push({
+            message: `The store "${ definition.id }" seed[${ index }] relation "${ relation.name }" has incomplete foreign key values`
+          });
+          return;
+        }
+
+        const keyItem: Record<string, unknown> = {};
+        relation.localFields.forEach((local, fieldIndex) => {
+          keyItem[relation.targetFields[fieldIndex]] = item[local];
+        });
+
+        const targetKeyValue = encodeFieldTuple(
+          relation.targetFields,
+          keyItem as Parameters<typeof encodeFieldTuple>[1]
+        );
+        const targetItem = target.seed.find(
+          seedItem => encodeFieldTuple(relation.targetFields, seedItem) === targetKeyValue
+        );
+
+        if (!targetItem || isSoftDeleted(targetItem, target.softDelete)) {
+          errors.push({
+            message: `The store "${ definition.id }" seed[${ index }] relation "${ relation.name }" references missing or soft-deleted "${ relation.storeId }" record`
+          });
+        }
+      });
+    }
+  }
+
+  return errors;
+};
+
 const validateSoftDelete = (
   errors: LocalIssue[],
   endpoint: string,
@@ -1018,7 +1499,7 @@ export const validateStore = (
 
   const keys = getKeys(config as unknown as Record<string, unknown>);
   for (const key of keys) {
-    if (!['id', 'key', 'seed', 'template', 'unique', 'persist', 'list', 'softDelete'].includes(key)) {
+    if (!['id', 'key', 'seed', 'template', 'unique', 'persist', 'list', 'softDelete', 'relations'].includes(key)) {
       push(errors, endpoint, `The "store" property contains unknown key "${ key }"`);
     }
   }
@@ -1075,6 +1556,18 @@ export const validateStore = (
       config.softDelete as RawStoreSoftDelete,
       keyFields,
       uniqueFieldNames
+    );
+  }
+
+  if (hasProperty(config, 'relations')) {
+    validateRelations(
+      errors,
+      endpoint,
+      config.relations as RawStoreRelations,
+      keyFields,
+      hasProperty(config, 'softDelete')
+        ? normalizeSoftDelete(config.softDelete as RawStoreSoftDelete)
+        : undefined
     );
   }
 

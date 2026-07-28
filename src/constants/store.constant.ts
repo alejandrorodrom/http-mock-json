@@ -20,6 +20,30 @@ export const DEFAULT_SOFT_DELETE_FIELD = 'deletedAt';
 
 export const INCLUDE_DELETED_QUERY = 'includeDeleted';
 
+export const EXPAND_QUERY = 'expand';
+
+export const STORE_RELATION_ON_DELETE = ['restrict', 'cascade', 'setNull'] as const;
+
+export const STORE_RELATION_ON_DELETE_SET = new Set<string>(STORE_RELATION_ON_DELETE);
+
+export const STORE_RELATION_ON_DELETE_LABEL = STORE_RELATION_ON_DELETE.join(', ');
+
+export const DEFAULT_RELATION_ON_DELETE = 'restrict' as const;
+
+export const DEFAULT_RELATION_TYPE = 'one' as const;
+
+export const STORE_RELATION_TYPES = ['one', 'many'] as const;
+
+export const STORE_RELATION_TYPE_SET = new Set<string>(STORE_RELATION_TYPES);
+
+export const STORE_RELATION_TYPE_LABEL = STORE_RELATION_TYPES.join(', ');
+
+export const MAX_EXPAND_DEPTH = 3;
+
+export const DEFAULT_FK_CONFLICT_MESSAGE = 'Related record not found';
+
+export const DEFAULT_DELETE_RESTRICT_MESSAGE = 'Cannot delete: related records exist';
+
 export const DEFAULT_CONFLICT_STATUS = 409;
 
 export const DEFAULT_NOT_FOUND_STATUS = 404;

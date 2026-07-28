@@ -34,6 +34,38 @@ const collectConflictResponseNames = (definition: StoreDefinition): string[] => 
     }
   }
 
+  for (const relation of definition.relations) {
+    if (relation.type === 'one' && relation.conflict?.response) {
+      names.add(relation.conflict.response);
+    }
+  }
+
+  return [...names];
+};
+
+const collectRestrictConflictResponseNames = (
+  targetStoreId: string,
+  stores: Map<string, StoreDefinition>
+): string[] => {
+  const names = new Set<string>();
+
+  for (const definition of stores.values()) {
+    for (const relation of definition.relations) {
+      if (
+        relation.type !== 'one'
+        || relation.storeId !== targetStoreId
+        || relation.onDelete !== 'restrict'
+      ) {
+        continue;
+      }
+
+      const response = relation.onDeleteConflict?.response ?? relation.conflict?.response;
+      if (response) {
+        names.add(response);
+      }
+    }
+  }
+
   return [...names];
 };
 
@@ -202,11 +234,26 @@ export const processMockData = (
         const mutatingActions = typedMethod.responses.some(response => {
           return response.action === 'create'
             || response.action === 'update'
-            || response.action === 'patch';
+            || response.action === 'patch'
+            || response.action === 'restore';
         });
 
         if (mutatingActions) {
           for (const name of collectConflictResponseNames(storeDefinition)) {
+            if (!responseNames.has(name)) {
+              addIssues(errorsByFile, file, [{
+                endpoint: route,
+                method,
+                message: `The store conflict response "${ name }" does not exist in responses`
+              }]);
+              hasResponseErrors = true;
+            }
+          }
+        }
+
+        const hasDeleteAction = typedMethod.responses.some(response => response.action === 'delete');
+        if (hasDeleteAction) {
+          for (const name of collectRestrictConflictResponseNames(storeDefinition.id, stores)) {
             if (!responseNames.has(name)) {
               addIssues(errorsByFile, file, [{
                 endpoint: route,

@@ -55,6 +55,64 @@ export interface StoreSoftDeleteConfig {
   field: string;
 }
 
+export type StoreRelationOnDelete = 'restrict' | 'cascade' | 'setNull';
+
+export type StoreRelationType = 'one' | 'many';
+
+export type RawRelationJoinColumns = string | string[];
+
+export interface RawStoreRelationJoin {
+  /** Columns on this store (type one) or on the child store (type many). */
+  from?: RawRelationJoinColumns;
+  /** Columns on the referenced store (type one). Optional when the target key is a single field. */
+  to?: RawRelationJoinColumns;
+}
+
+export type RawStoreRelationOnDelete =
+  | StoreRelationOnDelete
+  | {
+    action: StoreRelationOnDelete;
+    conflict?: StoreConflictConfig;
+  };
+
+export type RawStoreRelationEmbed =
+  | string
+  | {
+    as: string;
+  };
+
+export interface RawStoreRelationObject {
+  store: string;
+  type?: StoreRelationType;
+  join?: RawStoreRelationJoin;
+  required?: boolean;
+  onDelete?: RawStoreRelationOnDelete;
+  embed?: RawStoreRelationEmbed;
+  conflict?: StoreConflictConfig;
+}
+
+export type RawStoreRelation = string | RawStoreRelationObject;
+
+export type RawStoreRelations = Record<string, RawStoreRelation>;
+
+export interface StoreRelationConfig {
+  /** Map key / relation name (expand matching + default embed base). */
+  name: string;
+  type: StoreRelationType;
+  storeId: string;
+  /** Local FK columns (type one). Empty for type many. */
+  localFields: string[];
+  /** Target key columns (type one). Filled/resolved at integrity for simple. */
+  targetFields: string[];
+  /** Child FK columns pointing at this store (type many). */
+  foreignFields: string[];
+  required: boolean;
+  onDelete: StoreRelationOnDelete;
+  embedAs?: string;
+  conflict?: StoreConflictConfig;
+  onDeleteConflict?: StoreConflictConfig;
+}
+
 export type StoreListOrder = 'asc' | 'desc';
 
 export interface RawQueryDefault<T = number> {
@@ -240,6 +298,7 @@ export interface RawStoreConfig {
   persist?: RawStorePersist;
   list?: RawStoreList;
   softDelete?: RawStoreSoftDelete;
+  relations?: RawStoreRelations;
 }
 
 export interface NormalizedUniqueField {
@@ -259,6 +318,7 @@ export interface StoreDefinition {
   persist?: StorePersistConfig;
   list?: StoreListConfig;
   softDelete?: StoreSoftDeleteConfig;
+  relations: StoreRelationConfig[];
 }
 
 export type StoreResetOption = true | string[];

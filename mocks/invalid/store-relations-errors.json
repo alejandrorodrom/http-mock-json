@@ -1,0 +1,991 @@
+{
+  "bad-relations-empty-name": {
+    "store": {
+      "id": "bad-relations-empty-name",
+      "relations": {
+        "": "users"
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-empty-shorthand": {
+    "store": {
+      "id": "bad-relations-empty-shorthand",
+      "relations": {
+        "userId": ""
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-not-object": {
+    "store": {
+      "id": "bad-relations-not-object",
+      "relations": {
+        "userId": 12
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-type-value": {
+    "store": {
+      "id": "bad-relations-type-value",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "type": "link"
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-many-forbidden-keys": {
+    "store": {
+      "id": "bad-relations-many-forbidden-keys",
+      "relations": {
+        "posts": {
+          "type": "many",
+          "store": "posts",
+          "join": {
+            "from": "userId"
+          },
+          "required": true,
+          "onDelete": "cascade",
+          "conflict": {
+            "response": "x"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-many-missing-join": {
+    "store": {
+      "id": "bad-relations-many-missing-join",
+      "relations": {
+        "posts": {
+          "type": "many",
+          "store": "posts"
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-many-join-to": {
+    "store": {
+      "id": "bad-relations-many-join-to",
+      "relations": {
+        "posts": {
+          "type": "many",
+          "store": "posts",
+          "join": {
+            "from": "userId",
+            "to": "id"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-many-join-from": {
+    "store": {
+      "id": "bad-relations-many-join-from",
+      "relations": {
+        "posts": {
+          "type": "many",
+          "store": "posts",
+          "join": {
+            "from": []
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-join-not-object": {
+    "store": {
+      "id": "bad-relations-join-not-object",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "join": "userId"
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-join-unknown-key": {
+    "store": {
+      "id": "bad-relations-join-unknown-key",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "join": {
+            "from": "userId",
+            "via": "x"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-join-from-invalid": {
+    "store": {
+      "id": "bad-relations-join-from-invalid",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "join": {
+            "from": [
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-join-to-invalid": {
+    "store": {
+      "id": "bad-relations-join-to-invalid",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "join": {
+            "from": "userId",
+            "to": ""
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-required-type": {
+    "store": {
+      "id": "bad-relations-required-type",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "required": "yes"
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-overlap-softdelete": {
+    "store": {
+      "id": "bad-relations-overlap-softdelete",
+      "softDelete": {
+        "field": "deletedAt"
+      },
+      "relations": {
+        "deletedAt": "users"
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-overlap-softdelete-join": {
+    "store": {
+      "id": "bad-relations-overlap-softdelete-join",
+      "softDelete": true,
+      "relations": {
+        "userId": {
+          "store": "users",
+          "join": {
+            "from": "deletedAt",
+            "to": "id"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-embed-empty": {
+    "store": {
+      "id": "bad-relations-embed-empty",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "embed": ""
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-embed-type": {
+    "store": {
+      "id": "bad-relations-embed-type",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "embed": 1
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-embed-unknown-key": {
+    "store": {
+      "id": "bad-relations-embed-unknown-key",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "embed": {
+            "as": "user",
+            "foo": true
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-embed-as-empty": {
+    "store": {
+      "id": "bad-relations-embed-as-empty",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "embed": {
+            "as": ""
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-on-delete-type": {
+    "store": {
+      "id": "bad-relations-on-delete-type",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "onDelete": 1
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-on-delete-unknown-key": {
+    "store": {
+      "id": "bad-relations-on-delete-unknown-key",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "onDelete": {
+            "action": "restrict",
+            "foo": true
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-on-delete-action": {
+    "store": {
+      "id": "bad-relations-on-delete-action",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "onDelete": {
+            "action": "explode"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-conflict-type": {
+    "store": {
+      "id": "bad-relations-conflict-type",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "conflict": "invalid-user"
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-conflict-unknown-key": {
+    "store": {
+      "id": "bad-relations-conflict-unknown-key",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "conflict": {
+            "response": "x",
+            "foo": true
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-conflict-response-empty": {
+    "store": {
+      "id": "bad-relations-conflict-response-empty",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "conflict": {
+            "response": ""
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-on-delete-conflict-response": {
+    "store": {
+      "id": "bad-relations-on-delete-conflict-response",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "onDelete": {
+            "action": "restrict",
+            "conflict": {
+              "response": ""
+            }
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-target-simple": {
+    "store": {
+      "id": "rel-target-simple",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1
+        }
+      ]
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-embed-conflict-key": {
+    "store": {
+      "id": "rel-embed-conflict-key",
+      "key": "id",
+      "seed": [],
+      "relations": {
+        "userId": {
+          "store": "rel-target-simple",
+          "embed": {
+            "as": "id"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-embed-conflict-softdelete": {
+    "store": {
+      "id": "rel-embed-conflict-softdelete",
+      "key": "id",
+      "softDelete": true,
+      "seed": [],
+      "relations": {
+        "userId": {
+          "store": "rel-target-simple",
+          "embed": {
+            "as": "deletedAt"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-many-len-parent": {
+    "store": {
+      "id": "rel-many-len-parent",
+      "key": {
+        "fields": [
+          "tenantId",
+          "id"
+        ]
+      },
+      "seed": [
+        {
+          "tenantId": "t",
+          "id": 1
+        }
+      ],
+      "relations": {
+        "children": {
+          "type": "many",
+          "store": "rel-many-len-child",
+          "join": {
+            "from": "parentId"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-many-len-child": {
+    "store": {
+      "id": "rel-many-len-child",
+      "key": "id",
+      "seed": [],
+      "relations": {
+        "parentId": {
+          "store": "rel-many-len-parent",
+          "join": {
+            "from": "parentId",
+            "to": "id"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-join-to-mismatch": {
+    "store": {
+      "id": "rel-join-to-mismatch",
+      "key": "id",
+      "seed": [],
+      "relations": {
+        "userId": {
+          "store": "rel-target-simple",
+          "join": {
+            "from": "userId",
+            "to": "uuid"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-join-len-vs-target": {
+    "store": {
+      "id": "rel-join-len-vs-target",
+      "key": "id",
+      "seed": [],
+      "relations": {
+        "refs": {
+          "store": "rel-target-simple",
+          "join": {
+            "from": [
+              "a",
+              "b"
+            ]
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-seed-missing-required": {
+    "store": {
+      "id": "rel-seed-missing-required",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1,
+          "title": "x"
+        }
+      ],
+      "relations": {
+        "userId": {
+          "store": "rel-target-simple",
+          "required": true
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-seed-incomplete-fk": {
+    "store": {
+      "id": "rel-seed-incomplete-fk",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1,
+          "tenantId": "acme",
+          "orderId": null
+        }
+      ],
+      "relations": {
+        "orderRef": {
+          "store": "rel-composite-target",
+          "join": {
+            "from": [
+              "tenantId",
+              "orderId"
+            ],
+            "to": [
+              "tenantId",
+              "id"
+            ]
+          },
+          "required": true
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-seed-soft-deleted-fk": {
+    "store": {
+      "id": "rel-seed-soft-deleted-fk",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1,
+          "userId": 1
+        }
+      ],
+      "relations": {
+        "userId": "rel-target-soft"
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-target-soft": {
+    "store": {
+      "id": "rel-target-soft",
+      "key": "id",
+      "softDelete": true,
+      "seed": [
+        {
+          "id": 1,
+          "deletedAt": "2020-01-01T00:00:00.000Z"
+        }
+      ]
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-missing-conflict-response": {
+    "store": {
+      "id": "rel-missing-conflict-response",
+      "key": "id",
+      "seed": [],
+      "relations": {
+        "userId": {
+          "store": "rel-target-simple",
+          "conflict": {
+            "response": "missing-rel-fk"
+          }
+        }
+      }
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
+      ]
+    }
+  },
+  "rel-restrict-child": {
+    "store": {
+      "id": "rel-restrict-child",
+      "key": "id",
+      "seed": [],
+      "relations": {
+        "parentId": {
+          "store": "rel-restrict-parent",
+          "onDelete": {
+            "action": "restrict",
+            "conflict": {
+              "response": "missing-restrict-conflict"
+            }
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-restrict-parent": {
+    "store": {
+      "id": "rel-restrict-parent",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
+      ]
+    }
+  },
+  "rel-composite-target": {
+    "store": {
+      "id": "rel-composite-target",
+      "key": [
+        "tenantId",
+        "id"
+      ],
+      "seed": [
+        {
+          "tenantId": 1,
+          "id": 1
+        }
+      ]
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  }
+}

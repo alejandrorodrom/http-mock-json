@@ -29,6 +29,8 @@
     - [Filters / search](#filters--search)
   - [Key generation on create](#key-generation-on-create)
   - [Conflicts](#conflicts-409)
+  - [Soft delete](#soft-delete)
+  - [Relations](#relations)
   - [Persist and restart](#persist-and-restart-behavior)
   - [Runtime HTTP statuses](#runtime-http-statuses)
   - [Out of scope](#out-of-scope)
@@ -39,6 +41,8 @@
   - [Example E — E-commerce catalog](#example-e--real-project-e-commerce-catalog)
   - [Example F — Helpdesk](#example-f--real-project-multi-tenant-helpdesk)
   - [Example G — HR directory](#example-g--real-project-hr-employee-directory)
+  - [Example H — Blog CMS](#example-h--real-project-blog-cms-with-authors)
+  - [Example I — Multi-tenant orders](#example-i--real-project-multi-tenant-orders)
 - [Troubleshooting](#troubleshooting-)
 - [License](#license-)
 
@@ -52,7 +56,7 @@
 - **Multiple Responses** - Simulate different scenarios (success, error, etc.) for the same endpoint
 - **Request Matching** - Select responses by route params, query params and/or request body
 - **Request Validation** - Validate request `body`/`query` shape with rules (`type`, `minLength`, `format`, nested objects, etc.)
-- **Mutable Store** - Opt-in mutable collections (`store` + `action`) with `seed`, `template`, unique/key conflicts, optional soft delete (`softDelete` + `restore` + `includeDeleted`), disk `persist`, `--reset-store`, and `store.list` (sort/multi-sort, page/offset/cursor, filters with `eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in` + nested + `or` + search, response templates). Start with the [capability map](#capability-map-build-complex-mocks) to compose complex APIs from the docs.
+- **Mutable Store** - Opt-in mutable collections (`store` + `action`) with `seed`, `template`, unique/key conflicts, optional soft delete (`softDelete` + `restore` + `includeDeleted`), cross-store `relations` (FK + `expand` + `onDelete`), disk `persist`, `--reset-store`, and `store.list` (sort/multi-sort, page/offset/cursor, filters with `eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in` + nested + `or` + search, response templates). Start with the [capability map](#capability-map-build-complex-mocks) to compose complex APIs from the docs.
 - **Response Delay** - Simulate latency per method or per response
 - **Type Safe** - Built with TypeScript for better developer experience
 - **RESTful Support** - Full support for GET, POST, PUT, PATCH, DELETE methods
@@ -145,6 +149,7 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | store.persist| ❌       | boolean/object | `true` or `{ "enabled": true, "file": "state.json" }` | Persist to disk under the mock files root (default `.store/<id>.json`). Custom `file` must be relative (no `..`) |
    | store.list   | ❌       | boolean/object | `true` / `{ page, pageSize, offset, limit, cursor, sort, order, filter }` | Opt-in list engine for `action: "list"`: multi-sort, page/offset/cursor, filters (`eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in`, nested, `or`) + search. Response `body`/`headers` use placeholders (`{{items}}`, `{{next}}`, `{{nextCursor}}`, …) |
    | store.softDelete | ❌   | boolean/object | `true` or `{ "field": "deletedAt" }`     | Soft delete: `action: "delete"` sets the field (ISO); `list`/`get` hide items unless `?includeDeleted=true`; `action: "restore"` clears it |
+   | store.relations | ❌  | object         | `{ "userId": "users" }` / `{ "orderRef": { "join": { "from", "to" } } }` / `{ "posts": { "type": "many", "join": { "from": "userId" } } }` | FK (`one`) + reverse embed (`many`); `join.from`/`join.to`; `?expand=` incl. nested (max depth 3) |
    | HTTP Method  | ✅       | string         | `GET`, `POST`, `PUT`, `PATCH`, `DELETE`  | HTTP verb (must be uppercase)                                              |
    | nameResponse | ✅       | string         | `success`, `error`, `error-401`          | Fallback response when no `match` applies (must exist in responses array) |
    | request      | ❌       | object         | `{ "body": { "email": "string" } }`      | Validate incoming `body` and/or `query` before selecting a response        |
@@ -1070,18 +1075,18 @@ Proxy values:
 
 Opt-in collections that mutate while the server runs. Declare `store` on the endpoint and mark responses with `action`.
 
-See the full guide (capability map, schema, persist, conflicts, recipes, examples A–G):  
+See the full guide (capability map, schema, persist, conflicts, recipes, examples A–I):  
 **[Mutable store](#mutable-store-)** · **[Capability map](#capability-map-build-complex-mocks)**
 
 ---
 
 ## Mutable store 🗄️
 
-Opt-in feature (≥ `1.11.0`; advanced list filters ≥ `1.12.0`; composite unique ≥ `1.13.0`; soft delete ≥ `1.14.0`). Without `store` + `action`, mocks stay 100% static.
+Opt-in feature (≥ `1.11.0`; advanced list filters ≥ `1.12.0`; composite unique ≥ `1.13.0`; soft delete ≥ `1.14.0`; relations ≥ `1.15.0`). Without `store` + `action`, mocks stay 100% static.
 
 Use it when the frontend needs **real CRUD flows**: create an item, list it, edit it, delete it — without a backend. Data lives in memory for the process lifetime; optionally survive restarts with `persist`.
 
-The sections below are the reference. Use the **capability map** to pick pieces, then copy a recipe or a ready-made example (A–G) and adapt routes/fields to your app.
+The sections below are the reference. Use the **capability map** to pick pieces, then copy a recipe or a ready-made example (A–I) and adapt routes/fields to your app.
 
 ### Capability map (build complex mocks)
 
@@ -1093,6 +1098,7 @@ Goal: from this README alone you can compose multi-tenant APIs with validation, 
 |-----------|-----|----------------------|-----------|
 | Collection + CRUD | `store` + `action` | `"action": "list" \| "get" \| "create" \| "update" \| "patch" \| "delete" \| "restore"` | [Actions](#actions), [Schema](#schema-definition-vs-reference) |
 | Soft delete / trash | `store.softDelete` | `"softDelete": true` + `?includeDeleted=true` | [Soft delete](#soft-delete) |
+| Relations / FK | `store.relations` | `"userId": { "store": "users", "join": { "from": "userId", "to": "id" } }` / `type: "many"` / `?expand=posts.user` | [Relations](#relations) |
 | Auto ids / defaults | `key`, `template` | `"key": "id"` or `{ "fields": ["tenantId", "id"] }` | [Key generation](#key-generation-on-create) |
 | Seed data | `seed` | `"seed": [{ "id": 1, ... }]` | [Schema](#schema-definition-vs-reference) |
 | Business uniqueness | `unique` + `409` responses | `"unique": ["email"]` or field-level `conflict` | [Conflicts](#conflicts-409) |
@@ -1276,6 +1282,8 @@ Checklist when wiring a new domain:
 | Admin catalog + checkout | [Example E](#example-e--real-project-e-commerce-catalog) | Price/stock/`in`/warehouse/`or` + `402`/`429` |
 | Support inbox + activity | [Example F](#example-f--real-project-multi-tenant-helpdesk) | Page + cursor + date/channel filters |
 | People directory / HR | [Example G](#example-g--real-project-hr-employee-directory) | All filter ops + nested + combined query |
+| Blog / CMS authors + articles | [Example H](#example-h--real-project-blog-cms-with-authors) | `relations` + soft delete + expand + restrict |
+| Multi-tenant orders + line items | [Example I](#example-i--real-project-multi-tenant-orders) | Composite `join` + cascade + tenant routes |
 
 More product scenarios (auth, RBAC, webhooks, proxy) live under [Real-world projects](#real-world-projects-).
 
@@ -1303,7 +1311,7 @@ Request pipeline (fixed order):
 | `create` | Inserts; merges `template` + body; auto-generates missing numeric key fields; route params override key fields. Soft-deleted rows do not count toward `unique`/`key` | typically `201` | `400` (body not object), `409` (conflict) |
 | `update` | Full replace (`template` + body), preserves existing key. Soft-deleted → `404` | response `statusCode` | `404` / `400` / `409` |
 | `patch` | Partial merge on existing item (no template), preserves key. Soft-deleted → `404` | response `statusCode` | `404` / `400` / `409` |
-| `delete` | Without `softDelete`: removes item. With `softDelete`: sets the delete field (ISO) and keeps the row. **Always** `204` with empty body (`statusCode` in JSON is ignored, warning if ≠ 204) | `204` | `404` |
+| `delete` | Without `softDelete`: removes item. With `softDelete`: sets the delete field (ISO) and keeps the row. Runs `relations.onDelete` on dependents first. **Always** `204` with empty body on success (`statusCode` in JSON is ignored, warning if ≠ 204) | `204` | `404` / `409` (restrict) |
 | `restore` | Requires `store.softDelete`. Clears the delete field and returns the item. Soft-deleted-only; active or missing → `404` | response `statusCode` | `404` / `409` |
 
 Rules for `action`:
@@ -1382,7 +1390,101 @@ Also:
 - Absent/`null` delete field = active. Soft-deleting an already soft-deleted item → `404`.
 - Persist keeps soft-deleted rows as-is (same file format).
 
-Example with list + restore: `mocks/37-store-soft-delete.json`.
+### Relations
+
+Opt-in links between stores: `type: "one"` (FK) and `type: "many"` (reverse embed). Targets may use a **simple or composite** store `key`.
+
+#### `type: "one"` (default)
+
+```json
+"relations": {
+  "userId": {
+    "store": "users",
+    "join": { "from": "userId", "to": "id" },
+    "required": true,
+    "onDelete": {
+      "action": "restrict",
+      "conflict": { "response": "has-posts" }
+    },
+    "embed": { "as": "user" },
+    "conflict": {
+      "response": "invalid-user",
+      "detail": { "field": "{{field}}", "value": "{{value}}" }
+    }
+  },
+  "orderRef": {
+    "store": "orders",
+    "join": {
+      "from": ["tenantId", "orderId"],
+      "to": ["tenantId", "id"]
+    },
+    "required": true,
+    "onDelete": "cascade",
+    "embed": "order"
+  }
+}
+```
+
+Shorthand: `"userId": "users"` → `type: "one"`, `join.from = "userId"`, `to` = target key, `required: false`, `onDelete: "restrict"`, default embed key `userId$`.
+
+| Field | Default | Notes |
+|-------|---------|-------|
+| `type` | `"one"` | `"one"` = FK; `"many"` = reverse collection embed only |
+| `store` | — | Target `store.id` (required) |
+| `join.from` | relation name | Column(s) on **this** store (`string` or `string[]`) |
+| `join.to` | target’s key | Column(s) on the referenced store; required when the target `key` is composite; must match that key |
+| `required` | `false` | All `from` parts missing → error when `true` (`one` only). Partial `from` values also fail FK checks |
+| `onDelete` | `"restrict"` | String `restrict`/`cascade`/`setNull`, **or** `{ "action", "conflict?" }` (`one` only; `setNull` not with `required: true`) |
+| `embed` | `‹name›$` | String or `{ "as": "…" }` — property name when expanding; cannot equal a `join.from` field |
+| `conflict` | default `409` | Invalid/missing FK on write (`one` only) |
+
+`onDelete.conflict` (or top-level `conflict` as fallback) is used when **`action: "restrict"`** blocks deleting the parent. That named response must exist on the **parent** store’s `delete` method.
+
+#### `type: "many"`
+
+Declared on the **parent**. Embed-only (no write FK checks, no `onDelete`).
+
+```json
+"relations": {
+  "posts": {
+    "type": "many",
+    "store": "posts",
+    "join": { "from": "userId" },
+    "embed": { "as": "posts" }
+  }
+}
+```
+
+| Field | Notes |
+|-------|--------|
+| `join.from` | Child column(s) that point at this store’s key (`string` or `string[]`; length must match). No `join.to` on `many` |
+| Integrity | Child store must declare a `type: "one"` whose `join.from` equals this `join.from` and targets this store |
+
+#### Expand
+
+- Flat: `?expand=user` / `?expand=userId,posts`
+- Nested (max depth **3**): `?expand=posts.user`
+- Matching aliases per relation: relation **name**, `embed` / `embed.as`, and (for simple `one`) the single `join.from` field
+- Soft-deleted related `one` → `null` (unless `?includeDeleted=true`); soft-deleted `many` children omitted the same way
+- Soft-deleted children do **not** block `onDelete: "restrict"`
+- `onDelete` runs in two phases: all `restrict` checks (including through `cascade` chains) first; only then `setNull` / `cascade` mutations. A blocked delete never leaves partial side effects.
+- `cascade` is recursive (grandchildren included) and supports self-referential FKs on the same store
+- Cycles are skipped (no infinite recursion)
+
+#### Walkthrough (HTTP)
+
+1. **Invalid FK** — `POST /api/posts` `{ "title": "X", "userId": 999 }` → status/body from `conflict.response` (e.g. `422` + `INVALID_USER`).
+2. **Expand one** — `GET /api/posts/1?expand=user` → post plus `"user": { "id": 1, "name": "Ada" }`.
+3. **Expand many + nested** — `GET /api/users/1?expand=posts.user` → user plus `posts: [...]`, each post with nested `user`.
+4. **Restrict** — `DELETE /api/users/2` while posts reference them → `onDelete.conflict` on the users DELETE method (e.g. `409` + `HAS_POSTS`).
+5. **Composite join** — `GET /api/acme/order-items/1?expand=order` embeds the order keyed by `(tenantId, id)`.
+
+Behavior summary:
+
+1. **Write** — only `type: "one"` validates FKs on create/update/patch/restore.
+2. **Expand** — `one` embeds an object (or `null`); `many` embeds an array.
+3. **onDelete** — only from child `one` relations (including composite joins and self-refs). `restrict` is evaluated before any mutation; `cascade` walks the dependent graph.
+4. **Startup** — unknown targets, mismatched `join.from`/`join.to`, missing reverse for `many`, bad seed FKs, missing named conflict responses → fail boot.
 
 ### Schema (definition vs reference)
 
@@ -1446,19 +1548,20 @@ Also fine: put the **entire** full definition on `api/notes/:id` and use `{ "id"
 | `persist` | off | `true` / `{ "enabled": true, "file?": "relative/path.json" }` |
 | `list` | off | `true` / `{}` / object — sort (multi), page/offset/cursor, filters/search for `action: "list"` (see [Filters / search](#filters--search) and [List sort and pagination](#list-sort-and-pagination-storelist)) |
 | `softDelete` | off | `true` / `{ "field": "deletedAt" }` — on the full definition only; see [Soft delete](#soft-delete) |
+| `relations` | off | `{ "userId": "users" }` or object map — FK / reverse embed; see [Relations](#relations) |
 
 Rules:
 
 1. `store` is **not** an HTTP method; the endpoint still needs at least one verb (`GET`, `POST`, …).
 2. Unknown keys inside `store` → startup error.
-3. Several endpoints may share the same `store.id`; the full definition can appear only once. All of `key` / `seed` / `template` / `unique` / `persist` / `list` / `softDelete` belong on that one definition.
+3. Several endpoints may share the same `store.id`; the full definition can appear only once. All of `key` / `seed` / `template` / `unique` / `persist` / `list` / `softDelete` / `relations` belong on that one definition.
 4. A reference is **only** `{ "id": "..." }`. Any other property = full definition (and will conflict if that `id` is already defined).
 5. A reference to an undefined `id` → startup error.
 6. `seed` must be an array of objects (when present). `[]` or omitted → empty collection at start (unless a persist snapshot loads).
 7. `unique.fields` must be non-empty. Each entry is a non-empty string, `{ "field", "conflict?" }`, or `{ "fields": ["a","b"], "conflict?" }` (composite unique).
 8. `conflict` objects only allow `response` and `detail`.
 9. `conflict.detail` is a non-empty string **or** a non-empty object whose values are strings (templates).
-10. Named `conflict.response` values must exist in `responses` of every method that uses mutating actions (`create` / `update` / `patch`) for that store.
+10. Named `conflict.response` values must exist in `responses` of every method that uses mutating actions (`create` / `update` / `patch` / `restore`) for that store (includes relation `conflict`). Named `onDelete.conflict.response` (or relation `conflict` when used as restrict fallback) must exist on every method with `action: "delete"` of the **target** store.
 11. In a unique entry object, `field` and `fields` are mutually exclusive.
 
 `key` shapes:
@@ -1605,6 +1708,8 @@ You can also delete `.store/<id>.json` (or your custom file) manually before sta
 | Item not found (`get` / `update` / `patch` / `delete`) | `404` | `{ "message": "Not found" }` — **not** customizable in this version |
 | Body of `create` / `update` / `patch` is not a JSON object | `400` | `{ "message": "Request body must be a JSON object" }` |
 | Key / unique conflict | `409` or status of the named conflict response | Default or named conflict body (see above) |
+| Invalid relation FK | status of `relations.*.conflict.response` (else `409`) | Named body + `{{conflicts}}` / `detail` templates |
+| Parent delete blocked (`onDelete` restrict) | status of `onDelete.conflict.response` (else `conflict`, else `409`) | Named body on the **parent** DELETE method |
 | `request` validation failed | Your `invalidResponse` (or generic `400`) | Never reaches the store |
 | `match` selected a static response (no `action`) | That response’s status/body | Store is not called |
 
@@ -2143,10 +2248,8 @@ Without a `body` template → JSON array of items (already filtered/sorted/pagin
 
 Not implemented (do not expect these):
 
-- Composite unique constraints other than the primary `key` (e.g. unique on `email + tenantId` as a pair)  
 - Case-insensitive / trimmed unique comparison  
-- Soft delete  
-- Relations between stores  
+- Expand deeper than 3 hops / GraphQL-style field selection on embeds  
 - Customizable `404` / `not_found` response body  
 - HTTP admin routes to reset stores (use `--reset-store` or delete the snapshot file)  
 - Re-implementing `request` rules inside `store`
@@ -3604,6 +3707,628 @@ curl -si 'http://localhost:3000/api/orgs/acme/employees?minSalary=abc'
 | `or` | `anyDept` / `anyCity` / `anyRole` |
 | `search` | `q` on name, email, city, dept |
 
+### Example H — Real project: Blog CMS with authors
+
+Editorial UI: authors own articles, FK validation on write, `?expand=author` / `?expand=articles.author`, soft-delete + restore trash, paginated/filtered article list, `request` on create, `unique` slug, `persist`, and `onDelete: restrict` so you cannot delete an author who still has articles.
+
+```json
+{
+  "api/authors": {
+    "store": {
+      "id": "blog-authors",
+      "key": "id",
+      "softDelete": true,
+      "seed": [
+        { "id": 1, "name": "Ada Lovelace", "handle": "ada" },
+        { "id": 2, "name": "Grace Hopper", "handle": "grace" }
+      ],
+      "template": { "id": 0, "name": "", "handle": "" },
+      "unique": {
+        "fields": [
+          {
+            "field": "handle",
+            "conflict": { "response": "duplicate-handle" }
+          }
+        ]
+      },
+      "relations": {
+        "articles": {
+          "type": "many",
+          "store": "blog-articles",
+          "join": { "from": "authorId" },
+          "embed": { "as": "articles" }
+        }
+      },
+      "persist": true,
+      "list": {
+        "page": { "query": "page", "default": 1 },
+        "pageSize": { "default": 10, "max": 50 },
+        "sort": { "fields": ["name", "id"], "default": "name:asc" },
+        "filter": {
+          "fields": [
+            { "field": "handle", "query": "handle", "op": "eq" }
+          ],
+          "search": { "query": "q", "fields": ["name", "handle"] }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "body": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "handle": { "type": "string", "minLength": 2, "maxLength": 40, "pattern": "^[a-z0-9-]+$" }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        { "name": "create", "statusCode": 201, "action": "create" },
+        {
+          "name": "duplicate-handle",
+          "statusCode": 409,
+          "body": { "code": "HANDLE_TAKEN", "field": "{{field}}", "value": "{{value}}" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid author", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/authors/:id": {
+    "store": { "id": "blog-authors" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        { "name": "get", "statusCode": 200, "action": "get" }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        {
+          "name": "has-articles",
+          "statusCode": 409,
+          "body": {
+            "code": "HAS_ARTICLES",
+            "conflicts": "{{conflicts}}"
+          }
+        },
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "restore",
+      "responses": [
+        {
+          "name": "duplicate-handle",
+          "statusCode": 409,
+          "body": { "code": "HANDLE_TAKEN", "field": "{{field}}", "value": "{{value}}" }
+        },
+        { "name": "restore", "statusCode": 200, "action": "restore" }
+      ]
+    }
+  },
+  "api/articles": {
+    "store": {
+      "id": "blog-articles",
+      "key": "id",
+      "softDelete": true,
+      "seed": [
+        {
+          "id": 1,
+          "title": "Analytical Engine notes",
+          "slug": "analytical-engine",
+          "status": "published",
+          "authorId": 1
+        },
+        {
+          "id": 2,
+          "title": "Bug in the relay",
+          "slug": "relay-bug",
+          "status": "draft",
+          "authorId": 2
+        }
+      ],
+      "template": {
+        "id": 0,
+        "title": "",
+        "slug": "",
+        "status": "draft",
+        "authorId": 0
+      },
+      "unique": {
+        "fields": [
+          {
+            "field": "slug",
+            "conflict": { "response": "duplicate-slug" }
+          }
+        ]
+      },
+      "relations": {
+        "authorId": {
+          "store": "blog-authors",
+          "join": { "from": "authorId", "to": "id" },
+          "required": true,
+          "onDelete": {
+            "action": "restrict",
+            "conflict": { "response": "has-articles" }
+          },
+          "embed": { "as": "author" },
+          "conflict": {
+            "response": "invalid-author",
+            "detail": {
+              "code": "INVALID_AUTHOR",
+              "field": "{{field}}",
+              "value": "{{value}}"
+            }
+          }
+        }
+      },
+      "persist": true,
+      "list": {
+        "page": { "query": "page", "default": 1 },
+        "pageSize": { "default": 10, "max": 50 },
+        "sort": {
+          "fields": ["title", "status", "id"],
+          "default": "id:desc"
+        },
+        "filter": {
+          "fields": [
+            { "field": "status", "query": "status", "op": "eq" },
+            { "field": "authorId", "query": "authorId", "op": "eq" },
+            {
+              "field": "status",
+              "query": "excludeStatus",
+              "op": "ne"
+            }
+          ],
+          "search": { "query": "q", "fields": ["title", "slug"] }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "body": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "slug": { "type": "string", "minLength": 2, "maxLength": 80, "pattern": "^[a-z0-9-]+$" },
+          "status?": { "type": "string", "enum": ["draft", "published"] },
+          "authorId": { "type": "number", "min": 1 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        { "name": "create", "statusCode": 201, "action": "create" },
+        {
+          "name": "duplicate-slug",
+          "statusCode": 409,
+          "body": { "code": "SLUG_TAKEN", "field": "{{field}}", "value": "{{value}}" }
+        },
+        {
+          "name": "invalid-author",
+          "statusCode": 422,
+          "body": {
+            "code": "INVALID_AUTHOR",
+            "field": "{{field}}",
+            "value": "{{value}}"
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid article", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/articles/:id": {
+    "store": { "id": "blog-articles" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        { "name": "get", "statusCode": 200, "action": "get" }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "patch",
+      "request": {
+        "body": {
+          "title?": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "status?": { "type": "string", "enum": ["draft", "published"] },
+          "authorId?": { "type": "number", "min": 1 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        { "name": "patch", "statusCode": 200, "action": "patch" },
+        {
+          "name": "duplicate-slug",
+          "statusCode": 409,
+          "body": { "code": "SLUG_TAKEN", "field": "{{field}}", "value": "{{value}}" }
+        },
+        {
+          "name": "invalid-author",
+          "statusCode": 422,
+          "body": {
+            "code": "INVALID_AUTHOR",
+            "field": "{{field}}",
+            "value": "{{value}}"
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid article", "errors": [] }
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "restore",
+      "responses": [
+        {
+          "name": "duplicate-slug",
+          "statusCode": 409,
+          "body": { "code": "SLUG_TAKEN", "field": "{{field}}", "value": "{{value}}" }
+        },
+        {
+          "name": "invalid-author",
+          "statusCode": 422,
+          "body": {
+            "code": "INVALID_AUTHOR",
+            "field": "{{field}}",
+            "value": "{{value}}"
+          }
+        },
+        { "name": "restore", "statusCode": 200, "action": "restore" }
+      ]
+    }
+  }
+}
+```
+
+Try:
+
+```bash
+# Invalid FK
+curl -si -X POST http://localhost:3000/api/articles \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"Ghost","slug":"ghost","authorId":999}'
+
+# Expand one + list filters
+curl -s 'http://localhost:3000/api/articles/1?expand=author'
+curl -s 'http://localhost:3000/api/articles?status=published&q=engine&pageSize=10'
+
+# Expand many + nested
+curl -s 'http://localhost:3000/api/authors/1?expand=articles.author'
+
+# Restrict delete while articles remain
+curl -si -X DELETE http://localhost:3000/api/authors/1
+
+# Soft-delete article, then delete author, then restore article from trash
+curl -s -X DELETE http://localhost:3000/api/articles/1 -o /dev/null -w '%{http_code}\n'
+curl -s -X DELETE http://localhost:3000/api/articles/2 -o /dev/null -w '%{http_code}\n'
+curl -si -X DELETE http://localhost:3000/api/authors/2
+curl -s -X POST http://localhost:3000/api/articles/2
+curl -s 'http://localhost:3000/api/articles?includeDeleted=true'
+```
+
+| Feature | How this example uses it |
+|---------|--------------------------|
+| `relations` `one` / `many` | Articles → authors; authors embed `articles` |
+| `join` / `embed` / `expand` | `authorId` ↔ `id`; nested `articles.author` |
+| `onDelete` restrict | Author DELETE → `409` `HAS_ARTICLES` |
+| `softDelete` + `restore` | Trash for authors and articles; soft-deleted children do not block restrict |
+| `store.list` | Page + status/`authorId`/`ne` + search `q` |
+| `request` + `unique` + `persist` | Payload rules, slug/handle conflicts, survive restart |
+
+### Example I — Real project: Multi-tenant orders
+
+Checkout / order admin: tenant-scoped orders with composite keys, line items that join on `(tenantId, orderId)`, `onDelete: cascade` when an order is removed, list + filters, `request` validation, and `?expand=order` on items.
+
+```json
+{
+  "api/:tenantId/orders": {
+    "store": {
+      "id": "shop-orders",
+      "key": {
+        "fields": ["tenantId", "id"],
+        "conflict": { "response": "duplicate-key" }
+      },
+      "seed": [
+        {
+          "tenantId": "acme",
+          "id": 1,
+          "status": "paid",
+          "total": 42.5
+        },
+        {
+          "tenantId": "acme",
+          "id": 2,
+          "status": "pending",
+          "total": 10
+        }
+      ],
+      "template": {
+        "tenantId": "",
+        "id": 0,
+        "status": "pending",
+        "total": 0
+      },
+      "relations": {
+        "items": {
+          "type": "many",
+          "store": "shop-order-items",
+          "join": { "from": ["tenantId", "orderId"] },
+          "embed": { "as": "items" }
+        }
+      },
+      "persist": true,
+      "list": {
+        "page": { "query": "page", "default": 1 },
+        "pageSize": { "default": 10, "max": 50 },
+        "sort": { "fields": ["id", "status", "total"], "default": "id:desc" },
+        "filter": {
+          "fields": [
+            { "field": "status", "query": "status", "op": "eq" },
+            { "field": "total", "query": "minTotal", "op": "gte" },
+            { "field": "total", "query": "maxTotal", "op": "lte" }
+          ]
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "body": {
+          "status?": { "type": "string", "enum": ["pending", "paid", "cancelled"] },
+          "total": { "type": "number", "min": 0 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        { "name": "create", "statusCode": 201, "action": "create" },
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE_ORDER", "fields": "{{fields}}" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid order", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/:tenantId/orders/:id": {
+    "store": { "id": "shop-orders" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        { "name": "get", "statusCode": 200, "action": "get" }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "patch",
+      "request": {
+        "body": {
+          "status?": { "type": "string", "enum": ["pending", "paid", "cancelled"] },
+          "total?": { "type": "number", "min": 0 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        { "name": "patch", "statusCode": 200, "action": "patch" },
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE_ORDER", "fields": "{{fields}}" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid order", "errors": [] }
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    }
+  },
+  "api/:tenantId/order-items": {
+    "store": {
+      "id": "shop-order-items",
+      "key": {
+        "fields": ["tenantId", "id"],
+        "conflict": { "response": "duplicate-key" }
+      },
+      "seed": [
+        {
+          "tenantId": "acme",
+          "id": 1,
+          "orderId": 1,
+          "sku": "SKU-TEA",
+          "qty": 2,
+          "price": 12.5
+        },
+        {
+          "tenantId": "acme",
+          "id": 2,
+          "orderId": 1,
+          "sku": "SKU-MUG",
+          "qty": 1,
+          "price": 17.5
+        },
+        {
+          "tenantId": "acme",
+          "id": 3,
+          "orderId": 2,
+          "sku": "SKU-TEA",
+          "qty": 1,
+          "price": 10
+        }
+      ],
+      "template": {
+        "tenantId": "",
+        "id": 0,
+        "orderId": 0,
+        "sku": "",
+        "qty": 1,
+        "price": 0
+      },
+      "relations": {
+        "orderRef": {
+          "store": "shop-orders",
+          "join": {
+            "from": ["tenantId", "orderId"],
+            "to": ["tenantId", "id"]
+          },
+          "required": true,
+          "onDelete": "cascade",
+          "embed": { "as": "order" },
+          "conflict": {
+            "response": "invalid-order",
+            "detail": {
+              "code": "INVALID_ORDER",
+              "field": "{{field}}",
+              "value": "{{value}}",
+              "fields": "{{fields}}"
+            }
+          }
+        }
+      },
+      "persist": true,
+      "list": {
+        "page": { "query": "page", "default": 1 },
+        "pageSize": { "default": 20, "max": 100 },
+        "sort": { "fields": ["id", "sku", "qty"], "default": "id:asc" },
+        "filter": {
+          "fields": [
+            { "field": "orderId", "query": "orderId", "op": "eq" },
+            { "field": "sku", "query": "sku", "op": "eq" },
+            { "field": "qty", "query": "minQty", "op": "gte" }
+          ],
+          "search": { "query": "q", "fields": ["sku"] }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        { "name": "list", "statusCode": 200, "action": "list" }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "body": {
+          "orderId": { "type": "number", "min": 1 },
+          "sku": { "type": "string", "minLength": 1, "maxLength": 40 },
+          "qty": { "type": "number", "min": 1 },
+          "price": { "type": "number", "min": 0 }
+        },
+        "invalidResponse": "validation-error"
+      },
+      "responses": [
+        { "name": "create", "statusCode": 201, "action": "create" },
+        {
+          "name": "duplicate-key",
+          "statusCode": 409,
+          "body": { "code": "DUPLICATE_ITEM", "fields": "{{fields}}" }
+        },
+        {
+          "name": "invalid-order",
+          "statusCode": 422,
+          "body": {
+            "code": "INVALID_ORDER",
+            "field": "{{field}}",
+            "value": "{{value}}"
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Invalid line item", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/:tenantId/order-items/:id": {
+    "store": { "id": "shop-order-items" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        { "name": "get", "statusCode": 200, "action": "get" }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        { "name": "remove", "statusCode": 204, "action": "delete" }
+      ]
+    }
+  }
+}
+```
+
+Try:
+
+```bash
+# List orders + expand line items
+curl -s 'http://localhost:3000/api/acme/orders?status=paid'
+curl -s 'http://localhost:3000/api/acme/orders/1?expand=items'
+
+# Line items for an order + expand parent (composite join)
+curl -s 'http://localhost:3000/api/acme/order-items?orderId=1'
+curl -s 'http://localhost:3000/api/acme/order-items/1?expand=order'
+
+# Invalid FK (order 999 does not exist for tenant)
+curl -si -X POST http://localhost:3000/api/acme/order-items \
+  -H 'Content-Type: application/json' \
+  -d '{"orderId":999,"sku":"SKU-X","qty":1,"price":5}'
+
+# Cascade: deleting order 1 removes its items
+curl -s -X DELETE http://localhost:3000/api/acme/orders/1 -o /dev/null -w '%{http_code}\n'
+curl -s 'http://localhost:3000/api/acme/order-items?orderId=1'
+```
+
+| Feature | How this example uses it |
+|---------|--------------------------|
+| Composite `key` | Orders and items keyed by `(tenantId, id)` |
+| Composite `join` | `from: [tenantId, orderId]` → `to: [tenantId, id]` |
+| `type: "many"` | Order embeds `items` |
+| `onDelete: "cascade"` | Delete order → dependents removed |
+| `store.list` + `request` + `persist` | `orderId`/status/total filters, payload rules, survive restart |
+
 ---
 
 ## Real-world projects 🏢
@@ -3619,6 +4344,8 @@ The [Advanced examples](#advanced-examples) teach one feature at a time. This se
 | [E-commerce catalog](#example-e--real-project-e-commerce-catalog) | `store` + advanced `filter` + `request` + `match` + `delay` | Admin table, price/stock/warehouse filters, checkout |
 | [Multi-tenant helpdesk](#example-f--real-project-multi-tenant-helpdesk) | `store` + page/cursor + date/channel filters + `or` | Inbox facets, SLA, activity feed |
 | [HR employee directory](#example-g--real-project-hr-employee-directory) | All filter ops + nested + `or` + search | People admin: salary, level, hire window, roles |
+| [Blog CMS with authors](#example-h--real-project-blog-cms-with-authors) | `relations` + `softDelete` + `list` + `request` + `unique` + `persist` | Expand, trash/restore, FK + restrict delete |
+| [Multi-tenant orders](#example-i--real-project-multi-tenant-orders) | Composite `join` + `cascade` + `list` + `request` + `persist` | Order + line items, tenant routes, expand parent |
 | SaaS signup + org invite | `request` + `match` | Form validation vs business errors (`409`, `403`) |
 | Checkout resilience | `match` + `delay` + headers | `402` / `429` / `503`, retries, idempotency |
 | Multi-tenant RBAC | `match.params` + `match.query` | Admin vs member, `403` across orgs |
@@ -4384,6 +5111,16 @@ These errors occur when `store` or `action` configuration is invalid:
 | `The "store.softDelete" property contains unknown key "X"` | Typo / unsupported key | Only `field` is allowed |
 | `The "store.softDelete.field" "X" cannot overlap store key fields` | Soft-delete field is a key field | Choose another field name |
 | `The "store.softDelete.field" "X" cannot overlap store unique fields` | Soft-delete field is unique | Choose another field name |
+| `The "store.relations" property must be an object` | `relations` is not an object | Use `{ "userId": "users" }` or field objects |
+| `The "store.relations.X.store" must be a non-empty string` | Missing target | Set `"store": "‹target-id›"` |
+| `The "store.relations.X.onDelete" must be one of: restrict, cascade, setNull` | Invalid policy | Use one of the three values (or `{ "action": "…" }`) |
+| `The "store.relations.X" cannot use onDelete "setNull" when required is true` | Conflicting options | Drop `required` or use another `onDelete` |
+| `The store relation "A.X" targets unknown store "B"` | Target not defined | Define store `B` (or fix the id) |
+| `The store relation "A.X" targets composite key store "B" and must set "join.from" and "join.to"` | Simple FK shape toward composite target | Add matching `join.from` + `join.to` |
+| `The "store.relations.X.join.from" and "store.relations.X.join.to" must have the same length` | Composite join length mismatch | Align both arrays |
+| `The store relation "A.X" requires store "B" to declare a type "one" relation…` | `type: "many"` without reverse FK on child | Add the matching `one` relation on B |
+| `The store "A" seed[n] relation "X" references missing or soft-deleted "B" record` | Bad seed FK | Fix seed ids or seed the target first |
+| `The store conflict response "X" does not exist in responses` | Named FK/`onDelete.conflict` response missing on mutate or parent delete | Add that `name` to the method’s `responses` |
 | `The "action" property requires a "store" on the endpoint` | Action without store | Add `store` to the endpoint |
 | `The "action" property cannot be used together with "proxy"` | Action + proxy | Remove one of them |
 | `The store conflict response "X" does not exist in responses` | Missing conflict response name | Add a response with that `name` on mutating methods |

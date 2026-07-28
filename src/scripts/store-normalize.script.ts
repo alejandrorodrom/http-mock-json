@@ -16,7 +16,11 @@ import {
   DEFAULT_LIST_SORT_QUERY,
   DEFAULT_STORE_KEY,
   DEFAULT_SOFT_DELETE_FIELD,
-  STORE_LIST_FILTER_OP_SET
+  DEFAULT_RELATION_ON_DELETE,
+  DEFAULT_RELATION_TYPE,
+  STORE_LIST_FILTER_OP_SET,
+  STORE_RELATION_ON_DELETE_SET,
+  STORE_RELATION_TYPE_SET
 } from '../constants/store.constant';
 import {
   NormalizedUniqueField,
@@ -28,6 +32,12 @@ import {
   RawStoreListFilterField,
   RawStoreListObject,
   RawStorePersist,
+  RawStoreRelation,
+  RawStoreRelationEmbed,
+  RawStoreRelationJoin,
+  RawStoreRelationOnDelete,
+  RawStoreRelations,
+  RawRelationJoinColumns,
   RawStoreSoftDelete,
   RawStoreUnique,
   StoreConflictConfig,
@@ -40,6 +50,9 @@ import {
   StoreListFilterOp,
   StoreListOrder,
   StorePersistConfig,
+  StoreRelationConfig,
+  StoreRelationOnDelete,
+  StoreRelationType,
   StoreSoftDeleteConfig,
   StoreUniqueField
 } from '../types/store.type';
@@ -377,7 +390,7 @@ const normalizeListFilter = (filter: RawStoreListFilter): StoreListFilterConfig 
   return { fields, or, search };
 };
 
-const normalizeConflict = (value: unknown): StoreConflictConfig | undefined => {
+export const normalizeConflict = (value: unknown): StoreConflictConfig | undefined => {
   if (!isObject(value)) {
     return undefined;
   }
@@ -394,6 +407,241 @@ const normalizeConflict = (value: unknown): StoreConflictConfig | undefined => {
   }
 
   return result;
+};
+
+export const normalizeRelations = (
+  relations: RawStoreRelations | undefined
+): StoreRelationConfig[] | null => {
+  if (relations === undefined) {
+    return [];
+  }
+
+  if (!isObject(relations)) {
+    return null;
+  }
+
+  const result: StoreRelationConfig[] = [];
+
+  for (const [name, raw] of Object.entries(relations)) {
+    if (typeof name !== 'string' || name.length === 0) {
+      return null;
+    }
+
+    const normalized = normalizeRelationEntry(name, raw as RawStoreRelation);
+    if (!normalized) {
+      return null;
+    }
+
+    result.push(normalized);
+  }
+
+  return result;
+};
+
+const normalizeStringArray = (value: unknown): string[] | null => {
+  if (!isArray(value) || value.length === 0) {
+    return null;
+  }
+
+  const fields = value.filter((item): item is string => typeof item === 'string' && item.length > 0);
+  if (fields.length !== value.length) {
+    return null;
+  }
+
+  return fields;
+};
+
+const normalizeJoinColumns = (value: RawRelationJoinColumns | undefined): string[] | null => {
+  if (value === undefined) {
+    return null;
+  }
+
+  if (typeof value === 'string') {
+    return value.length > 0 ? [value] : null;
+  }
+
+  return normalizeStringArray(value);
+};
+
+const normalizeRelationEmbed = (embed: RawStoreRelationEmbed | undefined): string | undefined | null => {
+  if (embed === undefined) {
+    return undefined;
+  }
+
+  if (typeof embed === 'string') {
+    return embed.length > 0 ? embed : null;
+  }
+
+  if (!isObject(embed) || typeof embed.as !== 'string' || embed.as.length === 0) {
+    return null;
+  }
+
+  return embed.as;
+};
+
+const normalizeRelationOnDelete = (
+  onDelete: RawStoreRelationOnDelete | undefined
+): { action: StoreRelationOnDelete; conflict?: StoreConflictConfig } | null => {
+  if (onDelete === undefined) {
+    return { action: DEFAULT_RELATION_ON_DELETE };
+  }
+
+  if (typeof onDelete === 'string') {
+    if (!STORE_RELATION_ON_DELETE_SET.has(onDelete)) {
+      return null;
+    }
+    return { action: onDelete };
+  }
+
+  if (!isObject(onDelete)) {
+    return null;
+  }
+
+  if (typeof onDelete.action !== 'string' || !STORE_RELATION_ON_DELETE_SET.has(onDelete.action)) {
+    return null;
+  }
+
+  return {
+    action: onDelete.action,
+    conflict: normalizeConflict(onDelete.conflict)
+  };
+};
+
+const normalizeRelationEntry = (
+  name: string,
+  raw: RawStoreRelation
+): StoreRelationConfig | null => {
+  if (typeof raw === 'string') {
+    if (raw.length === 0) {
+      return null;
+    }
+
+    return {
+      name,
+      type: DEFAULT_RELATION_TYPE,
+      storeId: raw,
+      localFields: [name],
+      targetFields: [],
+      foreignFields: [],
+      required: false,
+      onDelete: DEFAULT_RELATION_ON_DELETE
+    };
+  }
+
+  if (!isObject(raw)) {
+    return null;
+  }
+
+  if (typeof raw.store !== 'string' || raw.store.length === 0) {
+    return null;
+  }
+
+  let type: StoreRelationType = DEFAULT_RELATION_TYPE;
+  if (raw.type !== undefined) {
+    if (typeof raw.type !== 'string' || !STORE_RELATION_TYPE_SET.has(raw.type)) {
+      return null;
+    }
+    type = raw.type as StoreRelationType;
+  }
+
+  const embedAs = normalizeRelationEmbed(raw.embed);
+  if (embedAs === null) {
+    return null;
+  }
+
+  if (type === 'many') {
+    if (raw.required !== undefined || raw.onDelete !== undefined || raw.conflict !== undefined) {
+      return null;
+    }
+
+    if (raw.join === undefined || !isObject(raw.join)) {
+      return null;
+    }
+
+    const join = raw.join as RawStoreRelationJoin;
+    if (join.to !== undefined) {
+      return null;
+    }
+
+    const from = normalizeJoinColumns(join.from);
+    if (!from) {
+      return null;
+    }
+
+    return {
+      name,
+      type: 'many',
+      storeId: raw.store,
+      localFields: [],
+      targetFields: [],
+      foreignFields: from,
+      required: false,
+      onDelete: DEFAULT_RELATION_ON_DELETE,
+      embedAs
+    };
+  }
+
+  if (raw.required !== undefined && typeof raw.required !== 'boolean') {
+    return null;
+  }
+
+  const onDelete = normalizeRelationOnDelete(raw.onDelete);
+  if (!onDelete) {
+    return null;
+  }
+
+  if (raw.required === true && onDelete.action === 'setNull') {
+    return null;
+  }
+
+  let localFields: string[] = [name];
+  let targetFields: string[] = [];
+
+  if (raw.join !== undefined) {
+    if (!isObject(raw.join)) {
+      return null;
+    }
+
+    const join = raw.join as RawStoreRelationJoin;
+    const from = normalizeJoinColumns(join.from);
+    const to = join.to !== undefined ? normalizeJoinColumns(join.to) : [];
+
+    if (join.from !== undefined && !from) {
+      return null;
+    }
+    if (join.to !== undefined && !to) {
+      return null;
+    }
+
+    if (from) {
+      localFields = from;
+    }
+
+    if (to && to.length > 0) {
+      if (to.length !== localFields.length) {
+        return null;
+      }
+      targetFields = to;
+    }
+  }
+
+  if (embedAs !== undefined && localFields.includes(embedAs)) {
+    return null;
+  }
+
+  return {
+    name,
+    type: 'one',
+    storeId: raw.store,
+    localFields,
+    targetFields,
+    foreignFields: [],
+    required: raw.required === true,
+    onDelete: onDelete.action,
+    embedAs,
+    conflict: normalizeConflict(raw.conflict),
+    onDeleteConflict: onDelete.conflict
+  };
 };
 
 const normalizeUniqueField = (entry: StoreUniqueField): NormalizedUniqueField | null => {
@@ -624,6 +872,11 @@ export const normalizeStoreDefinition = (store: RawStoreConfig): StoreDefinition
     return null;
   }
 
+  const relations = normalizeRelations(store.relations);
+  if (relations === null) {
+    return null;
+  }
+
   return {
     id: store.id,
     keyFields: key.fields,
@@ -634,6 +887,7 @@ export const normalizeStoreDefinition = (store: RawStoreConfig): StoreDefinition
     uniqueConflict,
     persist: persist?.enabled ? persist : undefined,
     list,
-    softDelete
+    softDelete,
+    relations
   };
 };

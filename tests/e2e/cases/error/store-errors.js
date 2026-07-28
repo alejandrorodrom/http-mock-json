@@ -60,7 +60,19 @@ module.exports = {
         'The "store.softDelete" property contains unknown key "foo"',
         'The "store.softDelete.field" "id" cannot overlap store key fields',
         'The "store.softDelete.field" "email" cannot overlap store unique fields',
-        'The "action" "restore" requires "store.softDelete" to be enabled'
+        'The "action" "restore" requires "store.softDelete" to be enabled',
+        'The "store.relations" property must be an object',
+        'The "store.relations.userId" property contains unknown key "foo"',
+        'The "store.relations.userId.store" must be a non-empty string',
+        'The "store.relations.userId.onDelete" must be one of: restrict, cascade, setNull',
+        'The "store.relations.userId" cannot use onDelete "setNull" when required is true',
+        'The "store.relations.id" local field cannot overlap store key fields',
+        'The "store.relations.userId.embed.as" cannot be the same as a local relation field',
+        'The store relation "rel-unknown-target.userId" targets unknown store "does-not-exist-store"',
+        'The store relation "rel-to-composite.parentId" targets composite key store "rel-composite-target" and must set "join.from" and "join.to"',
+        'The "store.relations.orderRef.join.from" and "store.relations.orderRef.join.to" must have the same length',
+        'The store relation "rel-many-parent.children" requires store "rel-many-child-missing" to declare a type "one" relation to "rel-many-parent" with join.from [parentId]',
+        'The store "rel-bad-seed-fk" seed[0] relation "userId" references missing or soft-deleted "rel-target-parent" record'
       ],
       stdoutExcludes: ['Mock server is running']
     }

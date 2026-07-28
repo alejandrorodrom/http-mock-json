@@ -725,6 +725,391 @@ const ERROR_CATALOG = [
     caseName: 'error/store-errors'
   },
   {
+    id: 'store.relations-type',
+    message: 'The "store.relations" property must be an object',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.relations-unknown-key',
+    message: 'The "store.relations.userId" property contains unknown key "foo"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.relations-missing-store',
+    message: 'The "store.relations.userId.store" must be a non-empty string',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.relations-on-delete',
+    message: 'The "store.relations.userId.onDelete" must be one of: restrict, cascade, setNull',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.relations-required-setnull',
+    message: 'The "store.relations.userId" cannot use onDelete "setNull" when required is true',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.relations-overlap-key',
+    message: 'The "store.relations.id" local field cannot overlap store key fields',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.relations-embedas-same',
+    message: 'The "store.relations.userId.embed.as" cannot be the same as a local relation field',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.relations-unknown-target',
+    message: 'The store relation "rel-unknown-target.userId" targets unknown store "does-not-exist-store"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.relations-composite-target',
+    message: 'The store relation "rel-to-composite.parentId" targets composite key store "rel-composite-target" and must set "join.from" and "join.to"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.relations-composite-length',
+    message: 'The "store.relations.orderRef.join.from" and "store.relations.orderRef.join.to" must have the same length',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.relations-many-reverse',
+    message: 'The store relation "rel-many-parent.children" requires store "rel-many-child-missing" to declare a type "one" relation to "rel-many-parent" with join.from [parentId]',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.relations-bad-seed-fk',
+    message: 'The store "rel-bad-seed-fk" seed[0] relation "userId" references missing or soft-deleted "rel-target-parent" record',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-errors'
+  },
+  {
+    id: 'store.relations-empty-name',
+    message: 'The "store.relations" property contains an empty field name',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-empty-shorthand',
+    message: 'The "store.relations.userId" must be a non-empty string or an object',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-type-value',
+    message: 'The "store.relations.userId.type" must be one of: one, many',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-many-forbidden-keys',
+    message: 'The "store.relations.posts" with type "many" cannot include required, onDelete, or conflict',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-many-missing-join',
+    message: 'The "store.relations.posts" with type "many" must include "join" with "from"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-many-join-to',
+    message: 'The "store.relations.posts.join" with type "many" cannot include "to"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-many-join-from',
+    message: 'The "store.relations.posts.join.from" must be a non-empty string or string array',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-join-not-object',
+    message: 'The "store.relations.userId.join" must be an object',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-join-unknown-key',
+    message: 'The "store.relations.userId.join" property contains unknown key "via"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-join-from-invalid',
+    message: 'The "store.relations.userId.join.from" must be a non-empty string or string array',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-join-to-invalid',
+    message: 'The "store.relations.userId.join.to" must be a non-empty string or string array',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-required-type',
+    message: 'The "store.relations.userId.required" must be a boolean',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-overlap-softdelete',
+    message: 'The "store.relations.deletedAt" local field cannot overlap store.softDelete.field',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-overlap-softdelete-join',
+    message: 'The "store.relations.userId" local field "deletedAt" cannot overlap store.softDelete.field',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-embed-empty',
+    message: 'The "store.relations.userId.embed" must be a non-empty string or { "as": "..." }',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-embed-unknown-key',
+    message: 'The "store.relations.userId.embed" property contains unknown key "foo"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-embed-as-empty',
+    message: 'The "store.relations.userId.embed.as" must be a non-empty string',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-on-delete-type',
+    message: 'The "store.relations.userId.onDelete" must be one of: restrict, cascade, setNull, or an object with "action"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-on-delete-unknown-key',
+    message: 'The "store.relations.userId.onDelete" property contains unknown key "foo"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-on-delete-action',
+    message: 'The "store.relations.userId.onDelete.action" must be one of: restrict, cascade, setNull',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-conflict-type',
+    message: 'The "store.relations.userId.conflict" property must be an object',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-conflict-unknown-key',
+    message: 'The "store.relations.userId.conflict" property contains unknown key "foo"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-conflict-response-empty',
+    message: 'The "store.relations.userId.conflict.response" must be a non-empty string',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-on-delete-conflict-response',
+    message: 'The "store.relations.userId.onDelete.conflict.response" must be a non-empty string',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-embed-conflict-key',
+    message: 'The store relation "rel-embed-conflict-key.userId.embed" "id" conflicts with an existing field',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-embed-conflict-softdelete',
+    message: 'The store relation "rel-embed-conflict-softdelete.userId.embed" "deletedAt" conflicts with an existing field',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-many-join-len',
+    message: 'The store relation "rel-many-len-parent.children.join.from" length must match this store key (tenantId, id)',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-join-to-mismatch',
+    message: 'The store relation "rel-join-to-mismatch.userId.join.to" must match target key [id]',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-join-len-vs-target',
+    message: 'The store relation "rel-join-len-vs-target.refs" join.from/join.to length mismatch',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-seed-missing-required',
+    message: 'The store "rel-seed-missing-required" seed[0] is missing required relation "userId"',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-seed-incomplete-fk',
+    message: 'The store "rel-seed-incomplete-fk" seed[0] relation "orderRef" has incomplete foreign key values',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-seed-soft-deleted-fk',
+    message: 'The store "rel-seed-soft-deleted-fk" seed[0] relation "userId" references missing or soft-deleted "rel-target-soft" record',
+    source: 'src/validators/store.validator.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-missing-conflict-response',
+    message: 'The store conflict response "missing-rel-fk" does not exist in responses',
+    source: 'src/cli/commands/start/process-file.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'store.relations-missing-restrict-conflict',
+    message: 'The store conflict response "missing-restrict-conflict" does not exist in responses',
+    source: 'src/cli/commands/start/process-file.ts',
+    kind: 'validation',
+    caseName: 'error/store-relations-errors'
+  },
+  {
+    id: 'http.store.relations.invalid-fk',
+    message: 'INVALID_USER',
+    source: 'src/scripts/store-relations.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-relations'
+  },
+  {
+    id: 'http.store.relations.restrict',
+    message: 'Cannot delete: related records exist',
+    source: 'src/scripts/store-relations.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-relations'
+  },
+  {
+    id: 'http.store.relations.partial-fk',
+    message: 'INCOMPLETE_ORDER_REF',
+    source: 'src/scripts/store-relations.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-relations-matrix'
+  },
+  {
+    id: 'http.store.relations.expand-depth',
+    message: 'expand-depth-capped',
+    source: 'src/scripts/store-relations.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-relations-matrix'
+  },
+  {
+    id: 'http.store.relations.list-expand',
+    message: 'list-filter-expand',
+    source: 'src/scripts/store-relations.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-relations-matrix'
+  },
+  {
+    id: 'http.store.relations.include-deleted-expand',
+    message: 'includeDeleted-expand',
+    source: 'src/scripts/store-relations.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-relations-matrix'
+  },
+  {
+    id: 'http.store.relations.unique-fk-combo',
+    message: 'UNIQUE_AND_FK',
+    source: 'src/scripts/store-relations.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-relations-matrix'
+  },
+  {
+    id: 'http.store.relations.request-blocks-store',
+    message: 'request-before-fk',
+    source: 'src/scripts/store-relations.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-relations-matrix'
+  },
+  {
+    id: 'http.store.relations.persist-fk',
+    message: 'persist-relations',
+    source: 'src/scripts/store-relations.script.ts',
+    kind: 'http',
+    caseName: 'runtime/store-relations-persist'
+  },
+  {
     id: 'store.action-body-ignored',
     message: 'The "body" property is ignored when "action" is set',
     source: 'src/validators/action.validator.ts',

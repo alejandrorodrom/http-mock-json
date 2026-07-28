@@ -41,6 +41,13 @@ import {
   isSoftDeleted,
   markSoftDeleted
 } from './store-soft-delete.script';
+import {
+  applyOnDelete,
+  applyRelationEmbeds,
+  findRelationConflicts,
+  RelationCollectionView,
+  RelationLookup
+} from './store-relations.script';
 
 interface Collection {
   definition: StoreDefinition;
@@ -295,6 +302,46 @@ export class StoreRegistry {
     }
   }
 
+  private relationLookup(): RelationLookup & { listCollections: () => RelationCollectionView[] } {
+    return {
+      getCollection: (storeId: string) => this.collections.get(storeId),
+      persistCollection: (collection: RelationCollectionView) => {
+        this.persistCollection(collection as Collection);
+      },
+      listCollections: () => [...this.collections.values()]
+    };
+  }
+
+  private mergeConflicts(
+    primary: {
+      conflicts: StoreConflictItem[];
+      responseName?: string;
+      detail?: StoreConflictConfig['detail'];
+    },
+    secondary: {
+      conflicts: StoreConflictItem[];
+      responseName?: string;
+      detail?: StoreConflictConfig['detail'];
+    }
+  ): {
+    conflicts: StoreConflictItem[];
+    responseName?: string;
+    detail?: StoreConflictConfig['detail'];
+  } {
+    if (primary.conflicts.length === 0) {
+      return secondary;
+    }
+    if (secondary.conflicts.length === 0) {
+      return primary;
+    }
+
+    return {
+      conflicts: [...primary.conflicts, ...secondary.conflicts],
+      responseName: undefined,
+      detail: undefined
+    };
+  }
+
   has(storeId: string): boolean {
     return this.collections.has(storeId);
   }
@@ -355,9 +402,20 @@ export class StoreRegistry {
       items = filterOutSoftDeleted(items, collection.definition.softDelete);
     }
 
+    const lookup = this.relationLookup();
+    const embedItem = (item: StoreItem): StoreItem => applyRelationEmbeds(
+      lookup,
+      collection.definition,
+      item,
+      req
+    );
+
     const listConfig = collection.definition.list;
     if (!listConfig) {
-      return { ok: true, body: items };
+      return {
+        ok: true,
+        body: items.map(embedItem)
+      };
     }
 
     const resolved = resolveListQuery(listConfig, req);
@@ -385,10 +443,14 @@ export class StoreRegistry {
       return { ok: false, kind: 'bad_request', message: built.message };
     }
 
+    const embedded = built.result.items.map(embedItem);
     return {
       ok: true,
-      body: built.result.items,
-      listResult: built.result
+      body: embedded,
+      listResult: {
+        ...built.result,
+        items: embedded
+      }
     };
   }
 
@@ -423,7 +485,15 @@ export class StoreRegistry {
       return { ok: false, kind: 'not_found' };
     }
 
-    return { ok: true, body: cloneItem(item) };
+    return {
+      ok: true,
+      body: applyRelationEmbeds(
+        this.relationLookup(),
+        collection.definition,
+        cloneItem(item),
+        req
+      )
+    };
   }
 
   private create(collection: Collection, req: Request): StoreOperationResult {
@@ -438,7 +508,13 @@ export class StoreRegistry {
 
     const merged = ensureKeys(collection, body, req.params);
 
-    const { conflicts, responseName, detail } = findConflicts(collection, merged);
+    const uniqueResult = findConflicts(collection, merged);
+    const relationResult = findRelationConflicts(
+      this.relationLookup(),
+      collection.definition,
+      merged
+    );
+    const { conflicts, responseName, detail } = this.mergeConflicts(uniqueResult, relationResult);
     if (conflicts.length > 0) {
       return {
         ok: false,
@@ -452,7 +528,15 @@ export class StoreRegistry {
     const key = encodeFieldTuple(collection.definition.keyFields, merged);
     collection.items.set(key, cloneItem(merged));
     this.persistCollection(collection);
-    return { ok: true, body: cloneItem(merged) };
+    return {
+      ok: true,
+      body: applyRelationEmbeds(
+        this.relationLookup(),
+        collection.definition,
+        cloneItem(merged),
+        req
+      )
+    };
   }
 
   private update(
@@ -493,7 +577,13 @@ export class StoreRegistry {
       merged[field] = existing[field];
     }
 
-    const { conflicts, responseName, detail } = findConflicts(collection, merged, key);
+    const uniqueResult = findConflicts(collection, merged, key);
+    const relationResult = findRelationConflicts(
+      this.relationLookup(),
+      collection.definition,
+      merged
+    );
+    const { conflicts, responseName, detail } = this.mergeConflicts(uniqueResult, relationResult);
     if (conflicts.length > 0) {
       return {
         ok: false,
@@ -506,7 +596,15 @@ export class StoreRegistry {
 
     collection.items.set(key, cloneItem(merged));
     this.persistCollection(collection);
-    return { ok: true, body: cloneItem(merged) };
+    return {
+      ok: true,
+      body: applyRelationEmbeds(
+        this.relationLookup(),
+        collection.definition,
+        cloneItem(merged),
+        req
+      )
+    };
   }
 
   private remove(collection: Collection, req: Request): StoreOperationResult {
@@ -522,11 +620,22 @@ export class StoreRegistry {
     }
 
     const softDelete = collection.definition.softDelete;
-    if (softDelete) {
-      if (isSoftDeleted(existing, softDelete)) {
-        return { ok: false, kind: 'not_found' };
-      }
+    if (softDelete && isSoftDeleted(existing, softDelete)) {
+      return { ok: false, kind: 'not_found' };
+    }
 
+    const onDeleteResult = applyOnDelete(this.relationLookup(), collection, existing);
+    if (onDeleteResult && onDeleteResult.conflicts.length > 0) {
+      return {
+        ok: false,
+        kind: 'conflict',
+        conflicts: onDeleteResult.conflicts,
+        responseName: onDeleteResult.responseName,
+        detail: onDeleteResult.detail
+      };
+    }
+
+    if (softDelete) {
       collection.items.set(key, markSoftDeleted(existing, softDelete));
       this.persistCollection(collection);
       return { ok: true, body: null, status: 204 };
@@ -559,7 +668,13 @@ export class StoreRegistry {
     }
 
     const restored = clearSoftDeleted(existing, softDelete);
-    const { conflicts, responseName, detail } = findConflicts(collection, restored, key);
+    const uniqueResult = findConflicts(collection, restored, key);
+    const relationResult = findRelationConflicts(
+      this.relationLookup(),
+      collection.definition,
+      restored
+    );
+    const { conflicts, responseName, detail } = this.mergeConflicts(uniqueResult, relationResult);
     if (conflicts.length > 0) {
       return {
         ok: false,
@@ -573,7 +688,15 @@ export class StoreRegistry {
     const stored = cloneItem(restored);
     collection.items.set(key, stored);
     this.persistCollection(collection);
-    return { ok: true, body: cloneItem(stored) };
+    return {
+      ok: true,
+      body: applyRelationEmbeds(
+        this.relationLookup(),
+        collection.definition,
+        cloneItem(stored),
+        req
+      )
+    };
   }
 }
 

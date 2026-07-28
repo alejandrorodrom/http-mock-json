@@ -12,6 +12,7 @@ import {
 import { formatIssues, getAllIssues } from '../../../scripts/issues.script';
 import { StoreDefinition } from '../../../types/store.type';
 import { RawMockFile } from '../../../types/mock.type';
+import { validateStoreRelationsIntegrity } from '../../../validators/store.validator';
 
 export interface MocksData {
   apis: Api[];
@@ -44,6 +45,19 @@ export const getMocksData = (folderPath: string): MocksData => {
 
   for (const [file, data] of parsed) {
     collectStoresFromData(file, data, errorsByFile, warningsByFile, stores, folderPath);
+  }
+
+  const relationIssues = validateStoreRelationsIntegrity(stores);
+  if (relationIssues.length > 0) {
+    if (!errorsByFile['__stores__']) {
+      errorsByFile['__stores__'] = [];
+    }
+    for (const issue of relationIssues) {
+      errorsByFile['__stores__'].push({
+        file: '__stores__',
+        ...issue
+      });
+    }
   }
 
   for (const [file, data] of parsed) {

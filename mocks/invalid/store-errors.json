@@ -4,7 +4,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -15,7 +19,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -27,7 +35,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -39,19 +51,29 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
   "bad-store-seed-item": {
     "store": {
       "id": "seed-item-bad",
-      "seed": [1]
+      "seed": [
+        1
+      ]
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -63,7 +85,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -75,7 +101,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -87,7 +117,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -103,7 +137,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -115,7 +153,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -124,14 +166,24 @@
       "id": "dup-key",
       "key": "id",
       "seed": [
-        { "id": 1, "email": "a@a.com" },
-        { "id": 1, "email": "b@b.com" }
+        {
+          "id": 1,
+          "email": "a@a.com"
+        },
+        {
+          "id": 1,
+          "email": "b@b.com"
+        }
       ]
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -139,16 +191,28 @@
     "store": {
       "id": "dup-unique",
       "key": "id",
-      "unique": ["email"],
+      "unique": [
+        "email"
+      ],
       "seed": [
-        { "id": 1, "email": "a@a.com" },
-        { "id": 2, "email": "a@a.com" }
+        {
+          "id": 1,
+          "email": "a@a.com"
+        },
+        {
+          "id": 2,
+          "email": "a@a.com"
+        }
       ]
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -201,7 +265,9 @@
     "store": {
       "id": "missing-conflict",
       "unique": {
-        "fields": ["email"],
+        "fields": [
+          "email"
+        ],
         "conflict": {
           "response": "duplicate-email"
         }
@@ -220,7 +286,9 @@
     }
   },
   "store-reference-missing": {
-    "store": { "id": "does-not-exist" },
+    "store": {
+      "id": "does-not-exist"
+    },
     "GET": {
       "nameResponse": "list",
       "responses": [
@@ -240,7 +308,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -254,7 +326,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -269,7 +345,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -284,7 +364,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -299,7 +383,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -308,13 +396,19 @@
       "id": "seed-missing-key",
       "key": "id",
       "seed": [
-        { "email": "a@a.com" }
+        {
+          "email": "a@a.com"
+        }
       ]
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -327,7 +421,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -340,7 +438,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -352,7 +454,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -366,7 +472,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -374,13 +484,19 @@
     "store": {
       "id": "list-page-default",
       "list": {
-        "page": { "default": 0 }
+        "page": {
+          "default": 0
+        }
       }
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -388,13 +504,19 @@
     "store": {
       "id": "list-sort-fields",
       "list": {
-        "sort": { "fields": [] }
+        "sort": {
+          "fields": []
+        }
       }
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -402,13 +524,19 @@
     "store": {
       "id": "list-order-default",
       "list": {
-        "order": { "default": "up" }
+        "order": {
+          "default": "up"
+        }
       }
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -422,7 +550,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -436,7 +568,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -445,14 +581,20 @@
       "id": "list-filter-search",
       "list": {
         "filter": {
-          "search": { "fields": [] }
+          "search": {
+            "fields": []
+          }
         }
       }
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -462,7 +604,10 @@
       "list": {
         "filter": {
           "fields": [
-            { "field": "price", "op": "between" }
+            {
+              "field": "price",
+              "op": "between"
+            }
           ]
         }
       }
@@ -470,7 +615,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -486,7 +635,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -496,7 +649,10 @@
       "list": {
         "filter": {
           "or": [
-            { "op": "eq", "query": "status" }
+            {
+              "op": "eq",
+              "query": "status"
+            }
           ]
         }
       }
@@ -504,7 +660,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -518,7 +678,11 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -527,14 +691,24 @@
       "id": "unique-both",
       "unique": {
         "fields": [
-          { "field": "email", "fields": ["tenantId", "email"] }
+          {
+            "field": "email",
+            "fields": [
+              "tenantId",
+              "email"
+            ]
+          }
         ]
       }
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -543,14 +717,20 @@
       "id": "unique-fields-empty",
       "unique": {
         "fields": [
-          { "fields": [] }
+          {
+            "fields": []
+          }
         ]
       }
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -559,14 +739,22 @@
       "id": "unique-missing-shape",
       "unique": {
         "fields": [
-          { "conflict": { "response": "x" } }
+          {
+            "conflict": {
+              "response": "x"
+            }
+          }
         ]
       }
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -576,18 +764,35 @@
       "key": "id",
       "unique": {
         "fields": [
-          { "fields": ["tenantId", "email"] }
+          {
+            "fields": [
+              "tenantId",
+              "email"
+            ]
+          }
         ]
       },
       "seed": [
-        { "id": 1, "tenantId": "acme", "email": "a@a.com" },
-        { "id": 2, "tenantId": "acme", "email": "a@a.com" }
+        {
+          "id": 1,
+          "tenantId": "acme",
+          "email": "a@a.com"
+        },
+        {
+          "id": 2,
+          "tenantId": "acme",
+          "email": "a@a.com"
+        }
       ]
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -596,14 +801,23 @@
       "id": "unique-fields-non-string",
       "unique": {
         "fields": [
-          { "fields": [1, "email"] }
+          {
+            "fields": [
+              1,
+              "email"
+            ]
+          }
         ]
       }
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -612,14 +826,24 @@
       "id": "unique-unknown-key",
       "unique": {
         "fields": [
-          { "fields": ["tenantId", "email"], "foo": 1 }
+          {
+            "fields": [
+              "tenantId",
+              "email"
+            ],
+            "foo": 1
+          }
         ]
       }
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -630,14 +854,20 @@
       "unique": {
         "fields": [
           "email",
-          { "field": "email" }
+          {
+            "field": "email"
+          }
         ]
       }
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -649,31 +879,48 @@
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
   "bad-soft-delete-field": {
     "store": {
       "id": "soft-field",
-      "softDelete": { "field": "" }
+      "softDelete": {
+        "field": ""
+      }
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
   "bad-soft-delete-unknown-key": {
     "store": {
       "id": "soft-unknown",
-      "softDelete": { "field": "deletedAt", "foo": 1 }
+      "softDelete": {
+        "field": "deletedAt",
+        "foo": 1
+      }
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -681,25 +928,39 @@
     "store": {
       "id": "soft-overlap-key",
       "key": "id",
-      "softDelete": { "field": "id" }
+      "softDelete": {
+        "field": "id"
+      }
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
   "bad-soft-delete-overlap-unique": {
     "store": {
       "id": "soft-overlap-unique",
-      "unique": ["email"],
-      "softDelete": { "field": "email" }
+      "unique": [
+        "email"
+      ],
+      "softDelete": {
+        "field": "email"
+      }
     },
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "body": {} }
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
       ]
     }
   },
@@ -715,6 +976,342 @@
           "name": "restore",
           "statusCode": 200,
           "action": "restore"
+        }
+      ]
+    }
+  },
+  "bad-relations-type": {
+    "store": {
+      "id": "bad-relations-type",
+      "relations": []
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-unknown-key": {
+    "store": {
+      "id": "bad-relations-unknown-key",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "foo": true
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-missing-store": {
+    "store": {
+      "id": "bad-relations-missing-store",
+      "relations": {
+        "userId": {
+          "required": true
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-on-delete": {
+    "store": {
+      "id": "bad-relations-on-delete",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "onDelete": "explode"
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-required-setnull": {
+    "store": {
+      "id": "bad-relations-required-setnull",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "required": true,
+          "onDelete": "setNull"
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-overlap-key": {
+    "store": {
+      "id": "bad-relations-overlap-key",
+      "key": "id",
+      "relations": {
+        "id": "users"
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "bad-relations-embedas-same": {
+    "store": {
+      "id": "bad-relations-embedas-same",
+      "relations": {
+        "userId": {
+          "store": "users",
+          "embed": {
+            "as": "userId"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-target-parent": {
+    "store": {
+      "id": "rel-target-parent",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1
+        }
+      ]
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-unknown-target": {
+    "store": {
+      "id": "rel-unknown-target",
+      "key": "id",
+      "seed": [],
+      "relations": {
+        "userId": "does-not-exist-store"
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-composite-target": {
+    "store": {
+      "id": "rel-composite-target",
+      "key": [
+        "tenantId",
+        "id"
+      ],
+      "seed": [
+        {
+          "tenantId": 1,
+          "id": 1
+        }
+      ]
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-to-composite": {
+    "store": {
+      "id": "rel-to-composite",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1,
+          "parentId": 1
+        }
+      ],
+      "relations": {
+        "parentId": "rel-composite-target"
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-composite-fields-mismatch": {
+    "store": {
+      "id": "rel-composite-fields-mismatch",
+      "key": "id",
+      "seed": [],
+      "relations": {
+        "orderRef": {
+          "store": "rel-composite-target",
+          "join": {
+            "from": [
+              "tenantId"
+            ],
+            "to": [
+              "tenantId",
+              "id"
+            ]
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-many-parent": {
+    "store": {
+      "id": "rel-many-parent",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1
+        }
+      ],
+      "relations": {
+        "children": {
+          "type": "many",
+          "store": "rel-many-child-missing",
+          "join": {
+            "from": "parentId"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-many-child-missing": {
+    "store": {
+      "id": "rel-many-child-missing",
+      "key": "id",
+      "seed": []
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "rel-bad-seed-fk": {
+    "store": {
+      "id": "rel-bad-seed-fk",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1,
+          "userId": 999
+        }
+      ],
+      "relations": {
+        "userId": "rel-target-parent"
+      }
+    },
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {}
         }
       ]
     }

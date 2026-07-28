@@ -1,0 +1,796 @@
+{
+  "api/users": {
+    "store": {
+      "id": "users",
+      "key": "id",
+      "softDelete": true,
+      "seed": [
+        {
+          "id": 1,
+          "name": "Ada"
+        },
+        {
+          "id": 2,
+          "name": "Grace"
+        },
+        {
+          "id": 3,
+          "name": "Solo"
+        }
+      ],
+      "template": {
+        "id": 0,
+        "name": ""
+      },
+      "relations": {
+        "posts": {
+          "type": "many",
+          "store": "posts",
+          "join": {
+            "from": "userId"
+          },
+          "embed": {
+            "as": "posts"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
+      ]
+    }
+  },
+  "api/users/:id": {
+    "store": {
+      "id": "users"
+    },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        {
+          "name": "has-posts",
+          "statusCode": 409,
+          "body": {
+            "code": "HAS_POSTS",
+            "errores": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "restore",
+      "responses": [
+        {
+          "name": "restore",
+          "statusCode": 200,
+          "action": "restore"
+        }
+      ]
+    }
+  },
+  "api/posts": {
+    "store": {
+      "id": "posts",
+      "key": "id",
+      "softDelete": true,
+      "seed": [
+        {
+          "id": 1,
+          "title": "Hello",
+          "userId": 1
+        },
+        {
+          "id": 2,
+          "title": "World",
+          "userId": 2
+        }
+      ],
+      "template": {
+        "id": 0,
+        "title": "",
+        "userId": 0
+      },
+      "relations": {
+        "userId": {
+          "store": "users",
+          "required": true,
+          "onDelete": {
+            "action": "restrict",
+            "conflict": {
+              "response": "has-posts",
+              "detail": {
+                "code": "HAS_POSTS",
+                "field": "{{field}}",
+                "value": "{{value}}"
+              }
+            }
+          },
+          "embed": {
+            "as": "user"
+          },
+          "conflict": {
+            "response": "invalid-user",
+            "detail": {
+              "code": "INVALID_USER",
+              "field": "{{field}}",
+              "value": "{{value}}"
+            }
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        {
+          "name": "invalid-user",
+          "statusCode": 422,
+          "body": {
+            "code": "INVALID_USER",
+            "errores": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
+      ]
+    }
+  },
+  "api/posts/:id": {
+    "store": {
+      "id": "posts"
+    },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
+    },
+    "PUT": {
+      "nameResponse": "update",
+      "responses": [
+        {
+          "name": "invalid-user",
+          "statusCode": 422,
+          "body": {
+            "code": "INVALID_USER",
+            "errores": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "update",
+          "statusCode": 200,
+          "action": "update"
+        }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "patch",
+      "responses": [
+        {
+          "name": "invalid-user",
+          "statusCode": 422,
+          "body": {
+            "code": "INVALID_USER",
+            "errores": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "patch",
+          "statusCode": 200,
+          "action": "patch"
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "restore",
+      "responses": [
+        {
+          "name": "invalid-user",
+          "statusCode": 422,
+          "body": {
+            "code": "INVALID_USER",
+            "errores": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "restore",
+          "statusCode": 200,
+          "action": "restore"
+        }
+      ]
+    }
+  },
+  "api/comments": {
+    "store": {
+      "id": "comments",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1,
+          "body": "Nice",
+          "postId": 1
+        },
+        {
+          "id": 2,
+          "body": "Also nice",
+          "postId": 1
+        }
+      ],
+      "template": {
+        "id": 0,
+        "body": "",
+        "postId": 0
+      },
+      "relations": {
+        "postId": {
+          "store": "posts",
+          "required": true,
+          "onDelete": "cascade"
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
+      ]
+    }
+  },
+  "api/comments/:id": {
+    "store": {
+      "id": "comments"
+    },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
+      ]
+    }
+  },
+  "api/tags": {
+    "store": {
+      "id": "tags",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1,
+          "label": "solo-tag",
+          "userId": 3
+        },
+        {
+          "id": 2,
+          "label": "orphan-ok",
+          "userId": null
+        }
+      ],
+      "template": {
+        "id": 0,
+        "label": "",
+        "userId": null
+      },
+      "relations": {
+        "userId": {
+          "store": "users",
+          "required": false,
+          "onDelete": "setNull",
+          "embed": {
+            "as": "owner"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
+      ]
+    }
+  },
+  "api/tags/:id": {
+    "store": {
+      "id": "tags"
+    },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
+      ]
+    }
+  },
+  "api/shorthand": {
+    "store": {
+      "id": "shorthand",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1,
+          "userId": 1
+        }
+      ],
+      "relations": {
+        "userId": "users"
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
+      ]
+    }
+  },
+  "api/:tenantId/orders": {
+    "store": {
+      "id": "orders",
+      "key": [
+        "tenantId",
+        "id"
+      ],
+      "seed": [
+        {
+          "tenantId": "acme",
+          "id": 1,
+          "total": 10
+        },
+        {
+          "tenantId": "acme",
+          "id": 2,
+          "total": 20
+        }
+      ],
+      "template": {
+        "tenantId": "",
+        "id": 0,
+        "total": 0
+      },
+      "relations": {
+        "items": {
+          "type": "many",
+          "store": "order-items",
+          "join": {
+            "from": [
+              "tenantId",
+              "orderId"
+            ]
+          },
+          "embed": {
+            "as": "items"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
+      ]
+    }
+  },
+  "api/:tenantId/orders/:id": {
+    "store": {
+      "id": "orders"
+    },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
+      ]
+    }
+  },
+  "api/:tenantId/order-items": {
+    "store": {
+      "id": "order-items",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1,
+          "tenantId": "acme",
+          "orderId": 1,
+          "sku": "A"
+        },
+        {
+          "id": 2,
+          "tenantId": "acme",
+          "orderId": 1,
+          "sku": "B"
+        }
+      ],
+      "template": {
+        "id": 0,
+        "tenantId": "",
+        "orderId": 0,
+        "sku": ""
+      },
+      "relations": {
+        "orderRef": {
+          "store": "orders",
+          "join": {
+            "from": [
+              "tenantId",
+              "orderId"
+            ],
+            "to": [
+              "tenantId",
+              "id"
+            ]
+          },
+          "required": true,
+          "onDelete": "cascade",
+          "embed": {
+            "as": "order"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
+      ]
+    }
+  },
+  "api/:tenantId/order-items/:id": {
+    "store": {
+      "id": "order-items"
+    },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
+      ]
+    }
+  },
+  "api/likes": {
+    "store": {
+      "id": "likes",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1,
+          "commentId": 1
+        },
+        {
+          "id": 2,
+          "commentId": 2
+        }
+      ],
+      "template": {
+        "id": 0,
+        "commentId": 0
+      },
+      "relations": {
+        "commentId": {
+          "store": "comments",
+          "required": true,
+          "onDelete": "cascade"
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
+      ]
+    }
+  },
+  "api/likes/:id": {
+    "store": {
+      "id": "likes"
+    },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
+      ]
+    }
+  },
+  "api/categories": {
+    "store": {
+      "id": "categories",
+      "key": "id",
+      "seed": [
+        {
+          "id": 1,
+          "name": "root",
+          "parentId": null
+        },
+        {
+          "id": 2,
+          "name": "child",
+          "parentId": 1
+        },
+        {
+          "id": 3,
+          "name": "grandchild",
+          "parentId": 2
+        },
+        {
+          "id": 4,
+          "name": "leaf",
+          "parentId": null
+        }
+      ],
+      "template": {
+        "id": 0,
+        "name": "",
+        "parentId": null
+      },
+      "relations": {
+        "parentId": {
+          "store": "categories",
+          "required": false,
+          "onDelete": "cascade",
+          "embed": {
+            "as": "parent"
+          }
+        },
+        "children": {
+          "type": "many",
+          "store": "categories",
+          "join": {
+            "from": "parentId"
+          },
+          "embed": {
+            "as": "children"
+          }
+        }
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "responses": [
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
+      ]
+    }
+  },
+  "api/categories/:id": {
+    "store": {
+      "id": "categories"
+    },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
+      ]
+    }
+  }
+}

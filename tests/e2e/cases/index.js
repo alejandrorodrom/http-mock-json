@@ -42,7 +42,9 @@ const successCases = [
   require('./success/34-store-hr'),
   require('./success/35-store-unique-composite'),
   require('./success/36-store-unique-redundant'),
-  require('./success/37-store-soft-delete')
+  require('./success/37-store-soft-delete'),
+  require('./success/38-store-relations'),
+  require('./success/39-store-relations-matrix')
 ];
 
 const errorCases = [
@@ -57,6 +59,7 @@ const errorCases = [
   require('./error/proxy-errors'),
   require('./error/request-errors'),
   require('./error/store-errors'),
+  require('./error/store-relations-errors'),
   require('./error/store-persist-corrupt')
 ];
 
@@ -103,7 +106,10 @@ const runtimeCases = [
   require('./runtime/store-hr'),
   require('./runtime/store-unique-composite'),
   require('./runtime/store-soft-delete'),
-  require('./runtime/store-soft-delete-persist')
+  require('./runtime/store-soft-delete-persist'),
+  require('./runtime/store-relations'),
+  require('./runtime/store-relations-matrix'),
+  require('./runtime/store-relations-persist')
 ];
 
 const unitCases = [
