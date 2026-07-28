@@ -58,6 +58,7 @@ Define the same endpoints your app will call. Switch success and failure scenari
   - [Example Q — Billing](#example-q--real-project-billing--subscription)
   - [Example R — Onboarding](#example-r--real-project-onboarding-wizard)
 - [Troubleshooting](#troubleshooting-)
+- [Sponsors](#sponsors-)
 - [License](#license-)
 
 ## Features
@@ -8185,3 +8186,12 @@ A: Yes! You can have as many JSON files as you want in the mock files directory.
 - 📧 **Issues**: [GitHub Issues](https://github.com/alejandrorodrom/http-mock-json/issues)
 - 🐛 **Bug Reports**: Please use the GitHub issue tracker
 - 💡 **Feature Requests**: We'd love to hear your ideas!
+
+---
+
+## Sponsors ❤️
+
+If this project helps you, consider sponsoring its development:
+
+- [GitHub Sponsors](https://github.com/sponsors/alejandrorodrom)
+- [Ko-fi](https://ko-fi.com/alejandrorodriguezro)
