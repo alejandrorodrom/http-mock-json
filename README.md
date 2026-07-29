@@ -6,6 +6,8 @@
 ![npm downloads](https://img.shields.io/npm/dm/http-mock-json?style=flat-square)
 ![license](https://img.shields.io/npm/l/http-mock-json?style=flat-square)
 ![GitHub stars](https://img.shields.io/github/stars/alejandrorodrom/http-mock-json?style=flat-square)
+[![CI](https://img.shields.io/github/actions/workflow/status/alejandrorodrom/http-mock-json/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/alejandrorodrom/http-mock-json/actions/workflows/ci.yml)
+[![E2E](https://img.shields.io/github/actions/workflow/status/alejandrorodrom/http-mock-json/e2e.yml?branch=main&style=flat-square&label=E2E)](https://github.com/alejandrorodrom/http-mock-json/actions/workflows/e2e.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)
 ![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen?style=flat-square)
 
