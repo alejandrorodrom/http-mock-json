@@ -8,10 +8,13 @@ import {
   Field,
   FieldType,
   MockRequest,
+  ParsedMultipartFile,
   RequestIssue,
   Rule
 } from '../types/request.type';
+import { contentTypeMatchesAs, detectRequestAs, headerMap } from './content-type.script';
 import { isObject } from './guards.script';
+import { checkFileValue, resolveRuleMessage } from './request-check-file.script';
 
 const getByPath = (value: unknown, path: string): unknown => {
   if (!path) {
@@ -127,13 +130,15 @@ const defaultMsg = (issue: Omit<RequestIssue, 'message'>): string => {
     case 'pattern':
       return `${ path } must match pattern ${ expected }`;
     case 'format':
-      return `${ path } must be a valid ${ expected }`;
+      return `${ path } must be a valid ${ Array.isArray(expected) ? expected.join(', ') : expected }`;
     case 'enum':
       return `${ path } must be one of: ${ Array.isArray(expected) ? expected.join(', ') : expected }`;
     case 'minItems':
       return `${ path } must have minItems ${ expected }`;
     case 'maxItems':
       return `${ path } must have maxItems ${ expected }`;
+    case 'contentType':
+      return `request content-type must be ${ expected }`;
     default:
       return `${ path } is invalid`;
   }
@@ -142,12 +147,12 @@ const defaultMsg = (issue: Omit<RequestIssue, 'message'>): string => {
 const addIssue = (
   issues: RequestIssue[],
   path: string,
-  rule: string,
+  ruleName: string,
   expected: unknown,
   received: unknown,
   message?: string
 ): void => {
-  const partial = { path, rule, expected, received };
+  const partial = { path, rule: ruleName, expected, received };
   issues.push({
     ...partial,
     message: message || defaultMsg(partial)
@@ -162,9 +167,14 @@ const checkValue = (
   issues: RequestIssue[],
   asQuery: boolean
 ): void => {
+  if (rule.type === 'file') {
+    checkFileValue(path, value, required, rule, issues);
+    return;
+  }
+
   const actual = asQuery ? coerceQuery(value, rule.type) : value;
   const fail = (name: string, expected: unknown, received: unknown) => {
-    addIssue(issues, path, name, expected, received, rule.message);
+    addIssue(issues, path, name, expected, received, resolveRuleMessage(rule, name));
   };
 
   if (actual === undefined || actual === null) {
@@ -190,7 +200,7 @@ const checkValue = (
     if (rule.pattern && !rule.pattern.test(actual)) {
       fail('pattern', rule.pattern.source, actual);
     }
-    if (rule.format && !matchFormat(actual, rule.format)) {
+    if (rule.format && typeof rule.format === 'string' && !matchFormat(actual, rule.format)) {
       fail('format', rule.format, actual);
     }
   }
@@ -249,15 +259,82 @@ const checkFields = (
   }
 };
 
-export const checkRequest = (request: MockRequest, req: Request): RequestIssue[] => {
+export const checkRequest = (
+  request: MockRequest,
+  req: Request
+): RequestIssue[] => {
   const issues: RequestIssue[] = [];
+  const contentType = req.headers['content-type'];
+  const contentTypeValue = typeof contentType === 'string' ? contentType : undefined;
+  const detected = detectRequestAs(contentTypeValue);
 
-  if (request.body) {
-    checkFields(request.body, req.body, issues, false);
+  if (request.as) {
+    if (!contentTypeMatchesAs(contentTypeValue, request.as)) {
+      addIssue(
+        issues,
+        'content-type',
+        'contentType',
+        request.as,
+        contentType ?? null
+      );
+      return issues;
+    }
+  }
+
+  const mode = request.as ?? detected;
+
+  if (request.rawPayload) {
+    if (mode === 'text' || request.rawPayload.type === 'string') {
+      const text = req.rawBody ? req.rawBody.toString('utf8') : (
+        typeof req.body === 'string' ? req.body : undefined
+      );
+      checkValue('payload', text, true, request.rawPayload, issues, false);
+    } else {
+      const file: ParsedMultipartFile | undefined = req.rawBody
+        ? {
+          fieldname: 'payload',
+          mimeType: contentTypeValue ? contentTypeValue.split(';')[0].trim() : undefined,
+          buffer: req.rawBody
+        }
+        : undefined;
+      checkValue('payload', file, true, request.rawPayload, issues, false);
+    }
+  }
+
+  if (request.payload) {
+    if (mode === 'multipart') {
+      const parsed = req.multipart ?? { fields: {}, files: {} };
+
+      for (const field of request.payload) {
+        if (field.rule.type === 'file') {
+          checkValue(field.path, parsed.files[field.path], field.required, field.rule, issues, false);
+        } else {
+          checkValue(field.path, parsed.fields[field.path], field.required, field.rule, issues, true);
+        }
+      }
+    } else if (mode === 'form') {
+      checkFields(request.payload, req.body, issues, true);
+    } else {
+      checkFields(request.payload, req.body, issues, false);
+    }
   }
 
   if (request.query) {
     checkFields(request.query, req.query, issues, true, 'query');
+  }
+
+  if (request.headers) {
+    const headers = headerMap(req);
+    for (const field of request.headers) {
+      checkValue(
+        field.path,
+        headers[field.path.toLowerCase()],
+        field.required,
+        field.rule,
+        issues,
+        false
+      );
+    }
   }
 
   return issues;

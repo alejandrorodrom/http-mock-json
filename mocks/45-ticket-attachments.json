@@ -1,0 +1,205 @@
+{
+  "api/tickets": {
+    "POST": {
+      "nameResponse": "created",
+      "request": {
+        "as": "json",
+        "payload": {
+          "subject": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 120
+          },
+          "channel": {
+            "type": "string",
+            "enum": ["email", "chat", "phone"]
+          },
+          "priority?": {
+            "type": "string",
+            "enum": ["low", "normal", "high"]
+          }
+        },
+        "headers": {
+          "x-tenant": {
+            "type": "string",
+            "minLength": 2
+          }
+        },
+        "error": {
+          "response": "validation-error",
+          "format": "map",
+          "key": "fields"
+        }
+      },
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": 201,
+          "body": {
+            "id": "tkt_1",
+            "status": "open",
+            "attachmentsUrl": "/api/tickets/tkt_1/attachments"
+          }
+        },
+        {
+          "name": "duplicate",
+          "statusCode": 409,
+          "match": {
+            "body": {
+              "subject": "Duplicate subject"
+            }
+          },
+          "body": {
+            "code": "TICKET_DUPLICATE"
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "message": "Ticket validation failed",
+            "fields": {}
+          }
+        }
+      ]
+    }
+  },
+  "api/tickets/:id/attachments": {
+    "POST": {
+      "nameResponse": "uploaded",
+      "request": {
+        "as": "multipart",
+        "payload": {
+          "note?": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "screenshots": {
+            "type": "file",
+            "format": "image/*",
+            "minItems": 1,
+            "maxItems": 3,
+            "maxSize": 1500000,
+            "requireFilename": true,
+            "messages": {
+              "minItems": "Attach at least one screenshot",
+              "maxItems": "At most 3 screenshots",
+              "format": "Screenshots must be images"
+            }
+          },
+          "report?": {
+            "type": "file",
+            "format": "pdf",
+            "maxSize": 5000000,
+            "requireFilename": true
+          }
+        },
+        "headers": {
+          "x-tenant": {
+            "type": "string",
+            "minLength": 2
+          }
+        },
+        "error": {
+          "response": "validation-error",
+          "format": "array"
+        }
+      },
+      "responses": [
+        {
+          "name": "uploaded",
+          "statusCode": 201,
+          "body": {
+            "ticketId": "tkt_1",
+            "files": [
+              {
+                "id": "att_img",
+                "kind": "screenshot",
+                "url": "/api/tickets/tkt_1/attachments/att_img"
+              },
+              {
+                "id": "att_pdf",
+                "kind": "report",
+                "url": "/api/tickets/tkt_1/attachments/att_pdf"
+              }
+            ]
+          }
+        },
+        {
+          "name": "quota",
+          "statusCode": 413,
+          "match": {
+            "multipart": {
+              "note": "quota"
+            }
+          },
+          "body": {
+            "code": "ATTACHMENT_QUOTA"
+          }
+        },
+        {
+          "name": "live",
+          "proxy": {
+            "target": "https://jsonplaceholder.typicode.com",
+            "path": "/posts"
+          },
+          "match": {
+            "headers": {
+              "x-mock-mode": "live"
+            }
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "message": "Attachment validation failed",
+            "errors": []
+          }
+        }
+      ]
+    }
+  },
+  "api/tickets/:id/attachments/:fileId": {
+    "GET": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "png",
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "image/png"
+          },
+          "encoding": "file",
+          "body": "assets/sample.png",
+          "match": {
+            "params": {
+              "fileId": "att_img"
+            }
+          }
+        },
+        {
+          "name": "pdf",
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "application/pdf"
+          },
+          "encoding": "base64",
+          "body": "JVBERi0xLjQKJeLjz9MKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9Db3VudCAxCi9LaWRzIFsgMyAwIFIgXQo+PgplbmRvYmoKMyAwIG9iago8PAovVHlwZSAvUGFnZQovUGFyZW50IDIgMCBSCi9NZWRpYUJveCBbIDAgMCA2MTIgNzkyIF0KPj4KZW5kb2JqCnhyZWYKMCA0CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAxNSAwMDAwMCBuIAowMDAwMDAwMDc0IDAwMDAwIG4gCjAwMDAwMDAxMjAgMDAwMDAgbiAKdHJhaWxlcgo8PAovU2l6ZSA0Ci9Sb290IDEgMCBSCj4+CnN0YXJ0eHJlZgoxOTMKJSVFT0YK",
+          "match": {
+            "params": {
+              "fileId": "att_pdf"
+            }
+          }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "body": {
+            "code": "ATTACHMENT_NOT_FOUND"
+          }
+        }
+      ]
+    }
+  }
+}

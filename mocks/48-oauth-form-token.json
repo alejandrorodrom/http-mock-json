@@ -1,0 +1,202 @@
+{
+  "oauth/token": {
+    "POST": {
+      "nameResponse": "ok",
+      "request": {
+        "as": "form",
+        "payload": {
+          "grant_type": {
+            "type": "string",
+            "enum": ["password", "refresh_token", "client_credentials"],
+            "message": "grant_type must be password, refresh_token, or client_credentials"
+          },
+          "client_id": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 64
+          },
+          "client_secret?": {
+            "type": "string",
+            "minLength": 8
+          },
+          "username?": {
+            "type": "string",
+            "minLength": 2
+          },
+          "password?": {
+            "type": "string",
+            "minLength": 4
+          },
+          "refresh_token?": {
+            "type": "string",
+            "minLength": 8
+          },
+          "scope?": {
+            "type": "string",
+            "minLength": 3
+          }
+        },
+        "error": {
+          "response": "invalid_request",
+          "format": "map",
+          "key": "errors"
+        }
+      },
+      "responses": [
+        {
+          "name": "password-ok",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "grant_type": "password",
+              "username": "ada",
+              "password": "secret"
+            }
+          },
+          "body": {
+            "token_type": "Bearer",
+            "access_token": "access_ada_ok",
+            "refresh_token": "rt_ada_ok",
+            "expires_in": 3600,
+            "scope": "openid profile"
+          }
+        },
+        {
+          "name": "password-bad",
+          "statusCode": 401,
+          "headers": {
+            "WWW-Authenticate": "Bearer error=\"invalid_grant\""
+          },
+          "match": {
+            "body": {
+              "grant_type": "password"
+            }
+          },
+          "body": {
+            "error": "invalid_grant",
+            "error_description": "Invalid username or password"
+          }
+        },
+        {
+          "name": "refresh-reuse",
+          "statusCode": 401,
+          "match": {
+            "body": {
+              "grant_type": "refresh_token",
+              "refresh_token": "rt_reused"
+            }
+          },
+          "body": {
+            "error": "invalid_grant",
+            "error_description": "Refresh token already used"
+          }
+        },
+        {
+          "name": "refresh-ok",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "grant_type": "refresh_token"
+            }
+          },
+          "body": {
+            "token_type": "Bearer",
+            "access_token": "access_rotated",
+            "refresh_token": "rt_rotated",
+            "expires_in": 3600
+          }
+        },
+        {
+          "name": "client-ok",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "grant_type": "client_credentials",
+              "client_id": "svc_payments"
+            }
+          },
+          "body": {
+            "token_type": "Bearer",
+            "access_token": "access_svc_payments",
+            "expires_in": 900,
+            "scope": "payments:write"
+          }
+        },
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "token_type": "Bearer",
+            "access_token": "access_fallback",
+            "expires_in": 3600
+          }
+        },
+        {
+          "name": "invalid_request",
+          "statusCode": 400,
+          "body": {
+            "error": "invalid_request",
+            "errors": {}
+          }
+        }
+      ]
+    }
+  },
+  "oauth/revoke": {
+    "POST": {
+      "nameResponse": "revoked",
+      "request": {
+        "as": "form",
+        "payload": {
+          "token": {
+            "type": "string",
+            "minLength": 8
+          },
+          "token_type_hint?": {
+            "type": "string",
+            "enum": ["access_token", "refresh_token"]
+          },
+          "client_id": {
+            "type": "string",
+            "minLength": 3
+          }
+        },
+        "error": {
+          "response": "invalid_request",
+          "format": "map",
+          "key": "errors"
+        }
+      },
+      "responses": [
+        {
+          "name": "unknown",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "token": "access_unknown"
+            }
+          },
+          "body": {
+            "revoked": false,
+            "reason": "unknown_token"
+          }
+        },
+        {
+          "name": "revoked",
+          "statusCode": 200,
+          "body": {
+            "revoked": true
+          }
+        },
+        {
+          "name": "invalid_request",
+          "statusCode": 400,
+          "body": {
+            "error": "invalid_request",
+            "errors": {}
+          }
+        }
+      ]
+    }
+  }
+}

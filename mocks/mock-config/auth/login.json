@@ -3,7 +3,7 @@
     "POST": {
       "nameResponse": "ok",
       "request": {
-        "body": {
+        "payload": {
           "email": {
             "type": "string",
             "format": "email"
@@ -13,7 +13,9 @@
             "minLength": 6
           }
         },
-        "invalidResponse": "invalid"
+        "error": {
+          "response": "invalid"
+        }
       },
       "responses": [
         {

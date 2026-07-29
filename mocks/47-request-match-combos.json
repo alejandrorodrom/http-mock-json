@@ -1,0 +1,410 @@
+{
+  "api/combo/json": {
+    "POST": {
+      "nameResponse": "ok",
+      "request": {
+        "as": "json",
+        "payload": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "user"]
+          }
+        },
+        "headers": {
+          "x-tenant": {
+            "type": "string",
+            "minLength": 2
+          }
+        },
+        "error": {
+          "response": "invalid"
+        }
+      },
+      "responses": [
+        {
+          "name": "admin",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "role": "admin"
+            },
+            "headers": {
+              "x-tenant": "acme"
+            }
+          },
+          "body": {
+            "matched": "json-admin-acme"
+          }
+        },
+        {
+          "name": "user",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "role": "user"
+            }
+          },
+          "body": {
+            "matched": "json-user"
+          }
+        },
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "matched": "json-fallback"
+          }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 400,
+          "body": {
+            "message": "json invalid"
+          }
+        }
+      ]
+    }
+  },
+  "api/combo/form": {
+    "POST": {
+      "nameResponse": "ok",
+      "request": {
+        "as": "form",
+        "payload": {
+          "username": {
+            "type": "string",
+            "minLength": 3,
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "plan": {
+            "type": "string",
+            "enum": ["free", "pro"]
+          },
+          "age": {
+            "type": "number",
+            "min": 1,
+            "max": 120
+          },
+          "newsletter": "boolean"
+        },
+        "query": {
+          "source": {
+            "type": "string",
+            "minLength": 2
+          }
+        },
+        "error": {
+          "response": "invalid",
+          "format": "map"
+        }
+      },
+      "responses": [
+        {
+          "name": "pro-web",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "plan": "pro",
+              "newsletter": true
+            },
+            "query": {
+              "source": "web"
+            }
+          },
+          "body": {
+            "matched": "form-pro-web"
+          }
+        },
+        {
+          "name": "free",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "plan": "free"
+            }
+          },
+          "body": {
+            "matched": "form-free"
+          }
+        },
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "matched": "form-fallback"
+          }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 400,
+          "body": {
+            "message": "form invalid"
+          }
+        }
+      ]
+    }
+  },
+  "api/combo/multipart": {
+    "POST": {
+      "nameResponse": "ok",
+      "request": {
+        "as": "multipart",
+        "payload": {
+          "title": {
+            "type": "string",
+            "minLength": 2
+          },
+          "avatar": {
+            "type": "file",
+            "format": ["png", "jpeg"],
+            "maxSize": 128,
+            "requireFilename": true
+          }
+        },
+        "headers": {
+          "x-upload": {
+            "type": "string",
+            "enum": ["avatar", "banner"]
+          }
+        },
+        "error": {
+          "response": "invalid"
+        }
+      },
+      "responses": [
+        {
+          "name": "png-avatar",
+          "statusCode": 201,
+          "match": {
+            "multipart": {
+              "title": "logo",
+              "avatar": {
+                "mimeType": "image/png"
+              }
+            },
+            "headers": {
+              "x-upload": "avatar"
+            }
+          },
+          "body": {
+            "matched": "multipart-png-avatar"
+          }
+        },
+        {
+          "name": "jpeg",
+          "statusCode": 201,
+          "match": {
+            "multipart": {
+              "avatar": {
+                "mimeType": "image/jpeg"
+              }
+            }
+          },
+          "body": {
+            "matched": "multipart-jpeg"
+          }
+        },
+        {
+          "name": "ok",
+          "statusCode": 201,
+          "body": {
+            "matched": "multipart-fallback"
+          }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 400,
+          "body": {
+            "message": "multipart invalid"
+          }
+        }
+      ]
+    }
+  },
+  "api/combo/text": {
+    "POST": {
+      "nameResponse": "ok",
+      "request": {
+        "as": "text",
+        "payload": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 32,
+          "pattern": "^[a-z]+$"
+        },
+        "error": {
+          "response": "invalid"
+        }
+      },
+      "responses": [
+        {
+          "name": "ping",
+          "statusCode": 200,
+          "match": {
+            "body": "ping"
+          },
+          "body": {
+            "matched": "text-ping"
+          }
+        },
+        {
+          "name": "pong",
+          "statusCode": 200,
+          "match": {
+            "body": "pong"
+          },
+          "body": {
+            "matched": "text-pong"
+          }
+        },
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "matched": "text-fallback"
+          }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 400,
+          "body": {
+            "message": "text invalid"
+          }
+        }
+      ]
+    }
+  },
+  "api/combo/raw": {
+    "PUT": {
+      "nameResponse": "ok",
+      "request": {
+        "as": "raw",
+        "payload": {
+          "type": "file",
+          "format": ["png", "jpeg", "pdf"],
+          "minSize": 4,
+          "maxSize": 256
+        },
+        "headers": {
+          "x-bin": {
+            "type": "string",
+            "minLength": 2
+          }
+        },
+        "error": {
+          "response": "invalid"
+        }
+      },
+      "responses": [
+        {
+          "name": "png",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "mimeType": "image/png"
+            },
+            "headers": {
+              "x-bin": "img"
+            }
+          },
+          "body": {
+            "matched": "raw-png-img"
+          }
+        },
+        {
+          "name": "pdf",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "mimeType": "application/pdf"
+            }
+          },
+          "body": {
+            "matched": "raw-pdf"
+          }
+        },
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "matched": "raw-fallback"
+          }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 415,
+          "body": {
+            "message": "raw invalid"
+          }
+        }
+      ]
+    }
+  },
+  "api/combo/json-query": {
+    "POST": {
+      "nameResponse": "ok",
+      "request": {
+        "as": "json",
+        "payload": {
+          "action": {
+            "type": "string",
+            "enum": ["create", "update"]
+          }
+        },
+        "query": {
+          "dry": "boolean"
+        },
+        "error": {
+          "response": "invalid"
+        }
+      },
+      "responses": [
+        {
+          "name": "dry-create",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "action": "create"
+            },
+            "query": {
+              "dry": "true"
+            }
+          },
+          "body": {
+            "matched": "json-dry-create"
+          }
+        },
+        {
+          "name": "update",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "action": "update"
+            }
+          },
+          "body": {
+            "matched": "json-update"
+          }
+        },
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "matched": "json-query-fallback"
+          }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 400,
+          "body": {
+            "message": "json-query invalid"
+          }
+        }
+      ]
+    }
+  }
+}

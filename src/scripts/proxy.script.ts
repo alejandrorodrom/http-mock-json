@@ -85,10 +85,18 @@ const buildOutgoingHeaders = (req: Request): Record<string, string> => {
   return headers;
 };
 
-const buildOutgoingBody = (req: Request): string | undefined => {
+const buildOutgoingBody = (req: Request): BodyInit | undefined => {
   const method = req.method.toUpperCase();
 
-  if (method === 'GET' || method === 'HEAD' || req.body === undefined) {
+  if (method === 'GET' || method === 'HEAD') {
+    return undefined;
+  }
+
+  if (req.rawBody && req.rawBody.length > 0) {
+    return new Uint8Array(req.rawBody);
+  }
+
+  if (req.body === undefined) {
     return undefined;
   }
 

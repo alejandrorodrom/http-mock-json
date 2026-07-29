@@ -45,7 +45,15 @@ const successCases = [
   require('./success/37-store-soft-delete'),
   require('./success/38-store-relations'),
   require('./success/39-store-relations-matrix'),
-  require('./success/40-match-call')
+  require('./success/40-match-call'),
+  require('./success/41-response-encoding'),
+  require('./success/42-request-multipart'),
+  require('./success/43-request-body-matrix'),
+  require('./success/44-profile-body-compat'),
+  require('./success/45-ticket-attachments'),
+  require('./success/46-expense-reports'),
+  require('./success/47-request-match-combos'),
+  require('./success/48-oauth-form-token')
 ];
 
 const errorCases = [
@@ -93,6 +101,15 @@ const runtimeCases = [
   require('./runtime/proxy-live'),
   require('./runtime/global-proxy-unmatched'),
   require('./runtime/proxy-request-failed'),
+  require('./runtime/proxy-raw-body'),
+  require('./runtime/response-encoding'),
+  require('./runtime/request-multipart'),
+  require('./runtime/request-body-matrix'),
+  require('./runtime/request-match-combos'),
+  require('./runtime/oauth-form-token'),
+  require('./runtime/profile-body-compat'),
+  require('./runtime/ticket-attachments'),
+  require('./runtime/expense-reports'),
   require('./runtime/watch-restart-failed'),
   require('./runtime/rest-resource-lifecycle'),
   require('./runtime/checkout-resilience'),

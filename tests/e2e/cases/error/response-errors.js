@@ -21,7 +21,11 @@ module.exports = {
         'Missing property "body"',
         'The "headers" property must be an object',
         'The "delay" "fast" is not a valid number',
-        'The "delay" must be greater than or equal to 0'
+        'The "delay" must be greater than or equal to 0',
+        'The "encoding" property must be one of: file, base64',
+        'The "body" property must be a string when encoding is "file"',
+        'The "encoding" property cannot be used together with "proxy" or "action"',
+        'The "body" property must be a non-empty path string when encoding is "file"'
       ],
       stdoutExcludes: ['Mock server is running']
     }

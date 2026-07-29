@@ -1,4 +1,4 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Express, NextFunction, Request, Response } from 'express';
 import { getMocksData } from './files';
 import { logApi, logError } from '../../../scripts/log.script';
 import cors from 'cors';
@@ -17,6 +17,20 @@ import {
   applyListTemplate
 } from '../../../scripts/store-list.script';
 import { buildPersistWatchIgnored } from '../../../scripts/store-persist.script';
+import {
+  captureUnhandledRawBody,
+  stashRawBody
+} from '../../../scripts/body-intake.script';
+import { sendMockBody } from '../../../scripts/response-send.script';
+import {
+  multipartParseIssue,
+  needsMultipartParse,
+  parseMultipart
+} from '../../../scripts/multipart.script';
+import {
+  isBodySizeLimitError,
+  RAW_BODY_LIMIT
+} from '../../../constants/body.constant';
 import { MockResponseConfig } from '../../../interfaces/data.interface';
 import { StartMock, StartMockResult } from '../../../interfaces/mock.interface';
 import { getProxyUnmatchedMounts } from '../../../scripts/mock-config.script';
@@ -31,8 +45,17 @@ export const startMock = async (
   app.use(cors({
     exposedHeaders: '*'
   }));
-  app.use(express.json({ strict: false }));
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json({
+    strict: false,
+    limit: RAW_BODY_LIMIT,
+    verify: stashRawBody
+  }));
+  app.use(express.urlencoded({
+    extended: true,
+    limit: RAW_BODY_LIMIT,
+    verify: stashRawBody
+  }));
+  app.use(captureUnhandledRawBody);
 
   const { apis, stores, config } = getMocksData(folderPath, loadedConfig);
   resetCallCounters();
@@ -68,7 +91,31 @@ export const startMock = async (
     app[value.method](value.route, async (req: Request, res: Response) => {
       let selectedResponse: MockResponseConfig | undefined;
 
-      if (value.request) {
+      if (needsMultipartParse(value)) {
+        try {
+          req.multipart = await parseMultipart(req);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+
+          if (isBodySizeLimitError(message)) {
+            res.status(413).json({ message });
+            return;
+          }
+
+          if (value.request) {
+            selectedResponse = buildRequestError(
+              value.request,
+              [multipartParseIssue(message)],
+              value.responses
+            );
+          } else {
+            res.status(400).json({ message });
+            return;
+          }
+        }
+      }
+
+      if (!selectedResponse && value.request) {
         const issues = checkRequest(value.request, req);
 
         if (!isEmpty(issues)) {
@@ -165,7 +212,7 @@ export const startMock = async (
         return;
       }
 
-      res.set(selectedResponse.headers).status(selectedResponse.status).json(selectedResponse.body);
+      sendMockBody(res, selectedResponse, folderPath);
     });
   });
 
@@ -185,6 +232,28 @@ export const startMock = async (
       await proxyRequest({ target: proxy }, req, res);
     });
   }
+
+  app.use((
+    error: Error & { status?: number; type?: string },
+    _req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const message = error.message || 'Request body too large';
+
+    if (
+      error.status === 413
+      || error.type === 'entity.too.large'
+      || isBodySizeLimitError(message)
+    ) {
+      if (!res.headersSent) {
+        res.status(413).json({ message });
+      }
+      return;
+    }
+
+    next(error);
+  });
 
   const server = app.listen(port, () => {
     console.log(`Mock server is running in http://localhost:${ port } 🚀`);

@@ -1,8 +1,14 @@
-export type FieldType = 'string' | 'number' | 'boolean' | 'object' | 'array';
+export type FieldType = 'string' | 'number' | 'boolean' | 'object' | 'array' | 'file';
 
-export type FieldFormat = 'email' | 'uuid' | 'url' | 'date';
+export type StringFieldFormat = 'email' | 'uuid' | 'url' | 'date';
+
+export type FileFormat = string | string[];
+
+export type FieldFormat = StringFieldFormat | FileFormat;
 
 export type ErrorFormat = 'array' | 'map';
+
+export type RequestAs = 'json' | 'form' | 'multipart' | 'raw' | 'text';
 
 export type FieldSchema = FieldType | FieldRule;
 
@@ -17,18 +23,28 @@ export interface FieldRule {
   enum?: Array<string | number>;
   minItems?: number;
   maxItems?: number;
+  maxSize?: number;
+  minSize?: number;
+  requireFilename?: boolean;
   message?: string;
+  messages?: Record<string, string>;
   properties?: Record<string, FieldSchema>;
   items?: FieldSchema;
 }
 
+export interface RawRequestError {
+  response?: string;
+  format?: ErrorFormat;
+  detail?: Record<string, string> | string;
+  key?: string;
+}
+
 export interface RawMockRequest {
-  body?: Record<string, FieldSchema>;
+  as?: RequestAs;
+  payload?: Record<string, FieldSchema> | FieldRule | FileFormat;
   query?: Record<string, FieldSchema>;
-  invalidResponse?: string;
-  errorFormat?: ErrorFormat;
-  errorDetail?: Record<string, string> | string;
-  errorDetailsKey?: string;
+  headers?: Record<string, FieldSchema>;
+  error?: RawRequestError;
 }
 
 export interface Rule {
@@ -42,7 +58,11 @@ export interface Rule {
   enum?: Array<string | number>;
   minItems?: number;
   maxItems?: number;
+  maxSize?: number;
+  minSize?: number;
+  requireFilename?: boolean;
   message?: string;
+  messages?: Record<string, string>;
   properties?: Field[];
   items?: Rule;
 }
@@ -53,13 +73,20 @@ export interface Field {
   rule: Rule;
 }
 
+export interface MockRequestError {
+  response?: string;
+  format: ErrorFormat;
+  detail?: Record<string, string> | string;
+  key: string;
+}
+
 export interface MockRequest {
-  body?: Field[];
+  as?: RequestAs;
+  payload?: Field[];
+  rawPayload?: Rule;
   query?: Field[];
-  invalidResponse?: string;
-  errorFormat: ErrorFormat;
-  errorDetail?: Record<string, string> | string;
-  errorDetailsKey: string;
+  headers?: Field[];
+  error: MockRequestError;
 }
 
 export interface RequestIssue {
@@ -68,4 +95,11 @@ export interface RequestIssue {
   expected: unknown;
   received: unknown;
   message: string;
+}
+
+export interface ParsedMultipartFile {
+  fieldname: string;
+  filename?: string;
+  mimeType?: string;
+  buffer: Buffer;
 }

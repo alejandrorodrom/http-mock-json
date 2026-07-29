@@ -27,7 +27,7 @@ module.exports = {
           POST: {
             nameResponse: 'ok',
             request: {
-              body: {
+              payload: {
                 email: { type: 'string', format: 'phone' }
               }
             },
@@ -44,7 +44,7 @@ module.exports = {
       const expectedRestart =
         'Mock server could not be restarted due to an invalid mock configuration. Please fix the mocks and run the command again.';
       const expectedValidation =
-        'The "request.body.email.format" must be one of: email, uuid, url, date';
+        'The "request.payload.email.format" must be one of: email, uuid, url, date';
 
       while (Date.now() < deadline) {
         const stdout = getStdout();

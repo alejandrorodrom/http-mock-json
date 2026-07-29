@@ -1,0 +1,212 @@
+{
+  "api/profiles": {
+    "POST": {
+      "nameResponse": "created",
+      "request": {
+        "as": "multipart",
+        "payload": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "message": "Use a valid work email"
+          },
+          "age?": {
+            "type": "number",
+            "min": 18,
+            "max": 120
+          },
+          "role": {
+            "type": "string",
+            "enum": ["member", "admin"]
+          },
+          "avatar": {
+            "type": "file",
+            "format": ["png", "jpeg"],
+            "maxSize": 2000000,
+            "minSize": 8,
+            "requireFilename": true,
+            "messages": {
+              "format": "Avatar must be PNG or JPEG",
+              "maxSize": "Avatar must be under 2MB"
+            }
+          },
+          "cv?": {
+            "type": "file",
+            "format": "pdf",
+            "maxSize": 5000000
+          }
+        },
+        "error": {
+          "response": "validation-error",
+          "format": "map",
+          "key": "fields"
+        }
+      },
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": 201,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": {
+            "id": "prof_1",
+            "status": "pending_review",
+            "avatarUrl": "/api/profiles/prof_1/avatar"
+          }
+        },
+        {
+          "name": "duplicate-email",
+          "statusCode": 409,
+          "match": {
+            "multipart": {
+              "email": "taken@example.com"
+            }
+          },
+          "body": {
+            "code": "EMAIL_TAKEN",
+            "message": "A profile with this email already exists"
+          }
+        },
+        {
+          "name": "live",
+          "proxy": {
+            "target": "https://jsonplaceholder.typicode.com",
+            "path": "/users"
+          },
+          "match": {
+            "headers": {
+              "x-mock-mode": "live"
+            }
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "message": "Profile validation failed",
+            "fields": {}
+          }
+        }
+      ]
+    }
+  },
+  "api/profiles/:id": {
+    "GET": {
+      "nameResponse": "public",
+      "responses": [
+        {
+          "name": "admin",
+          "statusCode": 200,
+          "match": {
+            "headers": {
+              "x-role": "admin"
+            }
+          },
+          "body": {
+            "id": "prof_1",
+            "email": "ada@example.com",
+            "role": "admin",
+            "internalNotes": "Priority onboard"
+          }
+        },
+        {
+          "name": "public",
+          "statusCode": 200,
+          "body": {
+            "id": "prof_1",
+            "name": "Ada",
+            "role": "member",
+            "avatarUrl": "/api/profiles/prof_1/avatar"
+          }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "match": {
+            "params": {
+              "id": "missing"
+            }
+          },
+          "body": {
+            "code": "PROFILE_NOT_FOUND"
+          }
+        }
+      ]
+    }
+  },
+  "api/profiles/:id/avatar": {
+    "GET": {
+      "nameResponse": "png",
+      "responses": [
+        {
+          "name": "png",
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "image/png",
+            "Cache-Control": "public, max-age=60"
+          },
+          "encoding": "file",
+          "body": "assets/sample.png"
+        },
+        {
+          "name": "gone",
+          "statusCode": 404,
+          "match": {
+            "params": {
+              "id": "missing"
+            }
+          },
+          "body": {
+            "code": "AVATAR_NOT_FOUND"
+          }
+        }
+      ]
+    },
+    "PUT": {
+      "nameResponse": "updated",
+      "request": {
+        "as": "raw",
+        "payload": {
+          "type": "file",
+          "format": "image/*",
+          "minSize": 8,
+          "maxSize": 2000000
+        },
+        "headers": {
+          "x-upload-token": {
+            "type": "string",
+            "minLength": 8
+          }
+        },
+        "error": {
+          "response": "invalid-upload"
+        }
+      },
+      "responses": [
+        {
+          "name": "updated",
+          "statusCode": 200,
+          "body": {
+            "id": "prof_1",
+            "avatarUrl": "/api/profiles/prof_1/avatar",
+            "updated": true
+          }
+        },
+        {
+          "name": "invalid-upload",
+          "statusCode": 415,
+          "body": {
+            "code": "INVALID_AVATAR",
+            "message": "Send a raw image body with x-upload-token"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -12,7 +12,10 @@
           "price": 12.5,
           "stock": 40,
           "status": "active",
-          "warehouse": { "code": "WH-EU", "zone": "A" }
+          "warehouse": {
+            "code": "WH-EU",
+            "zone": "A"
+          }
         },
         {
           "id": 2,
@@ -22,7 +25,10 @@
           "price": 18,
           "stock": 12,
           "status": "active",
-          "warehouse": { "code": "WH-US", "zone": "B" }
+          "warehouse": {
+            "code": "WH-US",
+            "zone": "B"
+          }
         },
         {
           "id": 3,
@@ -32,7 +38,10 @@
           "price": 11,
           "stock": 0,
           "status": "draft",
-          "warehouse": { "code": "WH-EU", "zone": "A" }
+          "warehouse": {
+            "code": "WH-EU",
+            "zone": "A"
+          }
         },
         {
           "id": 4,
@@ -42,7 +51,10 @@
           "price": 22,
           "stock": 8,
           "status": "active",
-          "warehouse": { "code": "WH-LATAM", "zone": "C" }
+          "warehouse": {
+            "code": "WH-LATAM",
+            "zone": "C"
+          }
         },
         {
           "id": 5,
@@ -52,7 +64,10 @@
           "price": 9.5,
           "stock": 25,
           "status": "active",
-          "warehouse": { "code": "WH-US", "zone": "A" }
+          "warehouse": {
+            "code": "WH-US",
+            "zone": "A"
+          }
         },
         {
           "id": 6,
@@ -62,7 +77,10 @@
           "price": 28,
           "stock": 3,
           "status": "active",
-          "warehouse": { "code": "WH-EU", "zone": "B" }
+          "warehouse": {
+            "code": "WH-EU",
+            "zone": "B"
+          }
         }
       ],
       "template": {
@@ -73,7 +91,10 @@
         "price": 0,
         "stock": 0,
         "status": "draft",
-        "warehouse": { "code": "", "zone": "" }
+        "warehouse": {
+          "code": "",
+          "zone": ""
+        }
       },
       "unique": {
         "fields": [
@@ -98,38 +119,91 @@
       },
       "persist": true,
       "list": {
-        "page": { "query": "page", "default": 1 },
+        "page": {
+          "query": "page",
+          "default": 1
+        },
         "pageSize": {
           "query": "pageSize",
           "default": 3,
           "max": 50,
-          "aliases": ["limit"]
+          "aliases": [
+            "limit"
+          ]
         },
         "sort": {
           "query": "sort",
           "default": "id",
-          "fields": ["id", "name", "price", "stock"]
+          "fields": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ]
         },
-        "order": { "query": "order", "default": "asc" },
+        "order": {
+          "query": "order",
+          "default": "asc"
+        },
         "filter": {
           "fields": [
             "status",
             "category",
-            { "field": "price", "op": "gte", "query": "minPrice" },
-            { "field": "price", "op": "lte", "query": "maxPrice" },
-            { "field": "stock", "op": "gt", "query": "minStock" },
-            { "field": "stock", "op": "lt", "query": "maxStock" },
-            { "field": "status", "op": "ne", "query": "excludeStatus" },
-            { "field": "category", "op": "in", "query": "categories" },
-            { "field": "warehouse.code", "op": "eq", "query": "warehouse" }
+            {
+              "field": "price",
+              "op": "gte",
+              "query": "minPrice"
+            },
+            {
+              "field": "price",
+              "op": "lte",
+              "query": "maxPrice"
+            },
+            {
+              "field": "stock",
+              "op": "gt",
+              "query": "minStock"
+            },
+            {
+              "field": "stock",
+              "op": "lt",
+              "query": "maxStock"
+            },
+            {
+              "field": "status",
+              "op": "ne",
+              "query": "excludeStatus"
+            },
+            {
+              "field": "category",
+              "op": "in",
+              "query": "categories"
+            },
+            {
+              "field": "warehouse.code",
+              "op": "eq",
+              "query": "warehouse"
+            }
           ],
           "or": [
-            { "field": "warehouse.code", "op": "eq", "query": "anyWarehouse" },
-            { "field": "category", "op": "eq", "query": "anyCategory" }
+            {
+              "field": "warehouse.code",
+              "op": "eq",
+              "query": "anyWarehouse"
+            },
+            {
+              "field": "category",
+              "op": "eq",
+              "query": "anyCategory"
+            }
           ],
           "search": {
             "query": "q",
-            "fields": ["name", "sku", "warehouse.code"]
+            "fields": [
+              "name",
+              "sku",
+              "warehouse.code"
+            ]
           }
         }
       }
@@ -140,7 +214,11 @@
         {
           "name": "maintenance",
           "statusCode": 503,
-          "match": { "query": { "mode": "maintenance" } },
+          "match": {
+            "query": {
+              "mode": "maintenance"
+            }
+          },
           "delay": 200,
           "headers": {
             "Retry-After": "30",
@@ -154,7 +232,11 @@
         {
           "name": "featured-static",
           "statusCode": 200,
-          "match": { "query": { "view": "featured" } },
+          "match": {
+            "query": {
+              "view": "featured"
+            }
+          },
           "headers": {
             "X-View": "featured",
             "Cache-Control": "public, max-age=60"
@@ -162,8 +244,14 @@
           "body": {
             "view": "featured",
             "items": [
-              { "sku": "SKU-TEA-001", "badge": "bestseller" },
-              { "sku": "SKU-BAG-003", "badge": "eco" }
+              {
+                "sku": "SKU-TEA-001",
+                "badge": "bestseller"
+              },
+              {
+                "sku": "SKU-BAG-003",
+                "badge": "eco"
+              }
             ]
           }
         },
@@ -196,27 +284,51 @@
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
+        "payload": {
           "sku": {
             "type": "string",
             "minLength": 5,
             "maxLength": 32,
             "pattern": "^SKU-[A-Z0-9]+-[0-9]{3}$"
           },
-          "name": { "type": "string", "minLength": 2, "maxLength": 80 },
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
           "category": {
             "type": "string",
-            "enum": ["beverages", "home", "grocery"]
+            "enum": [
+              "beverages",
+              "home",
+              "grocery"
+            ]
           },
-          "price": { "type": "number", "min": 0.01, "max": 9999 },
-          "stock?": { "type": "number", "min": 0, "max": 100000 },
-          "status?": { "type": "string", "enum": ["active", "draft"] }
+          "price": {
+            "type": "number",
+            "min": 0.01,
+            "max": 9999
+          },
+          "stock?": {
+            "type": "number",
+            "min": 0,
+            "max": 100000
+          },
+          "status?": {
+            "type": "string",
+            "enum": [
+              "active",
+              "draft"
+            ]
+          }
         },
-        "invalidResponse": "validation-error",
-        "errorFormat": "array",
-        "errorDetail": {
-          "field": "{{path}}",
-          "message": "{{message}}"
+        "error": {
+          "response": "validation-error",
+          "format": "array",
+          "detail": {
+            "field": "{{path}}",
+            "message": "{{message}}"
+          }
         }
       },
       "responses": [
@@ -257,7 +369,9 @@
     }
   },
   "api/catalog/products/:id": {
-    "store": { "id": "catalog-products" },
+    "store": {
+      "id": "catalog-products"
+    },
     "GET": {
       "nameResponse": "get",
       "responses": [
@@ -274,17 +388,42 @@
     "PATCH": {
       "nameResponse": "patch",
       "request": {
-        "body": {
-          "name?": { "type": "string", "minLength": 2, "maxLength": 80 },
-          "price?": { "type": "number", "min": 0.01, "max": 9999 },
-          "stock?": { "type": "number", "min": 0, "max": 100000 },
-          "status?": { "type": "string", "enum": ["active", "draft", "archived"] },
+        "payload": {
+          "name?": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "price?": {
+            "type": "number",
+            "min": 0.01,
+            "max": 9999
+          },
+          "stock?": {
+            "type": "number",
+            "min": 0,
+            "max": 100000
+          },
+          "status?": {
+            "type": "string",
+            "enum": [
+              "active",
+              "draft",
+              "archived"
+            ]
+          },
           "category?": {
             "type": "string",
-            "enum": ["beverages", "home", "grocery"]
+            "enum": [
+              "beverages",
+              "home",
+              "grocery"
+            ]
           }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -299,7 +438,11 @@
         {
           "name": "discontinued-static",
           "statusCode": 409,
-          "match": { "body": { "status": "archived" } },
+          "match": {
+            "body": {
+              "status": "archived"
+            }
+          },
           "body": {
             "code": "USE_ARCHIVE_ENDPOINT",
             "message": "Archive products via DELETE, not PATCH status=archived"
@@ -343,12 +486,24 @@
     "POST": {
       "nameResponse": "paid",
       "request": {
-        "body": {
-          "sku": { "type": "string", "minLength": 5 },
-          "quantity": { "type": "number", "min": 1, "max": 20 },
-          "cardLast4": { "type": "string", "pattern": "^[0-9]{4}$" }
+        "payload": {
+          "sku": {
+            "type": "string",
+            "minLength": 5
+          },
+          "quantity": {
+            "type": "number",
+            "min": 1,
+            "max": 20
+          },
+          "cardLast4": {
+            "type": "string",
+            "pattern": "^[0-9]{4}$"
+          }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -363,7 +518,11 @@
         {
           "name": "payment-required",
           "statusCode": 402,
-          "match": { "body": { "cardLast4": "0000" } },
+          "match": {
+            "body": {
+              "cardLast4": "0000"
+            }
+          },
           "delay": 150,
           "body": {
             "code": "PAYMENT_REQUIRED",
@@ -373,7 +532,11 @@
         {
           "name": "rate-limited",
           "statusCode": 429,
-          "match": { "body": { "cardLast4": "4290" } },
+          "match": {
+            "body": {
+              "cardLast4": "4290"
+            }
+          },
           "headers": {
             "Retry-After": "5"
           },

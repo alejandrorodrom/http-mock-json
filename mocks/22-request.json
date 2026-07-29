@@ -3,7 +3,7 @@
     "POST": {
       "nameResponse": "created",
       "request": {
-        "body": {
+        "payload": {
           "email": {
             "type": "string",
             "format": "email",
@@ -22,7 +22,10 @@
           "active": "boolean",
           "role": {
             "type": "string",
-            "enum": ["admin", "user"]
+            "enum": [
+              "admin",
+              "user"
+            ]
           },
           "website?": {
             "type": "string",
@@ -46,11 +49,13 @@
             }
           }
         },
-        "invalidResponse": "validation-error",
-        "errorFormat": "array",
-        "errorDetail": {
-          "field": "{{path}}",
-          "msg": "{{message}}"
+        "error": {
+          "response": "validation-error",
+          "format": "array",
+          "detail": {
+            "field": "{{path}}",
+            "msg": "{{message}}"
+          }
         }
       },
       "responses": [
@@ -105,7 +110,9 @@
           },
           "strict?": "boolean"
         },
-        "errorFormat": "map"
+        "error": {
+          "format": "map"
+        }
       },
       "responses": [
         {
@@ -122,7 +129,7 @@
     "POST": {
       "nameResponse": "created",
       "request": {
-        "body": {
+        "payload": {
           "customerId": "number",
           "items": {
             "type": "array",
@@ -156,7 +163,7 @@
     "POST": {
       "nameResponse": "created",
       "request": {
-        "body": {
+        "payload": {
           "address.city": {
             "type": "string",
             "minLength": 2
@@ -170,8 +177,10 @@
             "format": "uuid"
           }
         },
-        "errorDetailsKey": "details",
-        "errorDetail": "{{message}}"
+        "error": {
+          "detail": "{{message}}",
+          "key": "details"
+        }
       },
       "responses": [
         {
@@ -195,7 +204,7 @@
           },
           "active?": "boolean"
         },
-        "body": {
+        "payload": {
           "tags": {
             "type": "array",
             "minItems": 1,
@@ -203,10 +212,12 @@
             "items": "string"
           }
         },
-        "invalidResponse": "bad-request",
-        "errorFormat": "map",
-        "errorDetail": "{{path}}: {{message}}",
-        "errorDetailsKey": "fields"
+        "error": {
+          "response": "bad-request",
+          "format": "map",
+          "detail": "{{path}}: {{message}}",
+          "key": "fields"
+        }
       },
       "responses": [
         {

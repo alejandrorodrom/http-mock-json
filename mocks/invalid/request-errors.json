@@ -2,7 +2,9 @@
   "api/invalid/request-not-object": {
     "POST": {
       "nameResponse": "success",
-      "request": ["body"],
+      "request": [
+        "body"
+      ],
       "responses": [
         {
           "name": "success",
@@ -29,7 +31,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": "email"
+        "payload": true
       },
       "responses": [
         {
@@ -44,7 +46,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {}
+        "payload": {}
       },
       "responses": [
         {
@@ -59,7 +61,9 @@
     "GET": {
       "nameResponse": "success",
       "request": {
-        "query": ["page"]
+        "query": [
+          "page"
+        ]
       },
       "responses": [
         {
@@ -89,7 +93,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "email": true
         }
       },
@@ -106,7 +110,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "?": "string"
         }
       },
@@ -123,7 +127,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "email": {
             "type": "text"
           }
@@ -142,7 +146,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "age": {
             "type": "number",
             "minLength": 2
@@ -162,7 +166,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "name": {
             "type": "string",
             "min": 1
@@ -182,7 +186,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "name": {
             "type": "string",
             "minItems": 1
@@ -202,7 +206,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "name": {
             "type": "string",
             "properties": {
@@ -224,7 +228,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "address": {
             "type": "object",
             "properties": {}
@@ -244,7 +248,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "name": {
             "type": "string",
             "minLength": -1
@@ -264,7 +268,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "code": {
             "type": "string",
             "pattern": "["
@@ -284,7 +288,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "code": {
             "type": "string",
             "pattern": ""
@@ -304,7 +308,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "code": {
             "type": "string",
             "pattern": 123
@@ -324,7 +328,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "email": {
             "type": "string",
             "format": "phone"
@@ -344,7 +348,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "role": {
             "type": "string",
             "enum": []
@@ -364,10 +368,13 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "role": {
             "type": "string",
-            "enum": ["admin", true]
+            "enum": [
+              "admin",
+              true
+            ]
           }
         }
       },
@@ -384,7 +391,7 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "email": {
             "type": "string",
             "message": 123
@@ -404,10 +411,12 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "email": "string"
         },
-        "invalidResponse": "missing-error"
+        "error": {
+          "response": "missing-error"
+        }
       },
       "responses": [
         {
@@ -422,10 +431,12 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "email": "string"
         },
-        "invalidResponse": ""
+        "error": {
+          "response": ""
+        }
       },
       "responses": [
         {
@@ -440,10 +451,12 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "email": "string"
         },
-        "invalidResponse": 400
+        "error": {
+          "response": 400
+        }
       },
       "responses": [
         {
@@ -458,10 +471,12 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "email": "string"
         },
-        "errorFormat": "object"
+        "error": {
+          "format": "object"
+        }
       },
       "responses": [
         {
@@ -476,11 +491,13 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "email": "string"
         },
-        "errorDetail": {
-          "field": 1
+        "error": {
+          "detail": {
+            "field": 1
+          }
         }
       },
       "responses": [
@@ -496,10 +513,12 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "email": "string"
         },
-        "errorDetail": ""
+        "error": {
+          "detail": ""
+        }
       },
       "responses": [
         {
@@ -514,10 +533,14 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "email": "string"
         },
-        "errorDetail": ["{{message}}"]
+        "error": {
+          "detail": [
+            "{{message}}"
+          ]
+        }
       },
       "responses": [
         {
@@ -532,16 +555,254 @@
     "POST": {
       "nameResponse": "success",
       "request": {
-        "body": {
+        "payload": {
           "email": "string"
         },
-        "errorDetailsKey": ""
+        "error": {
+          "key": ""
+        }
       },
       "responses": [
         {
           "name": "success",
           "statusCode": 200,
           "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-as-invalid": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "as": "xml",
+        "payload": {
+          "email": "string"
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-file-rules-on-string": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "payload": {
+          "avatar": {
+            "type": "string",
+            "maxSize": 10
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-items-on-file": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "payload": {
+          "avatar": {
+            "type": "file",
+            "items": "string"
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-messages-not-object": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "payload": {
+          "email": {
+            "type": "string",
+            "messages": "bad"
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-legacy-body": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "body": {
+          "email": "string"
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-legacy-invalid-response": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "payload": {
+          "email": "string"
+        },
+        "invalidResponse": "bad"
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        },
+        {
+          "name": "bad",
+          "statusCode": 400,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-file-format-invalid": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "payload": {
+          "avatar": {
+            "type": "file",
+            "format": "not-a-mime"
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-raw-payload-format-invalid": {
+    "PUT": {
+      "nameResponse": "success",
+      "request": {
+        "as": "raw",
+        "payload": "not-a-mime"
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-whole-body-missing-as": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "payload": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-text-field-map": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "as": "text",
+        "payload": {
+          "message": "string"
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-file-requires-multipart": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "payload": {
+          "avatar": {
+            "type": "file",
+            "format": "png"
+          }
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/request-error-response-encoding": {
+    "POST": {
+      "nameResponse": "success",
+      "request": {
+        "payload": {
+          "email": "string"
+        },
+        "error": {
+          "response": "bin"
+        }
+      },
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "body": {}
+        },
+        {
+          "name": "bin",
+          "statusCode": 400,
+          "encoding": "base64",
+          "body": "AA=="
         }
       ]
     }

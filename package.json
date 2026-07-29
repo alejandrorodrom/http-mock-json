@@ -1,6 +1,6 @@
 {
   "name": "http-mock-json",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Mock your real API in JSON — status codes, errors, validation, latency, and mutable data — so the frontend can develop and test without waiting on a backend.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -43,6 +43,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "busboy": "^1.6.0",
     "chokidar": "^5.0.0",
     "colorette": "^2.0.20",
     "commander": "^14.0.2",
@@ -53,6 +54,7 @@
     "sisteransi": "^1.0.5"
   },
   "devDependencies": {
+    "@types/busboy": "^1.5.4",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "@types/figlet": "^1.7.0",

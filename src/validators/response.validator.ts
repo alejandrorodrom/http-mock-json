@@ -8,6 +8,7 @@ import {
   isValidNumber
 } from '../scripts/guards.script';
 import { VALID_STATUS_CODES } from '../constants/validation.constant';
+import { RESPONSE_ENCODING_SET } from '../constants/response-encoding.constant';
 import { LocalIssue, ResponseValidationResult } from '../types/validation.type';
 import { validateDelay } from './delay.validator';
 import { validateProxyValue } from './proxy.validator';
@@ -147,13 +148,15 @@ const validateMatch = (
   const hasParams = hasProperty(matchObject, 'params');
   const hasQuery = hasProperty(matchObject, 'query');
   const hasBody = hasProperty(matchObject, 'body');
+  const hasHeaders = hasProperty(matchObject, 'headers');
+  const hasMultipart = hasProperty(matchObject, 'multipart');
   const hasCall = hasProperty(matchObject, 'call');
 
-  if (!hasParams && !hasQuery && !hasBody && !hasCall) {
+  if (!hasParams && !hasQuery && !hasBody && !hasHeaders && !hasMultipart && !hasCall) {
     errors.push({
       endpoint,
       method,
-      message: 'The "match" property must include "params", "query", "body" and/or "call"'
+      message: 'The "match" property must include "params", "query", "body", "headers", "multipart" and/or "call"'
     });
 
     return errors;
@@ -191,6 +194,38 @@ const validateMatch = (
     }
   }
 
+  if (hasHeaders) {
+    if (!isObject(matchObject.headers)) {
+      errors.push({
+        endpoint,
+        method,
+        message: 'The "match.headers" property must be an object'
+      });
+    } else if (isEmpty(matchObject.headers)) {
+      errors.push({
+        endpoint,
+        method,
+        message: 'The "match.headers" property must not be empty'
+      });
+    }
+  }
+
+  if (hasMultipart) {
+    if (!isObject(matchObject.multipart)) {
+      errors.push({
+        endpoint,
+        method,
+        message: 'The "match.multipart" property must be an object'
+      });
+    } else if (isEmpty(matchObject.multipart)) {
+      errors.push({
+        endpoint,
+        method,
+        message: 'The "match.multipart" property must not be empty'
+      });
+    }
+  }
+
   if (hasCall) {
     errors.push(...validateCall(endpoint, method, matchObject.call));
 
@@ -199,11 +234,13 @@ const validateMatch = (
       && !hasParams
       && !hasQuery
       && !hasBody
+      && !hasHeaders
+      && !hasMultipart
     ) {
       errors.push({
         endpoint,
         method,
-        message: 'A "match.call" with only "reset": true must also include "params", "query" and/or "body"'
+        message: 'A "match.call" with only "reset": true must also include "params", "query", "body", "headers" and/or "multipart"'
       });
     }
   }
@@ -304,6 +341,41 @@ export const validateResponse = (
       method,
       message: 'Missing property "body"'
     });
+  }
+
+  if (hasProperty(response, 'encoding')) {
+    if (hasProxy || hasAction) {
+      errors.push({
+        endpoint,
+        method,
+        message: 'The "encoding" property cannot be used together with "proxy" or "action"'
+      });
+    } else if (
+      typeof response.encoding !== 'string'
+      || !RESPONSE_ENCODING_SET.has(response.encoding)
+    ) {
+      errors.push({
+        endpoint,
+        method,
+        message: 'The "encoding" property must be one of: file, base64'
+      });
+    } else if (hasProperty(response, 'body') && typeof response.body !== 'string') {
+      errors.push({
+        endpoint,
+        method,
+        message: `The "body" property must be a string when encoding is "${ response.encoding }"`
+      });
+    } else if (
+      response.encoding === 'file'
+      && typeof response.body === 'string'
+      && response.body.trim() === ''
+    ) {
+      errors.push({
+        endpoint,
+        method,
+        message: 'The "body" property must be a non-empty path string when encoding is "file"'
+      });
+    }
   }
 
   if (isExisting(response.delay)) {

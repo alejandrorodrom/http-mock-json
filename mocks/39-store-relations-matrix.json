@@ -3,136 +3,289 @@
     "store": {
       "id": "nodes-a",
       "key": "id",
-      "seed": [{ "id": 1, "name": "A", "bId": 1 }],
-      "template": { "id": 0, "name": "", "bId": 0 },
+      "seed": [
+        {
+          "id": 1,
+          "name": "A",
+          "bId": 1
+        }
+      ],
+      "template": {
+        "id": 0,
+        "name": "",
+        "bId": 0
+      },
       "relations": {
         "bId": {
           "store": "nodes-b",
-          "join": { "from": "bId", "to": "id" },
+          "join": {
+            "from": "bId",
+            "to": "id"
+          },
           "required": true,
-          "embed": { "as": "b" }
+          "embed": {
+            "as": "b"
+          }
         }
       }
     },
     "GET": {
       "nameResponse": "list",
-      "responses": [{ "name": "list", "statusCode": 200, "action": "list" }]
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
     }
   },
   "api/nodes-a/:id": {
-    "store": { "id": "nodes-a" },
+    "store": {
+      "id": "nodes-a"
+    },
     "GET": {
       "nameResponse": "get",
-      "responses": [{ "name": "get", "statusCode": 200, "action": "get" }]
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
     }
   },
   "api/nodes-b": {
     "store": {
       "id": "nodes-b",
       "key": "id",
-      "seed": [{ "id": 1, "name": "B", "cId": 1 }],
-      "template": { "id": 0, "name": "", "cId": 0 },
+      "seed": [
+        {
+          "id": 1,
+          "name": "B",
+          "cId": 1
+        }
+      ],
+      "template": {
+        "id": 0,
+        "name": "",
+        "cId": 0
+      },
       "relations": {
         "cId": {
           "store": "nodes-c",
-          "join": { "from": "cId", "to": "id" },
+          "join": {
+            "from": "cId",
+            "to": "id"
+          },
           "required": true,
-          "embed": { "as": "c" }
+          "embed": {
+            "as": "c"
+          }
         }
       }
     },
     "GET": {
       "nameResponse": "list",
-      "responses": [{ "name": "list", "statusCode": 200, "action": "list" }]
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
     }
   },
   "api/nodes-b/:id": {
-    "store": { "id": "nodes-b" },
+    "store": {
+      "id": "nodes-b"
+    },
     "GET": {
       "nameResponse": "get",
-      "responses": [{ "name": "get", "statusCode": 200, "action": "get" }]
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
     }
   },
   "api/nodes-c": {
     "store": {
       "id": "nodes-c",
       "key": "id",
-      "seed": [{ "id": 1, "name": "C", "dId": 1 }],
-      "template": { "id": 0, "name": "", "dId": 0 },
+      "seed": [
+        {
+          "id": 1,
+          "name": "C",
+          "dId": 1
+        }
+      ],
+      "template": {
+        "id": 0,
+        "name": "",
+        "dId": 0
+      },
       "relations": {
         "dId": {
           "store": "nodes-d",
-          "join": { "from": "dId", "to": "id" },
+          "join": {
+            "from": "dId",
+            "to": "id"
+          },
           "required": true,
-          "embed": { "as": "d" }
+          "embed": {
+            "as": "d"
+          }
         }
       }
     },
     "GET": {
       "nameResponse": "list",
-      "responses": [{ "name": "list", "statusCode": 200, "action": "list" }]
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
     }
   },
   "api/nodes-c/:id": {
-    "store": { "id": "nodes-c" },
+    "store": {
+      "id": "nodes-c"
+    },
     "GET": {
       "nameResponse": "get",
-      "responses": [{ "name": "get", "statusCode": 200, "action": "get" }]
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
     }
   },
   "api/nodes-d": {
     "store": {
       "id": "nodes-d",
       "key": "id",
-      "seed": [{ "id": 1, "name": "D", "eId": 1 }],
-      "template": { "id": 0, "name": "", "eId": 0 },
+      "seed": [
+        {
+          "id": 1,
+          "name": "D",
+          "eId": 1
+        }
+      ],
+      "template": {
+        "id": 0,
+        "name": "",
+        "eId": 0
+      },
       "relations": {
         "eId": {
           "store": "nodes-e",
-          "join": { "from": "eId", "to": "id" },
+          "join": {
+            "from": "eId",
+            "to": "id"
+          },
           "required": true,
-          "embed": { "as": "e" }
+          "embed": {
+            "as": "e"
+          }
         }
       }
     },
     "GET": {
       "nameResponse": "list",
-      "responses": [{ "name": "list", "statusCode": 200, "action": "list" }]
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
     }
   },
   "api/nodes-d/:id": {
-    "store": { "id": "nodes-d" },
+    "store": {
+      "id": "nodes-d"
+    },
     "GET": {
       "nameResponse": "get",
-      "responses": [{ "name": "get", "statusCode": 200, "action": "get" }]
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
     }
   },
   "api/nodes-e": {
     "store": {
       "id": "nodes-e",
       "key": "id",
-      "seed": [{ "id": 1, "name": "E" }],
-      "template": { "id": 0, "name": "" }
+      "seed": [
+        {
+          "id": 1,
+          "name": "E"
+        }
+      ],
+      "template": {
+        "id": 0,
+        "name": ""
+      }
     },
     "GET": {
       "nameResponse": "list",
-      "responses": [{ "name": "list", "statusCode": 200, "action": "list" }]
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
     }
   },
   "api/nodes-e/:id": {
-    "store": { "id": "nodes-e" },
+    "store": {
+      "id": "nodes-e"
+    },
     "GET": {
       "nameResponse": "get",
-      "responses": [{ "name": "get", "statusCode": 200, "action": "get" }]
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
     }
   },
   "api/:tenantId/matrix-orders": {
     "store": {
       "id": "matrix-orders",
-      "key": { "fields": ["tenantId", "id"] },
+      "key": {
+        "fields": [
+          "tenantId",
+          "id"
+        ]
+      },
       "seed": [
-        { "tenantId": "acme", "id": 1, "status": "open", "total": 10 },
-        { "tenantId": "acme", "id": 2, "status": "closed", "total": 20 }
+        {
+          "tenantId": "acme",
+          "id": 1,
+          "status": "open",
+          "total": 10
+        },
+        {
+          "tenantId": "acme",
+          "id": 2,
+          "status": "closed",
+          "total": 20
+        }
       ],
       "template": {
         "tenantId": "",
@@ -142,12 +295,28 @@
       },
       "persist": true,
       "list": {
-        "page": { "query": "page", "default": 1 },
-        "pageSize": { "default": 10, "max": 50 },
-        "sort": { "fields": ["id", "status"], "default": "id:asc" },
+        "page": {
+          "query": "page",
+          "default": 1
+        },
+        "pageSize": {
+          "default": 10,
+          "max": 50
+        },
+        "sort": {
+          "fields": [
+            "id",
+            "status"
+          ],
+          "default": "id:asc"
+        },
         "filter": {
           "fields": [
-            { "field": "status", "query": "status", "op": "eq" }
+            {
+              "field": "status",
+              "query": "status",
+              "op": "eq"
+            }
           ]
         }
       },
@@ -155,35 +324,73 @@
         "items": {
           "type": "many",
           "store": "matrix-items",
-          "join": { "from": ["tenantId", "orderId"] },
-          "embed": { "as": "items" }
+          "join": {
+            "from": [
+              "tenantId",
+              "orderId"
+            ]
+          },
+          "embed": {
+            "as": "items"
+          }
         }
       }
     },
     "GET": {
       "nameResponse": "list",
-      "responses": [{ "name": "list", "statusCode": 200, "action": "list" }]
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
     },
     "POST": {
       "nameResponse": "create",
-      "responses": [{ "name": "create", "statusCode": 201, "action": "create" }]
+      "responses": [
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
+      ]
     }
   },
   "api/:tenantId/matrix-orders/:id": {
-    "store": { "id": "matrix-orders" },
+    "store": {
+      "id": "matrix-orders"
+    },
     "GET": {
       "nameResponse": "get",
-      "responses": [{ "name": "get", "statusCode": 200, "action": "get" }]
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
     },
     "DELETE": {
       "nameResponse": "remove",
-      "responses": [{ "name": "remove", "statusCode": 204, "action": "delete" }]
+      "responses": [
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
+      ]
     }
   },
   "api/:tenantId/matrix-items": {
     "store": {
       "id": "matrix-items",
-      "key": { "fields": ["tenantId", "id"] },
+      "key": {
+        "fields": [
+          "tenantId",
+          "id"
+        ]
+      },
       "seed": [
         {
           "tenantId": "acme",
@@ -210,19 +417,38 @@
       "unique": {
         "fields": [
           {
-            "fields": ["tenantId", "sku"],
-            "conflict": { "response": "duplicate-sku" }
+            "fields": [
+              "tenantId",
+              "sku"
+            ],
+            "conflict": {
+              "response": "duplicate-sku"
+            }
           }
         ]
       },
       "persist": true,
       "list": {
-        "page": { "query": "page", "default": 1 },
-        "pageSize": { "default": 20, "max": 100 },
+        "page": {
+          "query": "page",
+          "default": 1
+        },
+        "pageSize": {
+          "default": 20,
+          "max": 100
+        },
         "filter": {
           "fields": [
-            { "field": "orderId", "query": "orderId", "op": "eq" },
-            { "field": "sku", "query": "sku", "op": "eq" }
+            {
+              "field": "orderId",
+              "query": "orderId",
+              "op": "eq"
+            },
+            {
+              "field": "sku",
+              "query": "sku",
+              "op": "eq"
+            }
           ]
         }
       },
@@ -230,12 +456,20 @@
         "orderRef": {
           "store": "matrix-orders",
           "join": {
-            "from": ["tenantId", "orderId"],
-            "to": ["tenantId", "id"]
+            "from": [
+              "tenantId",
+              "orderId"
+            ],
+            "to": [
+              "tenantId",
+              "id"
+            ]
           },
           "required": true,
           "onDelete": "cascade",
-          "embed": { "as": "order" },
+          "embed": {
+            "as": "order"
+          },
           "conflict": {
             "response": "invalid-order",
             "detail": {
@@ -249,28 +483,51 @@
     },
     "GET": {
       "nameResponse": "list",
-      "responses": [{ "name": "list", "statusCode": 200, "action": "list" }]
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
     },
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
-          "orderId": { "type": "number", "min": 1 },
-          "sku": { "type": "string", "minLength": 1 },
-          "qty": { "type": "number", "min": 1 }
+        "payload": {
+          "orderId": {
+            "type": "number",
+            "min": 1
+          },
+          "sku": {
+            "type": "string",
+            "minLength": 1
+          },
+          "qty": {
+            "type": "number",
+            "min": 1
+          }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
           "name": "validation-error",
           "statusCode": 422,
-          "body": { "code": "VALIDATION", "message": "Invalid item" }
+          "body": {
+            "code": "VALIDATION",
+            "message": "Invalid item"
+          }
         },
         {
           "name": "duplicate-sku",
           "statusCode": 409,
-          "body": { "code": "DUPLICATE_SKU", "field": "{{field}}" }
+          "body": {
+            "code": "DUPLICATE_SKU",
+            "field": "{{field}}"
+          }
         },
         {
           "name": "invalid-order",
@@ -281,15 +538,27 @@
             "value": "{{value}}"
           }
         },
-        { "name": "create", "statusCode": 201, "action": "create" }
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
       ]
     }
   },
   "api/:tenantId/matrix-items/:id": {
-    "store": { "id": "matrix-items" },
+    "store": {
+      "id": "matrix-items"
+    },
     "GET": {
       "nameResponse": "get",
-      "responses": [{ "name": "get", "statusCode": 200, "action": "get" }]
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
     },
     "PATCH": {
       "nameResponse": "patch",
@@ -297,7 +566,10 @@
         {
           "name": "duplicate-sku",
           "statusCode": 409,
-          "body": { "code": "DUPLICATE_SKU", "field": "{{field}}" }
+          "body": {
+            "code": "DUPLICATE_SKU",
+            "field": "{{field}}"
+          }
         },
         {
           "name": "invalid-order",
@@ -308,12 +580,22 @@
             "value": "{{value}}"
           }
         },
-        { "name": "patch", "statusCode": 200, "action": "patch" }
+        {
+          "name": "patch",
+          "statusCode": 200,
+          "action": "patch"
+        }
       ]
     },
     "DELETE": {
       "nameResponse": "remove",
-      "responses": [{ "name": "remove", "statusCode": 204, "action": "delete" }]
+      "responses": [
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
+      ]
     }
   },
   "api/authors-mx": {
@@ -322,29 +604,56 @@
       "key": "id",
       "softDelete": true,
       "seed": [
-        { "id": 1, "name": "Ada" },
-        { "id": 2, "name": "Grace" }
+        {
+          "id": 1,
+          "name": "Ada"
+        },
+        {
+          "id": 2,
+          "name": "Grace"
+        }
       ],
-      "template": { "id": 0, "name": "" },
+      "template": {
+        "id": 0,
+        "name": ""
+      },
       "relations": {
         "articles": {
           "type": "many",
           "store": "articles-mx",
-          "join": { "from": "authorId" },
-          "embed": { "as": "articles" }
+          "join": {
+            "from": "authorId"
+          },
+          "embed": {
+            "as": "articles"
+          }
         }
       }
     },
     "GET": {
       "nameResponse": "list",
-      "responses": [{ "name": "list", "statusCode": 200, "action": "list" }]
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
     }
   },
   "api/authors-mx/:id": {
-    "store": { "id": "authors-mx" },
+    "store": {
+      "id": "authors-mx"
+    },
     "GET": {
       "nameResponse": "get",
-      "responses": [{ "name": "get", "statusCode": 200, "action": "get" }]
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
     },
     "DELETE": {
       "nameResponse": "remove",
@@ -352,14 +661,26 @@
         {
           "name": "has-articles",
           "statusCode": 409,
-          "body": { "code": "HAS_ARTICLES" }
+          "body": {
+            "code": "HAS_ARTICLES"
+          }
         },
-        { "name": "remove", "statusCode": 204, "action": "delete" }
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
       ]
     },
     "POST": {
       "nameResponse": "restore",
-      "responses": [{ "name": "restore", "statusCode": 200, "action": "restore" }]
+      "responses": [
+        {
+          "name": "restore",
+          "statusCode": 200,
+          "action": "restore"
+        }
+      ]
     }
   },
   "api/articles-mx": {
@@ -401,32 +722,68 @@
         "fields": [
           {
             "field": "slug",
-            "conflict": { "response": "duplicate-slug" }
+            "conflict": {
+              "response": "duplicate-slug"
+            }
           }
         ]
       },
       "list": {
-        "page": { "query": "page", "default": 1 },
-        "pageSize": { "default": 10, "max": 50 },
-        "sort": { "fields": ["id", "status", "title"], "default": "id:asc" },
+        "page": {
+          "query": "page",
+          "default": 1
+        },
+        "pageSize": {
+          "default": 10,
+          "max": 50
+        },
+        "sort": {
+          "fields": [
+            "id",
+            "status",
+            "title"
+          ],
+          "default": "id:asc"
+        },
         "filter": {
           "fields": [
-            { "field": "status", "query": "status", "op": "eq" },
-            { "field": "authorId", "query": "authorId", "op": "eq" }
+            {
+              "field": "status",
+              "query": "status",
+              "op": "eq"
+            },
+            {
+              "field": "authorId",
+              "query": "authorId",
+              "op": "eq"
+            }
           ],
-          "search": { "query": "q", "fields": ["title", "slug"] }
+          "search": {
+            "query": "q",
+            "fields": [
+              "title",
+              "slug"
+            ]
+          }
         }
       },
       "relations": {
         "authorId": {
           "store": "authors-mx",
-          "join": { "from": "authorId", "to": "id" },
+          "join": {
+            "from": "authorId",
+            "to": "id"
+          },
           "required": true,
           "onDelete": {
             "action": "restrict",
-            "conflict": { "response": "has-articles" }
+            "conflict": {
+              "response": "has-articles"
+            }
           },
-          "embed": { "as": "author" },
+          "embed": {
+            "as": "author"
+          },
           "conflict": {
             "response": "invalid-author",
             "detail": {
@@ -440,29 +797,56 @@
     },
     "GET": {
       "nameResponse": "list",
-      "responses": [{ "name": "list", "statusCode": 200, "action": "list" }]
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
     },
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
-          "title": { "type": "string", "minLength": 1 },
-          "slug": { "type": "string", "minLength": 1 },
-          "authorId": { "type": "number", "min": 1 },
-          "status?": { "type": "string", "enum": ["draft", "published"] }
+        "payload": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "slug": {
+            "type": "string",
+            "minLength": 1
+          },
+          "authorId": {
+            "type": "number",
+            "min": 1
+          },
+          "status?": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
+          }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
           "name": "validation-error",
           "statusCode": 422,
-          "body": { "code": "VALIDATION" }
+          "body": {
+            "code": "VALIDATION"
+          }
         },
         {
           "name": "duplicate-slug",
           "statusCode": 409,
-          "body": { "code": "DUPLICATE_SLUG" }
+          "body": {
+            "code": "DUPLICATE_SLUG"
+          }
         },
         {
           "name": "invalid-author",
@@ -473,15 +857,27 @@
             "value": "{{value}}"
           }
         },
-        { "name": "create", "statusCode": 201, "action": "create" }
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
       ]
     }
   },
   "api/articles-mx/:id": {
-    "store": { "id": "articles-mx" },
+    "store": {
+      "id": "articles-mx"
+    },
     "GET": {
       "nameResponse": "get",
-      "responses": [{ "name": "get", "statusCode": 200, "action": "get" }]
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
+      ]
     },
     "PUT": {
       "nameResponse": "update",
@@ -489,7 +885,9 @@
         {
           "name": "duplicate-slug",
           "statusCode": 409,
-          "body": { "code": "DUPLICATE_SLUG" }
+          "body": {
+            "code": "DUPLICATE_SLUG"
+          }
         },
         {
           "name": "invalid-author",
@@ -500,7 +898,11 @@
             "value": "{{value}}"
           }
         },
-        { "name": "update", "statusCode": 200, "action": "update" }
+        {
+          "name": "update",
+          "statusCode": 200,
+          "action": "update"
+        }
       ]
     },
     "PATCH": {
@@ -509,7 +911,9 @@
         {
           "name": "duplicate-slug",
           "statusCode": 409,
-          "body": { "code": "DUPLICATE_SLUG" }
+          "body": {
+            "code": "DUPLICATE_SLUG"
+          }
         },
         {
           "name": "invalid-author",
@@ -520,12 +924,22 @@
             "value": "{{value}}"
           }
         },
-        { "name": "patch", "statusCode": 200, "action": "patch" }
+        {
+          "name": "patch",
+          "statusCode": 200,
+          "action": "patch"
+        }
       ]
     },
     "DELETE": {
       "nameResponse": "remove",
-      "responses": [{ "name": "remove", "statusCode": 204, "action": "delete" }]
+      "responses": [
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
+      ]
     },
     "POST": {
       "nameResponse": "restore",
@@ -533,7 +947,9 @@
         {
           "name": "duplicate-slug",
           "statusCode": 409,
-          "body": { "code": "DUPLICATE_SLUG" }
+          "body": {
+            "code": "DUPLICATE_SLUG"
+          }
         },
         {
           "name": "invalid-author",
@@ -544,7 +960,11 @@
             "value": "{{value}}"
           }
         },
-        { "name": "restore", "statusCode": 200, "action": "restore" }
+        {
+          "name": "restore",
+          "statusCode": 200,
+          "action": "restore"
+        }
       ]
     }
   }

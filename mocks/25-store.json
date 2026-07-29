@@ -3,7 +3,10 @@
     "store": {
       "id": "users",
       "key": {
-        "fields": ["tenantId", "id"],
+        "fields": [
+          "tenantId",
+          "id"
+        ],
         "conflict": {
           "response": "duplicate-key"
         }
@@ -56,12 +59,23 @@
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
-          "name": { "type": "string", "minLength": 2 },
-          "email": { "type": "string", "format": "email" },
-          "username": { "type": "string", "minLength": 3 }
+        "payload": {
+          "name": {
+            "type": "string",
+            "minLength": 2
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "username": {
+            "type": "string",
+            "minLength": 3
+          }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -98,7 +112,9 @@
     }
   },
   "api/:tenantId/users/:id": {
-    "store": { "id": "users" },
+    "store": {
+      "id": "users"
+    },
     "GET": {
       "nameResponse": "get",
       "responses": [
@@ -184,7 +200,9 @@
         "title": "",
         "done": false
       },
-      "unique": ["title"]
+      "unique": [
+        "title"
+      ]
     },
     "GET": {
       "nameResponse": "list",
@@ -208,7 +226,9 @@
     }
   },
   "api/notes/:id": {
-    "store": { "id": "notes" },
+    "store": {
+      "id": "notes"
+    },
     "GET": {
       "nameResponse": "get",
       "responses": [

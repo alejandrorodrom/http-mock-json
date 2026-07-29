@@ -1,6 +1,7 @@
 import { JsonValue } from '../types/json.type';
 import { MethodProxyValue, ProxyValue } from '../types/proxy.type';
 import { MockRequest, RawMockRequest } from '../types/request.type';
+import { ResponseEncoding } from '../types/response-encoding.type';
 import { StoreAction } from '../types/store.type';
 
 export interface MockMatchCallBy {
@@ -20,6 +21,8 @@ export interface MockMatch {
   params?: Record<string, JsonValue>;
   query?: Record<string, JsonValue>;
   body?: JsonValue;
+  headers?: Record<string, JsonValue>;
+  multipart?: Record<string, JsonValue>;
   call?: number | MockMatchCall;
 }
 
@@ -28,6 +31,7 @@ export interface MockResponseConfig {
   status: number;
   headers: Record<string, string>;
   body: JsonValue;
+  encoding?: ResponseEncoding;
   delay?: number;
   match?: MockMatch;
   proxy?: ProxyValue;
@@ -51,6 +55,7 @@ export interface RawMockResponse {
   statusCode: string | number;
   headers?: Record<string, string>;
   body?: unknown;
+  encoding?: ResponseEncoding;
   delay?: number;
   match?: MockMatch;
   proxy?: ProxyValue;

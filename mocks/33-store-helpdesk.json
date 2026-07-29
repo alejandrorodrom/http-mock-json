@@ -3,7 +3,10 @@
     "store": {
       "id": "helpdesk-tickets",
       "key": {
-        "fields": ["tenantId", "id"],
+        "fields": [
+          "tenantId",
+          "id"
+        ],
         "conflict": {
           "response": "duplicate-key"
         }
@@ -17,7 +20,10 @@
           "status": "open",
           "assignee": "alice@acme.com",
           "createdAt": 1700000001,
-          "channel": { "source": "email", "sla": 4 }
+          "channel": {
+            "source": "email",
+            "sla": 4
+          }
         },
         {
           "tenantId": "acme",
@@ -27,7 +33,10 @@
           "status": "pending",
           "assignee": "bob@acme.com",
           "createdAt": 1700000002,
-          "channel": { "source": "chat", "sla": 8 }
+          "channel": {
+            "source": "chat",
+            "sla": 8
+          }
         },
         {
           "tenantId": "acme",
@@ -37,7 +46,10 @@
           "status": "open",
           "assignee": "alice@acme.com",
           "createdAt": 1700000003,
-          "channel": { "source": "portal", "sla": 2 }
+          "channel": {
+            "source": "portal",
+            "sla": 2
+          }
         },
         {
           "tenantId": "acme",
@@ -47,7 +59,10 @@
           "status": "closed",
           "assignee": "carol@acme.com",
           "createdAt": 1700000004,
-          "channel": { "source": "email", "sla": 24 }
+          "channel": {
+            "source": "email",
+            "sla": 24
+          }
         },
         {
           "tenantId": "globex",
@@ -57,7 +72,10 @@
           "status": "open",
           "assignee": "dan@globex.com",
           "createdAt": 1700000101,
-          "channel": { "source": "email", "sla": 4 }
+          "channel": {
+            "source": "email",
+            "sla": 4
+          }
         },
         {
           "tenantId": "globex",
@@ -67,7 +85,10 @@
           "status": "open",
           "assignee": "eve@globex.com",
           "createdAt": 1700000102,
-          "channel": { "source": "api", "sla": 1 }
+          "channel": {
+            "source": "api",
+            "sla": 1
+          }
         }
       ],
       "template": {
@@ -78,7 +99,10 @@
         "status": "open",
         "assignee": "",
         "createdAt": 0,
-        "channel": { "source": "email", "sla": 8 }
+        "channel": {
+          "source": "email",
+          "sla": 8
+        }
       },
       "unique": {
         "fields": [
@@ -103,38 +127,87 @@
       },
       "persist": true,
       "list": {
-        "page": { "query": "page", "default": 1 },
+        "page": {
+          "query": "page",
+          "default": 1
+        },
         "pageSize": {
           "query": "pageSize",
           "default": 2,
           "max": 25,
-          "aliases": ["limit"]
+          "aliases": [
+            "limit"
+          ]
         },
         "sort": {
           "query": "sort",
           "default": "-createdAt",
-          "fields": ["id", "priority", "createdAt", "status"]
+          "fields": [
+            "id",
+            "priority",
+            "createdAt",
+            "status"
+          ]
         },
-        "order": { "query": "order", "default": "desc" },
+        "order": {
+          "query": "order",
+          "default": "desc"
+        },
         "filter": {
           "fields": [
             "status",
             "priority",
             "assignee",
-            { "field": "createdAt", "op": "gte", "query": "since" },
-            { "field": "createdAt", "op": "lte", "query": "until" },
-            { "field": "channel.sla", "op": "lt", "query": "maxSla" },
-            { "field": "status", "op": "ne", "query": "excludeStatus" },
-            { "field": "priority", "op": "in", "query": "priorities" },
-            { "field": "channel.source", "op": "eq", "query": "channel" }
+            {
+              "field": "createdAt",
+              "op": "gte",
+              "query": "since"
+            },
+            {
+              "field": "createdAt",
+              "op": "lte",
+              "query": "until"
+            },
+            {
+              "field": "channel.sla",
+              "op": "lt",
+              "query": "maxSla"
+            },
+            {
+              "field": "status",
+              "op": "ne",
+              "query": "excludeStatus"
+            },
+            {
+              "field": "priority",
+              "op": "in",
+              "query": "priorities"
+            },
+            {
+              "field": "channel.source",
+              "op": "eq",
+              "query": "channel"
+            }
           ],
           "or": [
-            { "field": "assignee", "op": "eq", "query": "anyAssignee" },
-            { "field": "priority", "op": "eq", "query": "anyPriority" }
+            {
+              "field": "assignee",
+              "op": "eq",
+              "query": "anyAssignee"
+            },
+            {
+              "field": "priority",
+              "op": "eq",
+              "query": "anyPriority"
+            }
           ],
           "search": {
             "query": "q",
-            "fields": ["subject", "assignee", "channel.source"]
+            "fields": [
+              "subject",
+              "assignee",
+              "channel.source"
+            ]
           }
         }
       }
@@ -145,7 +218,11 @@
         {
           "name": "forbidden-tenant",
           "statusCode": 403,
-          "match": { "params": { "tenantId": "blocked" } },
+          "match": {
+            "params": {
+              "tenantId": "blocked"
+            }
+          },
           "body": {
             "code": "TENANT_FORBIDDEN",
             "message": "Your account cannot access this tenant"
@@ -154,7 +231,11 @@
         {
           "name": "unauthorized",
           "statusCode": 401,
-          "match": { "query": { "auth": "missing" } },
+          "match": {
+            "query": {
+              "auth": "missing"
+            }
+          },
           "headers": {
             "WWW-Authenticate": "Bearer"
           },
@@ -191,32 +272,58 @@
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
-          "subject": { "type": "string", "minLength": 5, "maxLength": 120 },
+        "payload": {
+          "subject": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 120
+          },
           "priority": {
             "type": "string",
-            "enum": ["low", "medium", "high"]
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
           },
-          "assignee": { "type": "string", "format": "email" },
+          "assignee": {
+            "type": "string",
+            "format": "email"
+          },
           "status?": {
             "type": "string",
-            "enum": ["open", "pending", "closed"]
+            "enum": [
+              "open",
+              "pending",
+              "closed"
+            ]
           },
-          "createdAt?": { "type": "number", "min": 1 }
+          "createdAt?": {
+            "type": "number",
+            "min": 1
+          }
         },
-        "invalidResponse": "validation-error",
-        "errorFormat": "array",
-        "errorDetail": {
-          "field": "{{path}}",
-          "message": "{{message}}"
+        "error": {
+          "response": "validation-error",
+          "format": "array",
+          "detail": {
+            "field": "{{path}}",
+            "message": "{{message}}"
+          }
         }
       },
       "responses": [
         {
           "name": "forbidden-tenant",
           "statusCode": 403,
-          "match": { "params": { "tenantId": "blocked" } },
-          "body": { "code": "TENANT_FORBIDDEN" }
+          "match": {
+            "params": {
+              "tenantId": "blocked"
+            }
+          },
+          "body": {
+            "code": "TENANT_FORBIDDEN"
+          }
         },
         {
           "name": "validation-error",
@@ -246,7 +353,9 @@
         {
           "name": "duplicate-key",
           "statusCode": 409,
-          "body": { "code": "DUPLICATE_KEY" }
+          "body": {
+            "code": "DUPLICATE_KEY"
+          }
         },
         {
           "name": "create",
@@ -260,15 +369,23 @@
     }
   },
   "api/tenants/:tenantId/tickets/:id": {
-    "store": { "id": "helpdesk-tickets" },
+    "store": {
+      "id": "helpdesk-tickets"
+    },
     "GET": {
       "nameResponse": "get",
       "responses": [
         {
           "name": "forbidden-tenant",
           "statusCode": 403,
-          "match": { "params": { "tenantId": "blocked" } },
-          "body": { "code": "TENANT_FORBIDDEN" }
+          "match": {
+            "params": {
+              "tenantId": "blocked"
+            }
+          },
+          "body": {
+            "code": "TENANT_FORBIDDEN"
+          }
         },
         {
           "name": "get",
@@ -280,18 +397,31 @@
     "PATCH": {
       "nameResponse": "patch",
       "request": {
-        "body": {
+        "payload": {
           "status?": {
             "type": "string",
-            "enum": ["open", "pending", "closed"]
+            "enum": [
+              "open",
+              "pending",
+              "closed"
+            ]
           },
           "priority?": {
             "type": "string",
-            "enum": ["low", "medium", "high"]
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
           },
-          "assignee?": { "type": "string", "format": "email" }
+          "assignee?": {
+            "type": "string",
+            "format": "email"
+          }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -322,7 +452,9 @@
         {
           "name": "duplicate-key",
           "statusCode": 409,
-          "body": { "code": "DUPLICATE_KEY" }
+          "body": {
+            "code": "DUPLICATE_KEY"
+          }
         },
         {
           "name": "patch",
@@ -337,8 +469,14 @@
         {
           "name": "forbidden-tenant",
           "statusCode": 403,
-          "match": { "params": { "tenantId": "blocked" } },
-          "body": { "code": "TENANT_FORBIDDEN" }
+          "match": {
+            "params": {
+              "tenantId": "blocked"
+            }
+          },
+          "body": {
+            "code": "TENANT_FORBIDDEN"
+          }
         },
         {
           "name": "remove",
@@ -352,7 +490,10 @@
     "store": {
       "id": "helpdesk-activity",
       "key": {
-        "fields": ["tenantId", "id"]
+        "fields": [
+          "tenantId",
+          "id"
+        ]
       },
       "seed": [
         {
@@ -407,19 +548,34 @@
       "list": {
         "cursor": {
           "query": "starting_after",
-          "limit": { "query": "limit", "default": 2, "max": 20 }
+          "limit": {
+            "query": "limit",
+            "default": 2,
+            "max": 20
+          }
         },
         "sort": {
           "query": "sort",
           "default": "-createdAt",
-          "fields": ["id", "createdAt", "score"]
+          "fields": [
+            "id",
+            "createdAt",
+            "score"
+          ]
         },
-        "order": { "query": "order", "default": "desc" },
+        "order": {
+          "query": "order",
+          "default": "desc"
+        },
         "filter": {
-          "fields": ["type"],
+          "fields": [
+            "type"
+          ],
           "search": {
             "query": "q",
-            "fields": ["message"]
+            "fields": [
+              "message"
+            ]
           }
         }
       }
@@ -430,8 +586,14 @@
         {
           "name": "forbidden-tenant",
           "statusCode": 403,
-          "match": { "params": { "tenantId": "blocked" } },
-          "body": { "code": "TENANT_FORBIDDEN" }
+          "match": {
+            "params": {
+              "tenantId": "blocked"
+            }
+          },
+          "body": {
+            "code": "TENANT_FORBIDDEN"
+          }
         },
         {
           "name": "feed",
@@ -454,16 +616,33 @@
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
+        "payload": {
           "type": {
             "type": "string",
-            "enum": ["comment", "status", "assign"]
+            "enum": [
+              "comment",
+              "status",
+              "assign"
+            ]
           },
-          "message": { "type": "string", "minLength": 3, "maxLength": 200 },
-          "score?": { "type": "number", "min": 0, "max": 100 },
-          "createdAt?": { "type": "number", "min": 1 }
+          "message": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 200
+          },
+          "score?": {
+            "type": "number",
+            "min": 0,
+            "max": 100
+          },
+          "createdAt?": {
+            "type": "number",
+            "min": 1
+          }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {

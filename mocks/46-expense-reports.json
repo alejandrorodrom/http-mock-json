@@ -1,0 +1,387 @@
+{
+  "api/expenses": {
+    "store": {
+      "id": "expenses",
+      "key": "id",
+      "softDelete": true,
+      "unique": {
+        "fields": ["reference"],
+        "conflict": {
+          "response": "duplicate-reference"
+        }
+      },
+      "seed": [
+        {
+          "id": 1,
+          "reference": "EXP-100",
+          "title": "Client dinner",
+          "category": "meals",
+          "amount": 86.5,
+          "currency": "USD",
+          "status": "draft"
+        }
+      ],
+      "template": {
+        "id": 0,
+        "reference": "",
+        "title": "",
+        "category": "travel",
+        "amount": 0,
+        "currency": "USD",
+        "status": "draft"
+      },
+      "list": {
+        "page": { "query": "page", "default": 1 },
+        "pageSize": {
+          "query": "pageSize",
+          "default": 10,
+          "max": 50
+        },
+        "sort": {
+          "query": "sort",
+          "default": "id",
+          "fields": ["id", "amount", "reference", "status"]
+        },
+        "order": { "query": "order", "default": "asc" },
+        "filter": {
+          "fields": [
+            "status",
+            "category",
+            { "field": "amount", "op": "gte", "query": "minAmount" },
+            { "field": "amount", "op": "lte", "query": "maxAmount" }
+          ],
+          "search": {
+            "query": "q",
+            "fields": ["title", "reference"]
+          }
+        }
+      },
+      "notFound": {
+        "response": "missing-expense"
+      }
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list",
+          "headers": {
+            "X-Total-Count": "{{total}}"
+          },
+          "body": {
+            "data": "{{items}}",
+            "page": "{{page}}",
+            "pageSize": "{{pageSize}}",
+            "total": "{{total}}"
+          }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "create",
+      "request": {
+        "as": "json",
+        "payload": {
+          "reference": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 32
+          },
+          "title": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 120
+          },
+          "category": {
+            "type": "string",
+            "enum": ["travel", "meals", "equipment", "other"]
+          },
+          "amount": {
+            "type": "number",
+            "min": 0.01
+          },
+          "currency?": {
+            "type": "string",
+            "enum": ["USD", "EUR", "MXN"]
+          }
+        },
+        "headers": {
+          "x-tenant": {
+            "type": "string",
+            "minLength": 2
+          }
+        },
+        "error": {
+          "response": "validation-error",
+          "format": "map",
+          "key": "fields"
+        }
+      },
+      "responses": [
+        {
+          "name": "duplicate-reference",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE_REFERENCE",
+            "conflicts": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "message": "Expense validation failed",
+            "fields": {}
+          }
+        }
+      ]
+    }
+  },
+  "api/expenses/:id": {
+    "store": { "id": "expenses" },
+    "GET": {
+      "nameResponse": "get",
+      "responses": [
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        },
+        {
+          "name": "missing-expense",
+          "statusCode": 404,
+          "body": {
+            "code": "EXPENSE_NOT_FOUND"
+          }
+        }
+      ]
+    },
+    "PATCH": {
+      "nameResponse": "patch",
+      "request": {
+        "as": "json",
+        "payload": {
+          "status?": {
+            "type": "string",
+            "enum": ["draft", "submitted", "approved", "rejected"]
+          },
+          "title?": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 120
+          },
+          "amount?": {
+            "type": "number",
+            "min": 0.01
+          }
+        },
+        "error": {
+          "response": "validation-error",
+          "format": "map",
+          "key": "fields"
+        }
+      },
+      "responses": [
+        {
+          "name": "duplicate-reference",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE_REFERENCE",
+            "conflicts": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "patch",
+          "statusCode": 200,
+          "action": "patch"
+        },
+        {
+          "name": "missing-expense",
+          "statusCode": 404,
+          "body": {
+            "code": "EXPENSE_NOT_FOUND"
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "message": "Expense patch validation failed",
+            "fields": {}
+          }
+        }
+      ]
+    },
+    "DELETE": {
+      "nameResponse": "remove",
+      "responses": [
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        },
+        {
+          "name": "missing-expense",
+          "statusCode": 404,
+          "body": {
+            "code": "EXPENSE_NOT_FOUND"
+          }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "restore",
+      "responses": [
+        {
+          "name": "duplicate-reference",
+          "statusCode": 409,
+          "body": {
+            "code": "DUPLICATE_REFERENCE",
+            "conflicts": "{{conflicts}}"
+          }
+        },
+        {
+          "name": "restore",
+          "statusCode": 200,
+          "action": "restore"
+        },
+        {
+          "name": "missing-expense",
+          "statusCode": 404,
+          "body": {
+            "code": "EXPENSE_NOT_FOUND"
+          }
+        }
+      ]
+    }
+  },
+  "api/expenses/:id/receipts": {
+    "POST": {
+      "nameResponse": "uploaded",
+      "delay": 40,
+      "request": {
+        "as": "multipart",
+        "payload": {
+          "note?": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "receipt": {
+            "type": "file",
+            "format": "image/*",
+            "minItems": 1,
+            "maxItems": 1,
+            "maxSize": 2000000,
+            "requireFilename": true,
+            "messages": {
+              "minItems": "Attach a receipt image",
+              "format": "Receipt must be an image"
+            }
+          }
+        },
+        "headers": {
+          "x-tenant": {
+            "type": "string",
+            "minLength": 2
+          }
+        },
+        "error": {
+          "response": "validation-error",
+          "format": "map",
+          "key": "fields"
+        }
+      },
+      "responses": [
+        {
+          "name": "rate-limited",
+          "statusCode": 429,
+          "delay": 80,
+          "match": {
+            "call": {
+              "index": 3,
+              "by": {
+                "params": "id"
+              }
+            }
+          },
+          "headers": {
+            "Retry-After": "1",
+            "X-RateLimit-Limit": "2"
+          },
+          "body": {
+            "code": "RECEIPT_RATE_LIMIT",
+            "message": "At most 2 receipt uploads per expense in this mock window"
+          }
+        },
+        {
+          "name": "ocr-processing",
+          "statusCode": 202,
+          "delay": 100,
+          "match": {
+            "multipart": {
+              "note": "ocr"
+            }
+          },
+          "body": {
+            "status": "processing",
+            "receiptId": "rcpt_ocr",
+            "message": "OCR started; poll preview when ready"
+          }
+        },
+        {
+          "name": "uploaded",
+          "statusCode": 201,
+          "body": {
+            "receiptId": "rcpt_1",
+            "status": "stored"
+          }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": {
+            "message": "Receipt validation failed",
+            "fields": {}
+          }
+        }
+      ]
+    }
+  },
+  "api/expenses/:id/receipts/preview": {
+    "GET": {
+      "nameResponse": "png",
+      "responses": [
+        {
+          "name": "base64",
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "image/png"
+          },
+          "encoding": "base64",
+          "body": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+          "match": {
+            "query": {
+              "format": "base64"
+            }
+          }
+        },
+        {
+          "name": "png",
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "image/png"
+          },
+          "encoding": "file",
+          "body": "assets/sample.png"
+        }
+      ]
+    }
+  }
+}

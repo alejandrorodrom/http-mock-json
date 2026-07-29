@@ -5,6 +5,7 @@ import {
   MockMatchCallBy,
   MockResponseConfig
 } from '../interfaces/data.interface';
+import { detectRequestAs, headerMap } from './content-type.script';
 import { isObject } from './guards.script';
 import { JsonValue } from '../types/json.type';
 
@@ -71,6 +72,29 @@ const resolveByScope = (
   }
 
   return String(value);
+};
+
+const resolveRequestBody = (req: Request): unknown => {
+  const contentType = typeof req.headers?.['content-type'] === 'string'
+    ? req.headers['content-type']
+    : undefined;
+  const detected = detectRequestAs(contentType);
+
+  if (detected === 'text' && req.rawBody) {
+    return req.rawBody.toString('utf8');
+  }
+
+  const isRawView = detected === 'raw'
+    || (detected === null && Boolean(contentType));
+
+  if (isRawView && req.rawBody) {
+    return {
+      size: req.rawBody.length,
+      mimeType: contentType ? contentType.split(';')[0].trim() : null
+    };
+  }
+
+  return req.body;
 };
 
 const matchesPartial = (expected: unknown, actual: unknown): boolean => {
@@ -143,6 +167,52 @@ const matchesQuery = (
   });
 };
 
+const matchesHeaders = (
+  expected: Record<string, JsonValue>,
+  req: Request
+): boolean => {
+  const headers = headerMap(req);
+
+  return Object.entries(expected).every(([key, value]) => {
+    const actual = headers[key.toLowerCase()];
+
+    if (actual === undefined) {
+      return false;
+    }
+
+    return matchesPartial(value, actual);
+  });
+};
+
+const matchesMultipart = (
+  expected: Record<string, JsonValue>,
+  req: Request
+): boolean => {
+  const parsed = req.multipart;
+
+  if (!parsed) {
+    return false;
+  }
+
+  return Object.entries(expected).every(([key, value]) => {
+    if (parsed.files[key] && parsed.files[key].length > 0) {
+      const file = parsed.files[key][0];
+      const fileView = {
+        filename: file.filename ?? null,
+        mimeType: file.mimeType ?? null,
+        size: file.buffer.length
+      };
+      return matchesPartial(value, fileView);
+    }
+
+    if (key in parsed.fields) {
+      return matchesPartial(value, parsed.fields[key]);
+    }
+
+    return false;
+  });
+};
+
 export const matchesRequest = (
   match: MockMatch,
   req: Request,
@@ -151,9 +221,11 @@ export const matchesRequest = (
   const hasParams = isObject(match.params);
   const hasQuery = isObject(match.query);
   const hasBody = match.body !== undefined;
+  const hasHeaders = isObject(match.headers);
+  const hasMultipart = isObject(match.multipart);
   const hasCall = match.call !== undefined;
 
-  if (!hasParams && !hasQuery && !hasBody && !hasCall) {
+  if (!hasParams && !hasQuery && !hasBody && !hasHeaders && !hasMultipart && !hasCall) {
     return false;
   }
 
@@ -175,7 +247,15 @@ export const matchesRequest = (
     return false;
   }
 
-  if (hasBody && !matchesPartial(match.body, req.body)) {
+  if (hasBody && !matchesPartial(match.body, resolveRequestBody(req))) {
+    return false;
+  }
+
+  if (hasHeaders && !matchesHeaders(match.headers as Record<string, JsonValue>, req)) {
+    return false;
+  }
+
+  if (hasMultipart && !matchesMultipart(match.multipart as Record<string, JsonValue>, req)) {
     return false;
   }
 

@@ -1,0 +1,63 @@
+{
+  "api/encoding/file": {
+    "GET": {
+      "nameResponse": "png",
+      "responses": [
+        {
+          "name": "png",
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "image/png"
+          },
+          "encoding": "file",
+          "body": "assets/sample.png"
+        }
+      ]
+    }
+  },
+  "api/encoding/base64": {
+    "GET": {
+      "nameResponse": "bytes",
+      "responses": [
+        {
+          "name": "bytes",
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "application/octet-stream"
+          },
+          "encoding": "base64",
+          "body": "aGVsbG8="
+        }
+      ]
+    }
+  },
+  "api/encoding/missing": {
+    "GET": {
+      "nameResponse": "gone",
+      "responses": [
+        {
+          "name": "gone",
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "image/png"
+          },
+          "encoding": "file",
+          "body": "assets/does-not-exist.png"
+        }
+      ]
+    }
+  },
+  "api/encoding/escape": {
+    "GET": {
+      "nameResponse": "bad",
+      "responses": [
+        {
+          "name": "bad",
+          "statusCode": 200,
+          "encoding": "file",
+          "body": "../outside.png"
+        }
+      ]
+    }
+  }
+}

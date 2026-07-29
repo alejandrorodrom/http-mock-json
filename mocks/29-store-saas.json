@@ -3,7 +3,10 @@
     "store": {
       "id": "projects",
       "key": {
-        "fields": ["orgId", "id"],
+        "fields": [
+          "orgId",
+          "id"
+        ],
         "conflict": {
           "response": "duplicate-key"
         }
@@ -55,7 +58,11 @@
         {
           "name": "forbidden-org",
           "statusCode": 403,
-          "match": { "params": { "orgId": "org_blocked" } },
+          "match": {
+            "params": {
+              "orgId": "org_blocked"
+            }
+          },
           "body": {
             "code": "ORG_FORBIDDEN",
             "message": "You cannot access this organization"
@@ -64,13 +71,21 @@
         {
           "name": "board-view",
           "statusCode": 200,
-          "match": { "query": { "view": "board" } },
+          "match": {
+            "query": {
+              "view": "board"
+            }
+          },
           "headers": {
             "X-View": "board"
           },
           "body": {
             "view": "board",
-            "columns": ["backlog", "doing", "done"],
+            "columns": [
+              "backlog",
+              "doing",
+              "done"
+            ],
             "source": "static-match"
           }
         },
@@ -87,29 +102,48 @@
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
-          "name": { "type": "string", "minLength": 3, "maxLength": 80 },
+        "payload": {
+          "name": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 80
+          },
           "slug": {
             "type": "string",
             "minLength": 2,
             "maxLength": 40,
             "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
-          "ownerEmail": { "type": "string", "format": "email" },
-          "status?": { "type": "string", "enum": ["active", "paused"] }
+          "ownerEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "status?": {
+            "type": "string",
+            "enum": [
+              "active",
+              "paused"
+            ]
+          }
         },
-        "invalidResponse": "validation-error",
-        "errorFormat": "array",
-        "errorDetail": {
-          "field": "{{path}}",
-          "message": "{{message}}"
+        "error": {
+          "response": "validation-error",
+          "format": "array",
+          "detail": {
+            "field": "{{path}}",
+            "message": "{{message}}"
+          }
         }
       },
       "responses": [
         {
           "name": "forbidden-org",
           "statusCode": 403,
-          "match": { "params": { "orgId": "org_blocked" } },
+          "match": {
+            "params": {
+              "orgId": "org_blocked"
+            }
+          },
           "body": {
             "code": "ORG_FORBIDDEN",
             "message": "You cannot create projects in this organization"
@@ -160,15 +194,23 @@
     }
   },
   "api/orgs/:orgId/projects/:id": {
-    "store": { "id": "projects" },
+    "store": {
+      "id": "projects"
+    },
     "GET": {
       "nameResponse": "get",
       "responses": [
         {
           "name": "forbidden-org",
           "statusCode": 403,
-          "match": { "params": { "orgId": "org_blocked" } },
-          "body": { "code": "ORG_FORBIDDEN" }
+          "match": {
+            "params": {
+              "orgId": "org_blocked"
+            }
+          },
+          "body": {
+            "code": "ORG_FORBIDDEN"
+          }
         },
         {
           "name": "get",
@@ -183,12 +225,28 @@
     "PATCH": {
       "nameResponse": "patch",
       "request": {
-        "body": {
-          "name?": { "type": "string", "minLength": 3, "maxLength": 80 },
-          "status?": { "type": "string", "enum": ["active", "paused", "archived"] },
-          "ownerEmail?": { "type": "string", "format": "email" }
+        "payload": {
+          "name?": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 80
+          },
+          "status?": {
+            "type": "string",
+            "enum": [
+              "active",
+              "paused",
+              "archived"
+            ]
+          },
+          "ownerEmail?": {
+            "type": "string",
+            "format": "email"
+          }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -219,12 +277,18 @@
         {
           "name": "duplicate-key",
           "statusCode": 409,
-          "body": { "code": "DUPLICATE_KEY" }
+          "body": {
+            "code": "DUPLICATE_KEY"
+          }
         },
         {
           "name": "archived-static",
           "statusCode": 409,
-          "match": { "body": { "status": "archived" } },
+          "match": {
+            "body": {
+              "status": "archived"
+            }
+          },
           "body": {
             "code": "ARCHIVE_VIA_STORE_DISABLED",
             "message": "Use the archive endpoint instead of PATCH status=archived"
@@ -243,8 +307,14 @@
         {
           "name": "forbidden-org",
           "statusCode": 403,
-          "match": { "params": { "orgId": "org_blocked" } },
-          "body": { "code": "ORG_FORBIDDEN" }
+          "match": {
+            "params": {
+              "orgId": "org_blocked"
+            }
+          },
+          "body": {
+            "code": "ORG_FORBIDDEN"
+          }
         },
         {
           "name": "remove",
@@ -258,7 +328,11 @@
     "store": {
       "id": "tasks",
       "key": {
-        "fields": ["orgId", "projectId", "id"]
+        "fields": [
+          "orgId",
+          "projectId",
+          "id"
+        ]
       },
       "seed": [
         {
@@ -278,7 +352,9 @@
         "status": "todo",
         "assignee": ""
       },
-      "unique": ["title"],
+      "unique": [
+        "title"
+      ],
       "persist": true
     },
     "GET": {
@@ -294,12 +370,28 @@
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
-          "title": { "type": "string", "minLength": 2, "maxLength": 120 },
-          "assignee": { "type": "string", "format": "email" },
-          "status?": { "type": "string", "enum": ["todo", "doing", "done"] }
+        "payload": {
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "assignee": {
+            "type": "string",
+            "format": "email"
+          },
+          "status?": {
+            "type": "string",
+            "enum": [
+              "todo",
+              "doing",
+              "done"
+            ]
+          }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -320,7 +412,9 @@
     }
   },
   "api/orgs/:orgId/projects/:projectId/tasks/:id": {
-    "store": { "id": "tasks" },
+    "store": {
+      "id": "tasks"
+    },
     "GET": {
       "nameResponse": "get",
       "responses": [
@@ -334,12 +428,28 @@
     "PATCH": {
       "nameResponse": "patch",
       "request": {
-        "body": {
-          "title?": { "type": "string", "minLength": 2, "maxLength": 120 },
-          "status?": { "type": "string", "enum": ["todo", "doing", "done"] },
-          "assignee?": { "type": "string", "format": "email" }
+        "payload": {
+          "title?": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "status?": {
+            "type": "string",
+            "enum": [
+              "todo",
+              "doing",
+              "done"
+            ]
+          },
+          "assignee?": {
+            "type": "string",
+            "format": "email"
+          }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {

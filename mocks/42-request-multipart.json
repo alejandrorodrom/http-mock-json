@@ -1,0 +1,249 @@
+{
+  "api/upload": {
+    "POST": {
+      "nameResponse": "created",
+      "request": {
+        "as": "multipart",
+        "payload": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "avatar": {
+            "type": "file",
+            "format": "png",
+            "maxSize": 1024,
+            "requireFilename": true,
+            "pattern": "\\.png$"
+          }
+        },
+        "error": {
+          "response": "invalid",
+          "format": "array"
+        }
+      },
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": 201,
+          "body": {
+            "ok": true
+          }
+        },
+        {
+          "name": "invalid",
+          "statusCode": 400,
+          "body": {
+            "message": "Invalid upload"
+          }
+        },
+        {
+          "name": "avatar-png",
+          "statusCode": 201,
+          "match": {
+            "multipart": {
+              "title": "logo",
+              "avatar": {
+                "mimeType": "image/png"
+              }
+            }
+          },
+          "body": {
+            "matched": "png"
+          }
+        }
+      ]
+    }
+  },
+  "api/raw": {
+    "PUT": {
+      "nameResponse": "ok",
+      "request": {
+        "as": "raw",
+        "payload": {
+          "type": "file",
+          "format": "png",
+          "minSize": 1
+        },
+        "error": {
+          "response": "bad"
+        }
+      },
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "ok": true
+          }
+        },
+        {
+          "name": "bad",
+          "statusCode": 415,
+          "body": {
+            "message": "raw mismatch"
+          }
+        }
+      ]
+    }
+  },
+  "api/text": {
+    "POST": {
+      "nameResponse": "ok",
+      "request": {
+        "as": "text",
+        "payload": {
+          "type": "string",
+          "minLength": 2
+        },
+        "error": {
+          "response": "bad"
+        }
+      },
+      "responses": [
+        {
+          "name": "greeting",
+          "statusCode": 200,
+          "match": {
+            "body": "hello"
+          },
+          "body": {
+            "matched": "hello"
+          }
+        },
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "ok": true
+          }
+        },
+        {
+          "name": "bad",
+          "statusCode": 400,
+          "body": {
+            "message": "text mismatch"
+          }
+        }
+      ]
+    }
+  },
+  "api/headers-gate": {
+    "GET": {
+      "nameResponse": "fallback",
+      "responses": [
+        {
+          "name": "admin",
+          "statusCode": 200,
+          "match": {
+            "headers": {
+              "x-role": "admin"
+            }
+          },
+          "body": {
+            "role": "admin"
+          }
+        },
+        {
+          "name": "fallback",
+          "statusCode": 200,
+          "body": {
+            "role": "guest"
+          }
+        }
+      ]
+    }
+  },
+  "api/raw-zip": {
+    "PUT": {
+      "nameResponse": "ok",
+      "request": {
+        "as": "raw",
+        "payload": {
+          "type": "file",
+          "format": "application/zip",
+          "minSize": 1
+        },
+        "error": {
+          "response": "bad"
+        }
+      },
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "ok": true
+          }
+        },
+        {
+          "name": "bad",
+          "statusCode": 400,
+          "body": {
+            "message": "zip mismatch"
+          }
+        }
+      ]
+    }
+  },
+  "api/raw-string": {
+    "POST": {
+      "nameResponse": "ok",
+      "request": {
+        "as": "raw",
+        "payload": {
+          "type": "string",
+          "minLength": 3
+        },
+        "error": {
+          "response": "bad"
+        }
+      },
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "ok": true
+          }
+        },
+        {
+          "name": "bad",
+          "statusCode": 400,
+          "body": {
+            "message": "raw string mismatch"
+          }
+        }
+      ]
+    }
+  },
+  "api/json-type-field": {
+    "POST": {
+      "nameResponse": "ok",
+      "request": {
+        "payload": {
+          "type": "string"
+        },
+        "error": {
+          "response": "bad"
+        }
+      },
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "ok": true
+          }
+        },
+        {
+          "name": "bad",
+          "statusCode": 400,
+          "body": {
+            "message": "type field mismatch"
+          }
+        }
+      ]
+    }
+  }
+}

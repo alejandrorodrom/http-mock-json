@@ -26,6 +26,15 @@ Define the same endpoints your app will call. Switch success and failure scenari
 - [Validation System](#validation-system-)
 - [Examples in this repository](#examples-in-this-repository-)
 - [Advanced examples](#advanced-examples)
+- [Body compatibility (request & response)](#body-compatibility-request--response-)
+  - [Goals](#goals)
+  - [Request contract](#request-contract)
+  - [Payload field rules (`type` / `format`)](#payload-field-rules-type--format)
+  - [Content-Type detection (`as`)](#content-type-detection-as)
+  - [Error object](#error-object)
+  - [Response `encoding`](#response-encoding)
+  - [Pipeline](#pipeline-body-compatibility)
+  - [Rollout phases](#rollout-phases)
 - [Real-world projects](#real-world-projects-)
 - [Mutable store](#mutable-store-)
   - [Capability map (build complex mocks)](#capability-map-build-complex-mocks)
@@ -74,7 +83,7 @@ Define the same endpoints your app will call. Switch success and failure scenari
 - **Hot Reload** - Watch mode automatically restarts server on file changes
 - **Multiple Responses** - Simulate different scenarios (success, error, etc.) for the same endpoint
 - **Request Matching** - Select responses by route params, query params, request body and/or call count (`match.call` number or `{ index, by, loop, reset }`)
-- **Request Validation** - Validate request `body`/`query` shape with rules (`type`, `minLength`, `format`, nested objects, etc.)
+- **Request Validation** - Validate request `payload`/`query`/`headers` with rules (`type`, `minLength`, `format`, `file`, nested objects, etc.), including multipart / raw / text via [body compatibility](#body-compatibility-request--response-) (`as`, `error`, response `encoding`).
 - **Mutable Store** - Opt-in mutable collections (`store` + `action`) with `seed`, `template`, unique/key conflicts, customizable `notFound` (`404`), optional soft delete (`softDelete` + `restore` + `includeDeleted`), cross-store `relations` (FK + `expand` + `onDelete`), disk `persist`, `--reset-store`, and `store.list` (sort/multi-sort, page/offset/cursor, filters with `eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in` + nested + `or` + search, response templates). Start with the [capability map](#capability-map-build-complex-mocks) to compose complex APIs from the docs.
 - **Response Delay** - Simulate latency per method or per response
 - **Type Safe** - Built with TypeScript for better developer experience
@@ -173,25 +182,27 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | store.notFound | ❌    | object         | `{ "response": "missing-user" }`         | Named `404` response for missing / soft-deleted items (`get` / `update` / `patch` / `delete` / `restore`). Placeholders: `{{key}}`, `{{message}}`, each key field |
    | HTTP Method  | ✅       | string         | `GET`, `POST`, `PUT`, `PATCH`, `DELETE`  | HTTP verb (must be uppercase)                                              |
    | nameResponse | ✅       | string         | `success`, `error`, `error-401`          | Fallback response when no `match` applies (must exist in responses array) |
-   | request      | ❌       | object         | `{ "body": { "email": "string" } }`      | Validate incoming `body` and/or `query` before selecting a response        |
-   | request.body | ❌       | object         | `{ "email": { "type": "string", "format": "email" } }` | Field rules for JSON body (`?` suffix = optional)                 |
+   | request      | ❌       | object         | `{ "payload": { "email": { "type": "string", "format": "email" } } }` | Validate incoming payload / query / headers before selecting a response. See [body compatibility](#body-compatibility-request--response-) |
+   | request.payload | ❌    | object         | `{ "avatar": { "type": "file", "format": ["png", "jpeg"] } }` | Field map (or a single rule for raw/text). Always `{ "type": ... }`; files use `type: "file"` + `format` |
+   | request.as   | ❌       | string         | `"multipart"`                            | Omit = auto from Content-Type; if set, require that mode before validating payload |
    | request.query| ❌       | object         | `{ "page?": { "type": "number", "min": 1 } }` | Field rules for query params (basic number/boolean coercion)         |
-   | request.invalidResponse | ❌ | string | `"validation-error"`                     | Response `name` used when validation fails (default: generic `400`)        |
-   | request.errorFormat | ❌ | `"array"` \| `"map"` | `"map"`                             | Shape of collected field errors (`array` default, or `{ field: ["..."] }`) |
-   | request.errorDetail | ❌ | object/string | `{ "field": "{{path}}", "msg": "{{message}}" }` | Template for each error item (`{{path}}`, `{{rule}}`, `{{expected}}`, `{{received}}`, `{{message}}`) |
-   | request.errorDetailsKey | ❌ | string | `"errors"`                               | Body key where formatted errors are written (default `errors`)             |
+   | request.headers | ❌    | object         | `{ "authorization": { "type": "string" } }` | Field rules for HTTP headers (case-insensitive names) |
+   | request.error | ❌      | object         | `{ "response": "invalid", "format": "map" }` | Grouped error output (`response`, `format`, `detail`, `key`) |
    | delay        | ❌       | number         | `300`                                    | Default latency in ms for all responses of this method (overridable per response) |
    | proxy        | ❌       | string/object  | `"https://api.staging.com"`              | Default proxy target for responses with `"proxy": true`                    |
    | responses    | ✅       | array          |                                          | A mock can have multiple responses (array), each identified with a `name`. |
    | name         | ✅       | string         |                                          | Response name (unique within the responses array)                          |
    | statusCode   | ✅*      | string/number  | `200`, `"200"`, `404`, `"404"`          | Required unless the response uses `proxy`                                  |
    | headers      | ❌       | object         | `{ "Content-Type": "application/json" }`  | Headers in json format (optional)                                          |
-   | body         | ✅*      | any            |                                          | Required unless the response uses `proxy` or `action`                      |
-   | action       | ❌       | string         | `"list"`, `"get"`, `"create"`, `"update"`, `"patch"`, `"delete"`, `"restore"` | Run a store operation instead of a fixed `body` (requires `store`; incompatible with `proxy`). `body` ignored except for `list` templates. `delete` always `204`. `restore` requires `store.softDelete` |
-   | match        | ❌       | object         | `{ "params": { "id": "1" } }`            | Request matching rules (`params`, `query`, `body` and/or `call`). First match wins |
+   | encoding     | ❌       | string         | `"file"`, `"base64"`                     | Response-only: how to interpret `body` (omit = JSON). Incompatible with `proxy` / `action` on the same response. See [response encoding](#response-encoding) |
+   | body         | ✅*      | any            |                                          | Required unless the response uses `proxy` or `action`. With `encoding: "file"` = path under mocks root; with `"base64"` = string |
+   | action       | ❌       | string         | `"list"`, `"get"`, `"create"`, `"update"`, `"patch"`, `"delete"`, `"restore"` | Store op instead of fixed `body` (requires `store`). Incompatible with `proxy` and with `encoding` on the same response |
+   | match        | ❌       | object         | `{ "params": { "id": "1" } }`            | Request matching rules (`params`, `query`, `body`, `headers`, `multipart` and/or `call`). First match wins |
    | match.params | ❌       | object         | `{ "id": "1" }`                          | Partial match against route params (e.g. `/users/:id`)                     |
    | match.query  | ❌       | object         | `{ "page": "1" }`                        | Partial match against request query params                                 |
-   | match.body   | ❌       | any            | `{ "email": "a@b.com" }`                 | Partial match against request body                                         |
+   | match.body   | ❌       | any            | `{ "email": "a@b.com" }`                 | Partial match against parsed body (JSON or urlencoded form fields)         |
+   | match.headers | ❌      | object         | `{ "x-role": "admin" }`                  | Partial match against request headers (case-insensitive names)             |
+   | match.multipart | ❌   | object         | `{ "title": "logo", "avatar": { "mimeType": "image/png" } }` | Partial match against multipart fields / file metadata |
    | match.call   | ❌       | number \| object | `1` or `{ "index": 1, "by": { "body": "email" }, "loop": true, "reset": true }` | Match by N-th hit (1-based). Number shorthand = `{ "index": N }`. See [Example 8](#example-8-match-by-call-count) |
    | match.call.index | ❌   | number         | `1`, `2`                                 | 1-based call index to match                                                |
    | match.call.by | ❌      | object         | `{ "body": "email" }`                    | Scope the counter by one field from `body`, `query`, or `params` (nested paths allowed, e.g. `"user.email"`) |
@@ -340,7 +351,7 @@ When you run `mock-server start`, the system automatically validates in this ord
 4. **Response structure**: Checks that all required fields are present (`name`, `statusCode`, `body`)
 5. **Response matching**: Verifies that `nameResponse` references exist in the responses array
 6. **Optional match/delay/proxy**: Validates `match`, non-negative `delay`, and `proxy` URL shapes
-7. **Optional request validation**: Validates `request.body` / `request.query` rule shapes, formats, and `invalidResponse` references
+7. **Optional request validation**: Validates `request.payload` / `request.query` / `request.headers` rule shapes, formats, and `error.response` references
 8. **Optional store / action**: Validates `store` schema, unique/key/seed rules, `action` values, and conflict response names
 9. **Optional mock.config.json**: Validates folder organization config (`prefix`, `delay`, `proxy`, `headers`, `enabled`, `include`/`exclude`, `strictDuplicates`, `stripPrefix`, `proxyUnmatched`, `storeNamespace`, `port`, declared folders)
 10. **JSON structure**: Ensures files contain valid JSON objects
@@ -406,6 +417,11 @@ The numbered `.json` files are single-file samples (copy into your mocks folder)
 | | [`14-http-methods-case.json`](./mocks/14-http-methods-case.json) | HTTP method casing |
 | Request | [`22-request.json`](./mocks/22-request.json) | Request validation |
 | | [`24-request-saas.json`](./mocks/24-request-saas.json) | SaaS-style validation flows |
+| | [`41-response-encoding.json`](./mocks/41-response-encoding.json) | Response `encoding` file / base64 (+ error paths) |
+| | [`44-profile-body-compat.json`](./mocks/44-profile-body-compat.json) | Real profile onboarding: multipart + `encoding:file` + raw upload + `match.headers` / proxy |
+| | [`45-ticket-attachments.json`](./mocks/45-ticket-attachments.json) | Helpdesk attachments: multi-file multipart + `encoding` file/base64 + tenant headers |
+| | [`46-expense-reports.json`](./mocks/46-expense-reports.json) | Expenses: `store` + soft delete + list filters + multipart receipts + `encoding` + `match.call` + `delay` |
+| | [`48-oauth-form-token.json`](./mocks/48-oauth-form-token.json) | OAuth2 `/oauth/token` + `/oauth/revoke`: `as: "form"` + `match.body` on urlencoded grants |
 | Product-style | [`15-auth-scenarios.json`](./mocks/15-auth-scenarios.json) | Auth scenarios |
 | | [`18-rest-resource-lifecycle.json`](./mocks/18-rest-resource-lifecycle.json) | REST resource lifecycle |
 | | [`19-checkout-resilience.json`](./mocks/19-checkout-resilience.json) | Checkout / payment resilience |
@@ -700,7 +716,7 @@ If nothing matches, the server falls back to `nameResponse`.
 
 ### Example 7: Match by request body
 
-`match.body` does a partial deep match against the JSON request body.
+`match.body` does a partial deep match against the parsed request body (JSON **or** `application/x-www-form-urlencoded` — string form fields coerce for number/boolean compares).
 
 ```json
 {
@@ -1011,15 +1027,15 @@ Combine with `by` so only that user’s counter resets: `"call": { "reset": true
 
 ### Example 9: Request validation
 
-`request` validates the incoming `body` and/or `query` **before** `match` / `nameResponse`.
+`request` validates the incoming `payload` and/or `query` (and optional `headers`) **before** `match` / `nameResponse`.
 
 Flow:
 
 ```
 incoming request
-  → request validation (body / query)
-       FAIL → invalidResponse (or generic 400) + stop
-       PASS → match → nameResponse → delay → proxy/body
+  → request validation (payload / query / headers)
+       FAIL → error.response (or generic 400) + stop
+       PASS → match → nameResponse → delay → proxy/body/encoding
 ```
 
 `request` and `match` do not conflict:
@@ -1030,14 +1046,16 @@ incoming request
 
 | Key | Required | Type | Default | Description |
 |-----|----------|------|---------|-------------|
-| `body` | ❌* | object | - | Field rules for the JSON body |
+| `payload` | ❌* | object \| rule | - | Field map, or a single rule for raw/text bodies |
 | `query` | ❌* | object | - | Field rules for query params |
-| `invalidResponse` | ❌ | string | generic `400` | Response `name` used when validation fails |
-| `errorFormat` | ❌ | `"array"` \| `"map"` | `"array"` | Shape of collected field errors |
-| `errorDetail` | ❌ | object \| string | built-in shape | Template for each error item |
-| `errorDetailsKey` | ❌ | string | `"errors"` | Body key where formatted errors are written |
+| `headers` | ❌* | object | - | Field rules for HTTP headers |
+| `as` | ❌ | string | auto | Force Content-Type mode: `json` / `form` / `multipart` / `raw` / `text` |
+| `error.response` | ❌ | string | generic `400` | Response `name` used when validation fails |
+| `error.format` | ❌ | `"array"` \| `"map"` | `"array"` | Shape of collected field errors |
+| `error.detail` | ❌ | object \| string | built-in shape | Template for each error item |
+| `error.key` | ❌ | string | `"errors"` | Body key where formatted errors are written |
 
-\* At least one of `body` or `query` is required when `request` is present.
+\* At least one of `payload`, `query`, or `headers` is required when `request` is present.
 
 #### Field shortcuts
 
@@ -1061,7 +1079,7 @@ Optional fields use a trailing `?` on the key:
 
 | Rule | Applies to | Example | Description |
 |------|------------|---------|-------------|
-| `type` | all | `"string"` | `string`, `number`, `boolean`, `object`, `array` |
+| `type` | all | `"string"` | `string`, `number`, `boolean`, `object`, `array`, `file` |
 | required / `?` | all | `"email"` / `"age?"` | Presence. Keys without `?` are required |
 | `minLength` / `maxLength` | `string` | `8` / `64` | String length bounds |
 | `min` / `max` | `number` | `18` / `120` | Numeric range |
@@ -1140,14 +1158,14 @@ Query error paths are prefixed with `query.` (e.g. `query.page`).
 
 | Config | Result when validation fails |
 |--------|------------------------------|
-| no `invalidResponse` | Status `400`, body `{ "message": "Invalid request", "errors": ... }` |
-| `"invalidResponse": "validation-error"` | That response’s status/headers/body, with errors written into `errorDetailsKey` |
+| no `error.response` | Status `400`, body `{ "message": "Invalid request", "errors": ... }` |
+| `"error": { "response": "validation-error" }` | That response’s status/headers/body, with errors written into `error.key` |
 
 All field errors are accumulated in one response (not fail-fast on the first field).
 
 #### Error formats
 
-**`errorFormat: "array"` (default)** without custom `errorDetail`:
+**`error.format: "array"` (default)** without custom `error.detail`:
 
 ```json
 {
@@ -1164,7 +1182,7 @@ All field errors are accumulated in one response (not fail-fast on the first fie
 }
 ```
 
-**`errorFormat: "map"`:**
+**`error.format: "map"`:**
 
 ```json
 {
@@ -1176,14 +1194,14 @@ All field errors are accumulated in one response (not fail-fast on the first fie
 }
 ```
 
-#### `errorDetail` templates
+#### `error.detail` templates
 
 Available placeholders: `{{path}}`, `{{rule}}`, `{{expected}}`, `{{received}}`, `{{message}}`.
 
 Object template (typical with `array`):
 
 ```json
-"errorDetail": {
+"detail": {
   "field": "{{path}}",
   "msg": "{{message}}"
 }
@@ -1192,10 +1210,10 @@ Object template (typical with `array`):
 String template (useful with `map`, or as array of strings):
 
 ```json
-"errorDetail": "{{message}}"
+"detail": "{{message}}"
 ```
 
-With `errorFormat: "map"`, only the message string is used per field (object templates are not applied item-by-item).
+With `error.format: "map"`, only the message string is used per field (object templates are not applied item-by-item).
 
 #### Default messages (when `message` is omitted)
 
@@ -1218,7 +1236,7 @@ With `errorFormat: "map"`, only the message string is used per field (object tem
     "POST": {
       "nameResponse": "created",
       "request": {
-        "body": {
+        "payload": {
           "email": { "type": "string", "format": "email", "message": "Email inválido" },
           "password": { "type": "string", "minLength": 8, "maxLength": 64 },
           "age?": { "type": "number", "min": 18, "max": 120 },
@@ -1233,11 +1251,13 @@ With `errorFormat: "map"`, only the message string is used per field (object tem
             }
           }
         },
-        "invalidResponse": "validation-error",
-        "errorFormat": "array",
-        "errorDetail": {
-          "field": "{{path}}",
-          "msg": "{{message}}"
+        "error": {
+          "response": "validation-error",
+          "format": "array",
+          "detail": {
+            "field": "{{path}}",
+            "msg": "{{message}}"
+          }
         }
       },
       "responses": [
@@ -1269,7 +1289,9 @@ With `errorFormat: "map"`, only the message string is used per field (object tem
           "page?": { "type": "number", "min": 1 },
           "strict?": "boolean"
         },
-        "errorFormat": "map"
+        "error": {
+          "format": "map"
+        }
       },
       "responses": [
         { "name": "success", "statusCode": 200, "body": { "results": [] } }
@@ -1280,13 +1302,15 @@ With `errorFormat: "map"`, only the message string is used per field (object tem
     "POST": {
       "nameResponse": "created",
       "request": {
-        "body": {
+        "payload": {
           "userId": { "type": "string", "format": "uuid" },
           "address.city": { "type": "string", "minLength": 2 },
           "address.zip?": { "type": "string", "pattern": "^\\d{5}$" }
         },
-        "errorDetailsKey": "details",
-        "errorDetail": "{{message}}"
+        "error": {
+          "key": "details",
+          "detail": "{{message}}"
+        }
       },
       "responses": [
         { "name": "created", "statusCode": 201, "body": { "id": "ok" } }
@@ -1300,7 +1324,7 @@ With `errorFormat: "map"`, only the message string is used per field (object tem
         "query": {
           "page?": { "type": "number", "min": 1 }
         },
-        "body": {
+        "payload": {
           "tags": {
             "type": "array",
             "minItems": 1,
@@ -1308,10 +1332,12 @@ With `errorFormat: "map"`, only the message string is used per field (object tem
             "items": "string"
           }
         },
-        "invalidResponse": "bad-request",
-        "errorFormat": "map",
-        "errorDetail": "{{path}}: {{message}}",
-        "errorDetailsKey": "fields"
+        "error": {
+          "response": "bad-request",
+          "format": "map",
+          "detail": "{{path}}: {{message}}",
+          "key": "fields"
+        }
       },
       "responses": [
         { "name": "success", "statusCode": 200, "body": { "ok": true } },
@@ -1327,13 +1353,346 @@ With `errorFormat: "map"`, only the message string is used per field (object tem
 ```
 
 Behavior examples:
-- Invalid register body → `422 validation-error` with custom `errorDetail` items
+- Invalid register payload → `422 validation-error` with custom `error.detail` items
 - Valid register + `email: "taken@example.com"` → `409 duplicate-email` (`match`, after `request` passes)
 - Invalid search query → generic `400` with `errors` as a map
-- Invalid profile body → generic `400` with errors under `details`
+- Invalid profile payload → generic `400` with errors under `details`
 - Invalid filters → `400 bad-request` with map under `fields`
 
 See Example 9 above for a full `request` configuration you can paste into your project.
+
+---
+
+## Body compatibility (request & response) 📦
+
+**Live contract** (since **4.0.0**) for multi content-type request validation, tolerant intake (multipart / form / raw / text), grouped `error` options, and binary mock responses (`encoding`).
+
+See also [Example 9](#example-9-request-validation) for classic JSON/`query` validation using the same `payload` + `error` keys.
+
+### Goals
+
+1. **Do not fail** when the frontend sends `multipart/form-data`, urlencoded, raw binary, or text — respond like the real API (usually JSON).
+2. **Validate** those payloads with one clear shape: always `{ "type": "...", ... }` (and `format` when relevant).
+3. **Respond** with images/PDFs/etc. via `encoding` + `body` (no separate `bodyFile` key).
+
+### Request contract
+
+```text
+request?: {
+  as?: "json" | "form" | "multipart" | "raw" | "text"   // omit = auto from Content-Type
+  payload?: PayloadSchema
+  query?: FieldMap
+  headers?: FieldMap
+  error?: {
+    response?: string           // named response on validation failure
+    format?: "array" | "map"    // default: "array"
+    detail?: object | string
+    key?: string                // default: "errors"
+  }
+}
+```
+
+**Minimal (JSON):**
+
+```json
+"request": {
+  "payload": {
+    "email": { "type": "string", "format": "email" },
+    "password": { "type": "string", "minLength": 8 }
+  },
+  "error": {
+    "response": "invalid"
+  }
+}
+```
+
+**Multipart profile upload:**
+
+```json
+"request": {
+  "payload": {
+    "name": { "type": "string", "minLength": 2 },
+    "email": { "type": "string", "format": "email" },
+    "age?": { "type": "number", "min": 18, "max": 120 },
+    "avatar": { "type": "file", "format": ["png", "jpeg"] },
+    "banner?": { "type": "file", "format": "image/*" },
+    "cv?": {
+      "type": "file",
+      "format": "pdf",
+      "maxSize": 5000000,
+      "message": "CV must be a PDF up to 5MB"
+    }
+  },
+  "error": {
+    "response": "invalid",
+    "format": "map"
+  }
+}
+```
+
+Frontend equivalent:
+
+```js
+const form = new FormData();
+form.append('name', 'Ada');
+form.append('email', 'ada@example.com');
+form.append('avatar', pngFile);
+await fetch('/api/profile', { method: 'POST', body: form });
+```
+
+**Force multipart (reject other Content-Types first):**
+
+```json
+"request": {
+  "as": "multipart",
+  "payload": {
+    "title": { "type": "string" },
+    "file": { "type": "file", "format": "png" }
+  },
+  "error": { "response": "invalid" }
+}
+```
+
+**Raw body (e.g. `PUT` image):**
+
+```json
+"request": {
+  "as": "raw",
+  "payload": {
+    "type": "file",
+    "format": ["png", "jpeg"],
+    "maxSize": 2000000
+  },
+  "error": { "response": "invalid" }
+}
+```
+
+### Payload field rules (`type` / `format`)
+
+**One shape for every field:** an object with `type`. Use `format` when you need a string format or a file kind. Do **not** use ambiguous shorthands like `"email": "email"` or `"avatar": ["png", "jpeg"]`.
+
+Optional fields: trailing `?` on the key (`"age?"`, `"cv?"`).
+
+#### Options by `type`
+
+| Option | `string` | `number` | `boolean` | `object` | `array` | `file` |
+|--------|----------|----------|-----------|----------|---------|--------|
+| `format` | `email`, `uuid`, `url`, `date` | — | — | — | — | `png`, `jpeg`, `webp`, `pdf`, `image/*`, `file`, MIME, or list |
+| `minLength` / `maxLength` | ✅ | — | — | — | — | — |
+| `pattern` | ✅ | — | — | — | — | optional filename pattern |
+| `min` / `max` | — | ✅ | — | — | — | — |
+| `enum` | ✅ | ✅ | — | — | — | — |
+| `properties` | — | — | — | ✅ | — | — |
+| `items` | — | — | — | — | ✅ | — |
+| `minItems` / `maxItems` | — | — | — | — | ✅ | multiple parts with same name |
+| `maxSize` / `minSize` | — | — | — | — | — | ✅ (bytes) |
+| `requireFilename` | — | — | — | — | — | ✅ optional |
+| `message` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `messages` | ✅ per-rule map (optional) | same | same | same | same | same |
+
+`format` aliases for files (resolved internally):
+
+| User writes | Means |
+|-------------|--------|
+| `png` | `image/png` |
+| `jpeg` / `jpg` | `image/jpeg` |
+| `webp` | `image/webp` |
+| `gif` | `image/gif` |
+| `pdf` | `application/pdf` |
+| `image/*` | any image |
+| `file` / `*/*` | any file part |
+| `image/png` | used as-is |
+
+Examples:
+
+```json
+"email": { "type": "string", "format": "email" }
+"age": { "type": "number", "min": 18 }
+"active": { "type": "boolean" }
+"avatar": { "type": "file", "format": ["png", "jpeg"], "maxSize": 2000000 }
+"tags": {
+  "type": "array",
+  "minItems": 1,
+  "items": { "type": "string" }
+}
+```
+
+**Legacy type-only shortcut** (still allowed for non-file types, same as Example 9):
+
+```json
+"name": "string"
+```
+
+equals `{ "type": "string" }`. Formats and files **must** use the object form.
+
+### Content-Type detection (`as`)
+
+| `as` | Behavior |
+|------|----------|
+| *(omitted)* | **Auto:** detect from the incoming `Content-Type`, then validate `payload` |
+| `"json"` | Require JSON; else validation error → `error.response` |
+| `"form"` | Require `application/x-www-form-urlencoded` |
+| `"multipart"` | Require `multipart/form-data` |
+| `"raw"` | Require binary/raw (`image/*`, `application/pdf`, `octet-stream`, …) |
+| `"text"` | Require `text/plain` |
+
+Auto mapping:
+
+| Incoming `Content-Type` | Mode |
+|-------------------------|------|
+| `application/json` / `+json` | json |
+| `application/x-www-form-urlencoded` | form |
+| `multipart/form-data` | multipart |
+| `image/*`, `application/pdf`, `application/octet-stream`, … | raw |
+| `text/plain` | text |
+| no body (GET/HEAD) | skip payload; still validate `query` / `headers` |
+
+Flow when `as` is set:
+
+```text
+1) Does the frontend Content-Type match `as`?
+   NO  → validation error (default or error.response)
+   YES → validate payload / query / headers
+```
+
+Without `as`: detect → validate payload for that mode.
+
+**Intake rule:** if there is no `request`, or no file rules and no forced `as`, opaque bodies must **not** crash the server — select the mock response as usual (typical upload → JSON `201`).
+
+### Error object
+
+All optional; defaults always apply.
+
+```json
+"error": {
+  "response": "invalid",
+  "format": "map",
+  "detail": "{{message}}",
+  "key": "errors"
+}
+```
+
+| Key | Default | Role |
+|-----|---------|------|
+| `response` | generic `400` | Named response to use on failure |
+| `format` | `"array"` | `"array"` = list of issue objects; `"map"` = `{ field: [messages] }` |
+| `detail` | built-in per format | Template(s) with `{{path}}`, `{{rule}}`, `{{expected}}`, `{{received}}`, `{{message}}` |
+| `key` | `"errors"` | Property name where errors are injected into the response body |
+
+Message resolution per failed rule:
+
+```text
+rule.messages[ruleName] → rule.message → library default
+```
+
+### Response `encoding`
+
+**Response-only** (how to serialize `body`). Not used on `request`.
+
+| `encoding` | `body` means | Output |
+|------------|--------------|--------|
+| *(omitted)* | JSON / primitive | `res.json(body)` |
+| `"base64"` | base64 string | decoded bytes |
+| `"file"` | relative path under mocks root | file bytes (paths with `..` rejected) |
+
+```json
+{
+  "name": "avatar",
+  "statusCode": 200,
+  "headers": { "Content-Type": "image/png" },
+  "encoding": "file",
+  "body": "fixtures/avatar.png"
+}
+```
+
+```json
+{
+  "name": "tiny",
+  "statusCode": 200,
+  "headers": { "Content-Type": "image/png" },
+  "encoding": "base64",
+  "body": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+}
+```
+
+#### What you **can** do
+
+| Goal | How |
+|------|-----|
+| Serve a local image/PDF/binary from the mocks folder | `"encoding": "file"`, `"body": "assets/avatar.png"` (+ usually `Content-Type`) |
+| Serve bytes embedded in the mock JSON | `"encoding": "base64"`, `"body": "<base64>"` |
+| Keep classic JSON mocks | Omit `encoding` (default `res.json`) |
+| Choose binary vs proxy vs store by scenario | **Separate** responses (e.g. different `match` / `nameResponse`) — one mode per response |
+| Validate upload then return JSON | `request` (multipart/file) + normal JSON `body` (no `encoding` required) |
+| Proxy multipart/binary upstream unchanged | `proxy` on the response (uses `rawBody`; do **not** set `encoding` on that same response) |
+
+#### What you **cannot** do (startup error)
+
+One response = **one** output mode. Mixing them on the **same** response fails validation:
+
+| Combination | Result |
+|-------------|--------|
+| `encoding` + `proxy` | ❌ config error |
+| `encoding` + `action` | ❌ config error |
+| `proxy` + `action` | ❌ config error (unchanged) |
+| `encoding` not `file` / `base64` | ❌ config error |
+| `encoding` set but `body` is not a string | ❌ config error |
+| `encoding: "file"` with empty / whitespace `body` | ❌ config error |
+| `request.body` / flat `invalidResponse` / … | ❌ config error (use `payload` / `error.*`) |
+
+`encoding` is **not** ignored when `proxy` is present: the server refuses to start so dead config is not silent.
+
+#### Runtime failures (`encoding: "file"` / `"base64"`)
+
+These pass config validation but fail when the response is selected:
+
+| Situation | HTTP | Behavior |
+|-----------|------|----------|
+| File path missing under mocks root | `500` | JSON `{ "message": "…" }` (e.g. ENOENT) — `Content-Type: application/json` |
+| Path escapes mocks root (`../…`) | `500` | `Response body file path escapes mocks directory: …` |
+
+#### Request side (related)
+
+| Allowed | Not allowed / notes |
+|---------|---------------------|
+| `payload` + optional `as`, `query`, `headers`, `error` | Legacy `body`, `invalidResponse`, `errorFormat`, `errorDetail`, `errorDetailsKey` |
+| `as: "json" \| "form" \| "multipart" \| "raw" \| "text"` | If `as` is set and Content-Type does not match → validation error → `error.response` (or generic `400`) |
+| Whole-body rule object (`{ "type": "string", … }`) | Requires `as: "text"` or `as: "raw"` (or top-level `type: "file"`) |
+| Field rules per type (see [Options by `type`](#payload-field-rules-type--format)) | File shorthand like `"avatar": ["png"]`; use `{ "type": "file", "format": … }` |
+| Form / multipart coerce `number` / `boolean` from strings | — |
+| `match.headers` / `match.multipart` after validation passes | Empty / non-object `match.headers` / `match.multipart` → startup error |
+
+### Pipeline (body compatibility)
+
+```text
+incoming request
+  → tolerant intake (rawBody when needed)
+  → request? 
+       → as? check Content-Type
+       → parse (json | form | multipart | raw | text)
+       → validate payload / query / headers
+            FAIL → error.response (or generic 400)
+            PASS → match → delay → proxy | action | encoding/body
+```
+
+Exactly one of `proxy` / `action` / static `body`(+optional `encoding`) runs for the selected response.
+`request` = “is this valid?” · `match` = “which scenario?” (`match.headers` / `match.multipart` included). They do not replace each other.
+
+### Migration from 3.x
+
+| Removed (3.x) | Use in 4.0 |
+|---------------|------------|
+| `request.body` | `request.payload` |
+| `invalidResponse` | `error.response` |
+| `errorFormat` | `error.format` |
+| `errorDetail` | `error.detail` |
+| `errorDetailsKey` | `error.key` |
+
+There is **no** dual-read / alias period: legacy keys are rejected at startup with a clear error.
+
+Out of scope: record & replay, OpenAPI import, response multipart *builder*, GraphQL/XML.
+
+---
 
 ### Example 10: Proxy to a real backend
 
@@ -1923,7 +2282,7 @@ Goal: from this README alone you can compose multi-tenant APIs with validation, 
 | Business uniqueness | `unique` + `409` responses | `"unique": ["email"]` or field-level `conflict` | [Conflicts](#conflicts-409) |
 | Custom missing item | `store.notFound` | `"notFound": { "response": "missing-user" }` | [Not found](#not-found-404) |
 | Survive restart | `persist` / `--reset-store` | `"persist": true` | [Persist and restart](#persist-and-restart-behavior) |
-| Validate payload/query | `request` | `"body": { "email": { "type": "string", "format": "email" } }` | [Request validation](#example-8-request-validation) |
+| Validate payload/query | `request` | `"payload": { "email": { "type": "string", "format": "email" } }` | [Request validation](#example-9-request-validation) |
 | Branch by params/query/body/call | `match` | `"match": { "call": { "index": 1, "by": { "body": "email" } } }` | [Example 5–8](#example-5-match-by-route-params) |
 | Latency / headers | `delay`, `headers` | `"delay": 120`, `"Retry-After": "30"` | [Example 6](#example-6-match-by-query-params-and-delay) |
 | Page tables | `store.list` **page** | `?page=2&pageSize=10` | [Page mode](#page-mode) |
@@ -1940,7 +2299,7 @@ Goal: from this README alone you can compose multi-tenant APIs with validation, 
 | Custom list JSON | list placeholders | `"data": "{{items}}"`, `"Link": "{{linkHeader}}"` | [Response templates](#response-templates-fully-customizable) |
 | Forward to real API | `proxy` (**not** with `action`) | `"proxy": true` or URL | [Proxy](#example-9-proxy-to-a-real-backend) |
 
-Pipeline reminder (every request): `request` → `match` → `delay` → `proxy` **or** `action` → else static `body`.  
+Pipeline reminder (every request): `request` → `match` → `delay` → exactly one of `proxy` / `action` / static `body` (optional `encoding`).  
 List pipeline (inside `action: "list"` + `store.list`): key params → `fields` (AND) → `or` → `search` → sort → page/offset/cursor → templates.
 
 #### 2. Compose a complex endpoint (recipe)
@@ -2035,11 +2394,13 @@ Copy this skeleton and fill the `‹…›` slots. One file can define several e
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
+        "payload": {
           "‹name›": { "type": "string", "minLength": 2 },
           "‹slug-or-email›": { "type": "string", "minLength": 2 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -2125,10 +2486,10 @@ More product scenarios (auth, RBAC, webhooks, proxy) live under [Real-world proj
 
 Request pipeline (fixed order):
 
-1. `request` validation (if any) → may return `invalidResponse` and **never** hits the store  
+1. `request` validation (if any) → may return `error.response` and **never** hits the store  
 2. `match` → picks a response (`nameResponse` fallback)  
 3. `delay` (once)  
-4. `proxy` **or** `action` (not both on the same response)  
+4. Exactly one of `proxy` / `action` / static `body`(+optional `encoding`) on the same response  
 5. otherwise static `body`
 
 ### Actions
@@ -2583,7 +2944,7 @@ You can also delete `.store/<id>.json` (or your custom file) manually before sta
 | Key / unique conflict | `409` or status of the named conflict response | Default or named conflict body (see above) |
 | Invalid relation FK | status of `relations.*.conflict.response` (else `409`) | Named body + `{{conflicts}}` / `detail` templates |
 | Parent delete blocked (`onDelete` restrict) | status of `onDelete.conflict.response` (else `conflict`, else `409`) | Named body on the **parent** DELETE method |
-| `request` validation failed | Your `invalidResponse` (or generic `400`) | Never reaches the store |
+| `request` validation failed | Your `error.response` (or generic `400`) | Never reaches the store |
 | `match` selected a static response (no `action`) | That response’s status/body | Store is not called |
 
 Implications of the pipeline:
@@ -3229,12 +3590,14 @@ Composite key, template defaults, request validation, custom conflict bodies, sh
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
+        "payload": {
           "name": { "type": "string", "minLength": 2 },
           "email": { "type": "string", "format": "email" },
           "username": { "type": "string", "minLength": 3 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -3329,10 +3692,12 @@ Typical SPA: list, create with validation, toggle done (`patch`), delete. Persis
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
+        "payload": {
           "title": { "type": "string", "minLength": 1, "maxLength": 120 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -3354,11 +3719,13 @@ Typical SPA: list, create with validation, toggle done (`patch`), delete. Persis
     "PATCH": {
       "nameResponse": "patch",
       "request": {
-        "body": {
+        "payload": {
           "title?": { "type": "string", "minLength": 1, "maxLength": 120 },
           "done?": { "type": "boolean" }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -3449,7 +3816,7 @@ Org-scoped projects with slug uniqueness, forbidden org via `match`, persist acr
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
+        "payload": {
           "name": { "type": "string", "minLength": 3, "maxLength": 80 },
           "slug": {
             "type": "string",
@@ -3460,7 +3827,9 @@ Org-scoped projects with slug uniqueness, forbidden org via `match`, persist acr
           "ownerEmail": { "type": "string", "format": "email" },
           "status?": { "type": "string", "enum": ["active", "paused"] }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -3691,7 +4060,7 @@ Filter permutation focus: `eq` / `ne` / `gt` / `lt` / `gte` / `lte` / `in` + nes
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
+        "payload": {
           "sku": {
             "type": "string",
             "minLength": 5,
@@ -3707,7 +4076,9 @@ Filter permutation focus: `eq` / `ne` / `gt` / `lt` / `gte` / `lte` / `in` + nes
           "stock?": { "type": "number", "min": 0, "max": 100000 },
           "status?": { "type": "string", "enum": ["active", "draft"] }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -3742,7 +4113,7 @@ Filter permutation focus: `eq` / `ne` / `gt` / `lt` / `gte` / `lte` / `in` + nes
     "PATCH": {
       "nameResponse": "patch",
       "request": {
-        "body": {
+        "payload": {
           "name?": { "type": "string", "minLength": 2, "maxLength": 80 },
           "price?": { "type": "number", "min": 0.01, "max": 9999 },
           "stock?": { "type": "number", "min": 0, "max": 100000 },
@@ -3751,7 +4122,9 @@ Filter permutation focus: `eq` / `ne` / `gt` / `lt` / `gte` / `lte` / `in` + nes
             "enum": ["active", "draft", "archived"]
           }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -3789,12 +4162,14 @@ Filter permutation focus: `eq` / `ne` / `gt` / `lt` / `gte` / `lte` / `in` + nes
     "POST": {
       "nameResponse": "paid",
       "request": {
-        "body": {
+        "payload": {
           "sku": { "type": "string", "minLength": 5 },
           "quantity": { "type": "number", "min": 1, "max": 20 },
           "cardLast4": { "type": "string", "pattern": "^[0-9]{4}$" }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -4036,7 +4411,7 @@ Filter permutation focus: date range on `createdAt`, nested `channel.source` / `
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
+        "payload": {
           "subject": { "type": "string", "minLength": 5, "maxLength": 120 },
           "priority": { "type": "string", "enum": ["low", "medium", "high"] },
           "assignee": { "type": "string", "format": "email" },
@@ -4046,7 +4421,9 @@ Filter permutation focus: date range on `createdAt`, nested `channel.source` / `
           },
           "createdAt?": { "type": "number", "min": 1 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -4095,7 +4472,7 @@ Filter permutation focus: date range on `createdAt`, nested `channel.source` / `
     "PATCH": {
       "nameResponse": "patch",
       "request": {
-        "body": {
+        "payload": {
           "status?": {
             "type": "string",
             "enum": ["open", "pending", "closed"]
@@ -4106,7 +4483,9 @@ Filter permutation focus: date range on `createdAt`, nested `channel.source` / `
           },
           "assignee?": { "type": "string", "format": "email" }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -4227,7 +4606,7 @@ Filter permutation focus: date range on `createdAt`, nested `channel.source` / `
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
+        "payload": {
           "type": {
             "type": "string",
             "enum": ["comment", "status", "assign"]
@@ -4236,7 +4615,9 @@ Filter permutation focus: date range on `createdAt`, nested `channel.source` / `
           "score?": { "type": "number", "min": 0, "max": 100 },
           "createdAt?": { "type": "number", "min": 1 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -4451,7 +4832,7 @@ Org-scoped people directory built to **permute every filter op** in a realistic 
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
+        "payload": {
           "name": { "type": "string", "minLength": 2, "maxLength": 80 },
           "email": { "type": "string", "format": "email" },
           "role": {
@@ -4469,7 +4850,9 @@ Org-scoped people directory built to **permute every filter op** in a realistic 
             }
           }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -4633,11 +5016,13 @@ Editorial UI: authors own articles, FK validation on write, `?expand=author` / `
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
+        "payload": {
           "name": { "type": "string", "minLength": 1, "maxLength": 80 },
           "handle": { "type": "string", "minLength": 2, "maxLength": 40, "pattern": "^[a-z0-9-]+$" }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         { "name": "create", "statusCode": 201, "action": "create" },
@@ -4775,13 +5160,15 @@ Editorial UI: authors own articles, FK validation on write, `?expand=author` / `
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
+        "payload": {
           "title": { "type": "string", "minLength": 1, "maxLength": 160 },
           "slug": { "type": "string", "minLength": 2, "maxLength": 80, "pattern": "^[a-z0-9-]+$" },
           "status?": { "type": "string", "enum": ["draft", "published"] },
           "authorId": { "type": "number", "min": 1 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         { "name": "create", "statusCode": 201, "action": "create" },
@@ -4818,12 +5205,14 @@ Editorial UI: authors own articles, FK validation on write, `?expand=author` / `
     "PATCH": {
       "nameResponse": "patch",
       "request": {
-        "body": {
+        "payload": {
           "title?": { "type": "string", "minLength": 1, "maxLength": 160 },
           "status?": { "type": "string", "enum": ["draft", "published"] },
           "authorId?": { "type": "number", "min": 1 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         { "name": "patch", "statusCode": 200, "action": "patch" },
@@ -4977,11 +5366,13 @@ Checkout / order admin: tenant-scoped orders with composite keys, line items tha
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
+        "payload": {
           "status?": { "type": "string", "enum": ["pending", "paid", "cancelled"] },
           "total": { "type": "number", "min": 0 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         { "name": "create", "statusCode": 201, "action": "create" },
@@ -5009,11 +5400,13 @@ Checkout / order admin: tenant-scoped orders with composite keys, line items tha
     "PATCH": {
       "nameResponse": "patch",
       "request": {
-        "body": {
+        "payload": {
           "status?": { "type": "string", "enum": ["pending", "paid", "cancelled"] },
           "total?": { "type": "number", "min": 0 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         { "name": "patch", "statusCode": 200, "action": "patch" },
@@ -5122,13 +5515,15 @@ Checkout / order admin: tenant-scoped orders with composite keys, line items tha
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
+        "payload": {
           "orderId": { "type": "number", "min": 1 },
           "sku": { "type": "string", "minLength": 1, "maxLength": 40 },
           "qty": { "type": "number", "min": 1 },
           "price": { "type": "number", "min": 0 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         { "name": "create", "statusCode": 201, "action": "create" },
@@ -5214,11 +5609,13 @@ Combines: `match.call` (`index` / `by` / `reset`) + `match.body` + `request` + `
       "nameResponse": "locked",
       "delay": 80,
       "request": {
-        "body": {
+        "payload": {
           "email": { "type": "string", "format": "email" },
           "password": { "type": "string", "minLength": 8, "maxLength": 72 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -5318,12 +5715,14 @@ Combines: `match.call` (`index` / `by` / `reset`) + `match.body` + `request` + `
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
+        "payload": {
           "userId": { "type": "number", "min": 1 },
           "email": { "type": "string", "format": "email" },
           "device": { "type": "string", "minLength": 1, "maxLength": 80 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -5415,11 +5814,13 @@ Combines: `request` + `match.body` + `match.call` (`index` / `by`) + `match.quer
     "POST": {
       "nameResponse": "invalid",
       "request": {
-        "body": {
+        "payload": {
           "email": { "type": "string", "format": "email" },
           "password": { "type": "string", "minLength": 1 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -5451,10 +5852,12 @@ Combines: `request` + `match.body` + `match.call` (`index` / `by`) + `match.quer
     "POST": {
       "nameResponse": "unauthorized",
       "request": {
-        "body": {
+        "payload": {
           "refreshToken": { "type": "string", "minLength": 1 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -5517,10 +5920,12 @@ Combines: `request` + `match.body` + `match.call` (`index` / `by`) + `match.quer
     "POST": {
       "nameResponse": "ok-fallback",
       "request": {
-        "body": {
+        "payload": {
           "refreshToken": { "type": "string", "minLength": 1 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -5635,10 +6040,12 @@ Combines: `request` + `match.params` + `match.body` + `delay` + custom headers.
       "nameResponse": "accepted",
       "delay": 200,
       "request": {
-        "body": {
+        "payload": {
           "email": { "type": "string", "format": "email" }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -5691,11 +6098,13 @@ Combines: `request` + `match.params` + `match.body` + `delay` + custom headers.
     "POST": {
       "nameResponse": "invalid",
       "request": {
-        "body": {
+        "payload": {
           "password": { "type": "string", "minLength": 10, "maxLength": 72 },
           "passwordConfirm": { "type": "string", "minLength": 10, "maxLength": 72 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -5791,12 +6200,14 @@ Combines: `request` + `match.params` + `match.call` + `delay` + headers (`Retry-
     "POST": {
       "nameResponse": "accepted",
       "request": {
-        "body": {
+        "payload": {
           "type": { "type": "string", "enum": ["orders-csv", "users-csv", "invoices-pdf"] },
           "from?": { "type": "string", "format": "date" },
           "to?": { "type": "string", "format": "date" }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -6039,12 +6450,14 @@ Combines: `store` + `list` filters + `patch` + `request` + `persist`.
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
+        "payload": {
           "title": { "type": "string", "minLength": 1, "maxLength": 120 },
-          "body": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "payload": { "type": "string", "minLength": 1, "maxLength": 500 },
           "unread?": { "type": "boolean" }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         { "name": "create", "statusCode": 201, "action": "create" },
@@ -6067,11 +6480,13 @@ Combines: `store` + `list` filters + `patch` + `request` + `persist`.
     "PATCH": {
       "nameResponse": "patch",
       "request": {
-        "body": {
+        "payload": {
           "unread?": { "type": "boolean" },
           "title?": { "type": "string", "minLength": 1, "maxLength": 120 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         { "name": "patch", "statusCode": 200, "action": "patch" },
@@ -6145,7 +6560,7 @@ Combines: `request` + `match.params` + `match.body` + `delay` + headers.
     "POST": {
       "nameResponse": "created",
       "request": {
-        "body": {
+        "payload": {
           "filename": { "type": "string", "minLength": 1, "maxLength": 200 },
           "contentType": {
             "type": "string",
@@ -6153,7 +6568,9 @@ Combines: `request` + `match.params` + `match.body` + `delay` + headers.
           },
           "sizeBytes": { "type": "number", "min": 1, "max": 10485760 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -6528,12 +6945,14 @@ Combines: `request` + `match.body` + `match.query` + `delay` + `402` / `403` / `
       "nameResponse": "upgraded",
       "delay": 150,
       "request": {
-        "body": {
+        "payload": {
           "planId": { "type": "string", "enum": ["free", "pro", "business"] },
           "seats?": { "type": "number", "min": 1, "max": 500 },
           "paymentMethodId?": { "type": "string", "minLength": 1 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -6708,7 +7127,7 @@ Combines: `request` + `match.body` + `match.query` + `409` / `422`.
     "PUT": {
       "nameResponse": "saved",
       "request": {
-        "body": {
+        "payload": {
           "company?": { "type": "string", "minLength": 2, "maxLength": 80 },
           "role?": { "type": "string", "enum": ["admin", "member", "viewer"] },
           "inviteEmails?": {
@@ -6718,7 +7137,9 @@ Combines: `request` + `match.body` + `match.query` + `409` / `422`.
             "items": { "type": "string", "format": "email" }
           }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -6886,6 +7307,10 @@ The [Advanced examples](#advanced-examples) teach one feature at a time. This se
 | [Async export job](#example-m--real-project-async-export-job) | `match.call` + `202` + `Retry-After` + `delay` | Create job, poll queued→ready, download |
 | [Notifications inbox](#example-n--real-project-notifications-inbox) | `store` + `list` filter + `patch` + `persist` | Unread filter, mark read, mark-all ack |
 | [Signed URL upload](#example-o--real-project-signed-url-upload) | `request` + `match` + `delay` + `413`/`410` | Initiate → PUT content → complete → asset |
+| [Profile onboarding (multipart + binary)](#example-profile-onboarding-multipart--binary) | `as` multipart/raw + `type: "file"` + `encoding: "file"` + `match.headers` / `match.multipart` + `proxy` | Create profile with FormData, serve avatar bytes, raw re-upload, admin vs public |
+| [Ticket attachments (multi-file + download)](#example-ticket-attachments-multi-file--download) | Multi-file `type: "file"` + `encoding` file/base64 + `request.headers` tenant + `match.multipart` | Helpdesk: create ticket, upload screenshots/PDF, download bytes |
+| [Expense reports (store + binary)](#example-expense-reports-store--binary) | `store` + soft delete/restore + `list` filters + multipart `type: "file"` + `encoding` + `match.call` + `delay` + `match.multipart` | Create/list/patch expenses, upload receipts with rate limit, preview bytes, trash/restore |
+| [OAuth2 token (form-urlencoded)](#example-oauth2-token-form-urlencoded) | `as: "form"` + `request.payload` + `match.body` on urlencoded fields | Password / refresh / client_credentials grants + revoke (not JSON login) |
 | [Feature flags / config](#example-p--real-project-feature-flags--app-config) | `match.query` + `match.params` + `delay` | Boot config, tenant flags, maintenance |
 | [Billing / subscription](#example-q--real-project-billing--subscription) | `request` + `match` + `402`/`403`/`409` | Plans, trial, past_due, upgrade, pay invoice |
 | [Onboarding wizard](#example-r--real-project-onboarding-wizard) | `request` + `match` + `409` | Multi-step save, resume, complete |
@@ -6910,7 +7335,7 @@ Validate the payload first, then branch with `match` for business errors (`409` 
     "POST": {
       "nameResponse": "created",
       "request": {
-        "body": {
+        "payload": {
           "email": { "type": "string", "format": "email", "message": "Use a valid work email" },
           "password": { "type": "string", "minLength": 10, "maxLength": 128 },
           "company": { "type": "string", "minLength": 2 },
@@ -6924,7 +7349,9 @@ Validate the payload first, then branch with `match` for business errors (`409` 
             }
           }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         { "name": "created", "statusCode": 201, "body": { "orgId": "org_1", "status": "active" } },
@@ -6946,11 +7373,13 @@ Validate the payload first, then branch with `match` for business errors (`409` 
     "POST": {
       "nameResponse": "not-found",
       "request": {
-        "body": {
+        "payload": {
           "email": { "type": "string", "format": "email" },
           "role": { "type": "string", "enum": ["owner", "admin", "member"] }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -7169,12 +7598,14 @@ Typical resource UI: list with filters/pages, get by id, create, update conflict
     "POST": {
       "nameResponse": "created",
       "request": {
-        "body": {
+        "payload": {
           "name": { "type": "string", "minLength": 1 },
           "sku": { "type": "string", "minLength": 3 },
           "price": { "type": "number", "min": 0 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -7277,11 +7708,13 @@ Validate first. Invalid bodies never hit the upstream. Valid bodies can stay loc
       "nameResponse": "mock",
       "proxy": "https://jsonplaceholder.typicode.com",
       "request": {
-        "body": {
+        "payload": {
           "title": { "type": "string", "minLength": 3 },
           "body?": { "type": "string", "minLength": 1 }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -7357,7 +7790,7 @@ Validate callback URL, event list, and secret before returning a webhook id.
     "POST": {
       "nameResponse": "created",
       "request": {
-        "body": {
+        "payload": {
           "url": { "type": "string", "format": "url" },
           "events": {
             "type": "array",
@@ -7370,8 +7803,10 @@ Validate callback URL, event list, and secret before returning a webhook id.
           },
           "secret": { "type": "string", "minLength": 16 }
         },
-        "errorFormat": "map",
-        "errorDetailsKey": "errors"
+        "error": {
+          "format": "map",
+          "key": "errors"
+        }
       },
       "responses": [
         {
@@ -7413,6 +7848,670 @@ Validate callback URL, event list, and secret before returning a webhook id.
 | Invalid `url` / empty `events` / short `secret` | `400` with `errors` map |
 | Valid registration | `201` + `webhookId` |
 | `GET .../webhooks/wh_1/deliveries` | Delivery history for UI |
+
+### Example: Profile onboarding (multipart + binary)
+
+**App:** signup / profile UI that uploads `FormData` (fields + avatar), shows the avatar from a binary GET, and later replaces it with a raw `PUT`. Optional header switches admin view or live proxy.
+
+Full sample on GitHub: [`mocks/44-profile-body-compat.json`](./mocks/44-profile-body-compat.json) (put a PNG at `assets/sample.png` under your mocks root for `encoding: "file"`).
+
+See also [Body compatibility](#body-compatibility-request--response-) for the `as` / `file` / `encoding` rules.
+
+```json
+{
+  "api/profiles": {
+    "POST": {
+      "nameResponse": "created",
+      "request": {
+        "as": "multipart",
+        "payload": {
+          "name": { "type": "string", "minLength": 2, "maxLength": 80 },
+          "email": { "type": "string", "format": "email", "message": "Use a valid work email" },
+          "age?": { "type": "number", "min": 18, "max": 120 },
+          "role": { "type": "string", "enum": ["member", "admin"] },
+          "avatar": {
+            "type": "file",
+            "format": ["png", "jpeg"],
+            "maxSize": 2000000,
+            "minSize": 8,
+            "requireFilename": true,
+            "messages": {
+              "format": "Avatar must be PNG or JPEG",
+              "maxSize": "Avatar must be under 2MB"
+            }
+          },
+          "cv?": { "type": "file", "format": "pdf", "maxSize": 5000000 }
+        },
+        "error": {
+          "response": "validation-error",
+          "format": "map",
+          "key": "fields"
+        }
+      },
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": 201,
+          "body": {
+            "id": "prof_1",
+            "status": "pending_review",
+            "avatarUrl": "/api/profiles/prof_1/avatar"
+          }
+        },
+        {
+          "name": "duplicate-email",
+          "statusCode": 409,
+          "match": { "multipart": { "email": "taken@example.com" } },
+          "body": { "code": "EMAIL_TAKEN", "message": "A profile with this email already exists" }
+        },
+        {
+          "name": "live",
+          "proxy": {
+            "target": "https://jsonplaceholder.typicode.com",
+            "path": "/users"
+          },
+          "match": { "headers": { "x-mock-mode": "live" } }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Profile validation failed", "fields": {} }
+        }
+      ]
+    }
+  },
+  "api/profiles/:id": {
+    "GET": {
+      "nameResponse": "public",
+      "responses": [
+        {
+          "name": "admin",
+          "statusCode": 200,
+          "match": { "headers": { "x-role": "admin" } },
+          "body": {
+            "id": "prof_1",
+            "email": "ada@example.com",
+            "role": "admin",
+            "internalNotes": "Priority onboard"
+          }
+        },
+        {
+          "name": "public",
+          "statusCode": 200,
+          "body": {
+            "id": "prof_1",
+            "name": "Ada",
+            "role": "member",
+            "avatarUrl": "/api/profiles/prof_1/avatar"
+          }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "match": { "params": { "id": "missing" } },
+          "body": { "code": "PROFILE_NOT_FOUND" }
+        }
+      ]
+    }
+  },
+  "api/profiles/:id/avatar": {
+    "GET": {
+      "nameResponse": "png",
+      "responses": [
+        {
+          "name": "png",
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "image/png",
+            "Cache-Control": "public, max-age=60"
+          },
+          "encoding": "file",
+          "body": "assets/sample.png"
+        },
+        {
+          "name": "gone",
+          "statusCode": 404,
+          "match": { "params": { "id": "missing" } },
+          "body": { "code": "AVATAR_NOT_FOUND" }
+        }
+      ]
+    },
+    "PUT": {
+      "nameResponse": "updated",
+      "request": {
+        "as": "raw",
+        "payload": {
+          "type": "file",
+          "format": "image/*",
+          "minSize": 8,
+          "maxSize": 2000000
+        },
+        "headers": {
+          "x-upload-token": { "type": "string", "minLength": 8 }
+        },
+        "error": { "response": "invalid-upload" }
+      },
+      "responses": [
+        {
+          "name": "updated",
+          "statusCode": 200,
+          "body": {
+            "id": "prof_1",
+            "avatarUrl": "/api/profiles/prof_1/avatar",
+            "updated": true
+          }
+        },
+        {
+          "name": "invalid-upload",
+          "statusCode": 415,
+          "body": {
+            "code": "INVALID_AVATAR",
+            "message": "Send a raw image body with x-upload-token"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+| Call | Result |
+|------|--------|
+| `POST /api/profiles` with valid `FormData` (name, email, role, avatar PNG) | `201` + `avatarUrl` |
+| Same + `email=taken@example.com` | `409 EMAIL_TAKEN` (`match.multipart` after `request` passes) |
+| Invalid fields / missing avatar / wrong MIME | `422` map under `fields` |
+| `POST` with header `x-mock-mode: live` (and valid multipart) | Proxied upstream (`proxy`; no `encoding` on that response) |
+| `GET /api/profiles/prof_1` | Public profile JSON |
+| `GET /api/profiles/prof_1` + `x-role: admin` | Admin payload with `internalNotes` |
+| `GET /api/profiles/prof_1/avatar` | PNG bytes (`encoding: "file"`) |
+| `PUT .../avatar` raw `image/png` + `x-upload-token` | `200` updated |
+| `PUT .../avatar` with `Content-Type: application/json` | `415` (`as: "raw"` mismatch) |
+
+Frontend sketch:
+
+```js
+const form = new FormData();
+form.append('name', 'Ada');
+form.append('email', 'ada@example.com');
+form.append('role', 'member');
+form.append('avatar', pngFile);
+await fetch('/api/profiles', { method: 'POST', body: form });
+
+const img = await fetch('/api/profiles/prof_1/avatar');
+const blob = await img.blob(); // real image bytes for <img>
+
+await fetch('/api/profiles/prof_1/avatar', {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'image/png',
+    'x-upload-token': 'token-ok'
+  },
+  body: pngFile
+});
+```
+
+### Example: Ticket attachments (multi-file + download)
+
+**App:** helpdesk UI — create a ticket (JSON + tenant header), upload several screenshots (+ optional PDF) via `FormData`, then download attachment bytes for the inbox preview.
+
+Full sample: [`mocks/45-ticket-attachments.json`](./mocks/45-ticket-attachments.json) (PNG at `assets/sample.png` for `encoding: "file"`).
+
+```json
+{
+  "api/tickets": {
+    "POST": {
+      "nameResponse": "created",
+      "request": {
+        "as": "json",
+        "payload": {
+          "subject": { "type": "string", "minLength": 5, "maxLength": 120 },
+          "channel": { "type": "string", "enum": ["email", "chat", "phone"] },
+          "priority?": { "type": "string", "enum": ["low", "normal", "high"] }
+        },
+        "headers": {
+          "x-tenant": { "type": "string", "minLength": 2 }
+        },
+        "error": { "response": "validation-error", "format": "map", "key": "fields" }
+      },
+      "responses": [
+        {
+          "name": "created",
+          "statusCode": 201,
+          "body": {
+            "id": "tkt_1",
+            "status": "open",
+            "attachmentsUrl": "/api/tickets/tkt_1/attachments"
+          }
+        },
+        {
+          "name": "duplicate",
+          "statusCode": 409,
+          "match": { "body": { "subject": "Duplicate subject" } },
+          "body": { "code": "TICKET_DUPLICATE" }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Ticket validation failed", "fields": {} }
+        }
+      ]
+    }
+  },
+  "api/tickets/:id/attachments": {
+    "POST": {
+      "nameResponse": "uploaded",
+      "request": {
+        "as": "multipart",
+        "payload": {
+          "note?": { "type": "string", "maxLength": 200 },
+          "screenshots": {
+            "type": "file",
+            "format": "image/*",
+            "minItems": 1,
+            "maxItems": 3,
+            "maxSize": 1500000,
+            "requireFilename": true,
+            "messages": {
+              "minItems": "Attach at least one screenshot",
+              "maxItems": "At most 3 screenshots",
+              "format": "Screenshots must be images"
+            }
+          },
+          "report?": {
+            "type": "file",
+            "format": "pdf",
+            "maxSize": 5000000,
+            "requireFilename": true
+          }
+        },
+        "headers": {
+          "x-tenant": { "type": "string", "minLength": 2 }
+        },
+        "error": { "response": "validation-error", "format": "array" }
+      },
+      "responses": [
+        {
+          "name": "uploaded",
+          "statusCode": 201,
+          "body": {
+            "ticketId": "tkt_1",
+            "files": [
+              { "id": "att_img", "kind": "screenshot", "url": "/api/tickets/tkt_1/attachments/att_img" },
+              { "id": "att_pdf", "kind": "report", "url": "/api/tickets/tkt_1/attachments/att_pdf" }
+            ]
+          }
+        },
+        {
+          "name": "quota",
+          "statusCode": 413,
+          "match": { "multipart": { "note": "quota" } },
+          "body": { "code": "ATTACHMENT_QUOTA" }
+        },
+        {
+          "name": "live",
+          "proxy": { "target": "https://jsonplaceholder.typicode.com", "path": "/posts" },
+          "match": { "headers": { "x-mock-mode": "live" } }
+        },
+        {
+          "name": "validation-error",
+          "statusCode": 422,
+          "body": { "message": "Attachment validation failed", "errors": [] }
+        }
+      ]
+    }
+  },
+  "api/tickets/:id/attachments/:fileId": {
+    "GET": {
+      "nameResponse": "not-found",
+      "responses": [
+        {
+          "name": "png",
+          "statusCode": 200,
+          "headers": { "Content-Type": "image/png" },
+          "encoding": "file",
+          "body": "assets/sample.png",
+          "match": { "params": { "fileId": "att_img" } }
+        },
+        {
+          "name": "pdf",
+          "statusCode": 200,
+          "headers": { "Content-Type": "application/pdf" },
+          "encoding": "base64",
+          "body": "JVBERi0xLjQK...",
+          "match": { "params": { "fileId": "att_pdf" } }
+        },
+        {
+          "name": "not-found",
+          "statusCode": 404,
+          "body": { "code": "ATTACHMENT_NOT_FOUND" }
+        }
+      ]
+    }
+  }
+}
+```
+
+| Call | Result |
+|------|--------|
+| `POST /api/tickets` + `x-tenant` | `201` ticket |
+| Missing `x-tenant` / short subject | `422` under `fields` |
+| `POST .../attachments` with 1–3 screenshots (+ optional PDF) | `201` + download URLs |
+| No screenshots | `422` (`minItems`) |
+| `note=quota` (valid files) | `413 ATTACHMENT_QUOTA` (`match.multipart`) |
+| `GET .../attachments/att_img` | PNG bytes (`encoding: "file"`) |
+| `GET .../attachments/att_pdf` | PDF bytes (`encoding: "base64"`) |
+| Unknown `fileId` | `404` |
+
+Frontend sketch:
+
+```js
+await fetch('/api/tickets', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'x-tenant': 'acme' },
+  body: JSON.stringify({ subject: 'Cannot login', channel: 'chat' })
+});
+
+const form = new FormData();
+form.append('note', 'from ios');
+form.append('screenshots', pngFileA);
+form.append('screenshots', pngFileB);
+form.append('report', pdfFile);
+await fetch('/api/tickets/tkt_1/attachments', {
+  method: 'POST',
+  headers: { 'x-tenant': 'acme' },
+  body: form
+});
+
+const preview = await fetch('/api/tickets/tkt_1/attachments/att_img');
+const blob = await preview.blob();
+```
+
+### Example: Expense reports (store + binary)
+
+**App:** employee expense UI — mutable reports in a `store` (create / list / filter / soft-delete / restore), then attach a receipt image via multipart, hit upload rate limits with `match.call`, OCR delay with `match.multipart`, and serve preview bytes with `encoding`.
+
+Full sample: [`mocks/46-expense-reports.json`](./mocks/46-expense-reports.json) (PNG at `assets/sample.png` for `encoding: "file"`).
+
+Highlights from that file:
+
+```json
+{
+  "api/expenses": {
+    "store": {
+      "id": "expenses",
+      "softDelete": true,
+      "unique": {
+        "fields": ["reference"],
+        "conflict": { "response": "duplicate-reference" }
+      },
+      "list": {
+        "filter": {
+          "fields": [
+            "status",
+            "category",
+            { "field": "amount", "op": "gte", "query": "minAmount" }
+          ],
+          "search": { "query": "q", "fields": ["title", "reference"] }
+        }
+      }
+    },
+    "POST": {
+      "request": {
+        "as": "json",
+        "payload": {
+          "reference": { "type": "string", "minLength": 3 },
+          "title": { "type": "string", "minLength": 3 },
+          "category": { "type": "string", "enum": ["travel", "meals", "equipment", "other"] },
+          "amount": { "type": "number", "min": 0.01 }
+        },
+        "headers": { "x-tenant": { "type": "string", "minLength": 2 } },
+        "error": { "response": "validation-error", "format": "map", "key": "fields" }
+      },
+      "responses": [
+        { "name": "duplicate-reference", "statusCode": 409, "body": { "code": "DUPLICATE_REFERENCE", "conflicts": "{{conflicts}}" } },
+        { "name": "create", "statusCode": 201, "action": "create" },
+        { "name": "validation-error", "statusCode": 422, "body": { "message": "Expense validation failed", "fields": {} } }
+      ]
+    }
+  },
+  "api/expenses/:id/receipts": {
+    "POST": {
+      "delay": 40,
+      "request": {
+        "as": "multipart",
+        "payload": {
+          "note?": { "type": "string", "maxLength": 200 },
+          "receipt": {
+            "type": "file",
+            "format": "image/*",
+            "minItems": 1,
+            "maxItems": 1,
+            "maxSize": 2000000,
+            "requireFilename": true
+          }
+        },
+        "headers": { "x-tenant": { "type": "string", "minLength": 2 } }
+      },
+      "responses": [
+        {
+          "name": "rate-limited",
+          "statusCode": 429,
+          "match": { "call": { "index": 3, "by": { "params": "id" } } },
+          "body": { "code": "RECEIPT_RATE_LIMIT" }
+        },
+        {
+          "name": "ocr-processing",
+          "statusCode": 202,
+          "delay": 100,
+          "match": { "multipart": { "note": "ocr" } },
+          "body": { "status": "processing" }
+        },
+        { "name": "uploaded", "statusCode": 201, "body": { "receiptId": "rcpt_1", "status": "stored" } }
+      ]
+    }
+  }
+}
+```
+
+| Call | Result |
+|------|--------|
+| `GET /api/expenses` | Paginated list from `store` (`{{items}}` / `{{total}}`) |
+| `POST /api/expenses` + `x-tenant` | `201` create; duplicate `reference` → `409` |
+| Missing tenant / short fields | `422` map under `fields` |
+| `?status=draft&category=travel` | Filtered list |
+| `PATCH /api/expenses/:id` | Update status / title / amount |
+| `DELETE` then `POST` on `:id` | Soft delete (`204`) + restore (`200`) |
+| `POST .../receipts` with image | `201` (method `delay: 40`) |
+| Same + `note=ocr` | `202 processing` (`delay: 100`, `match.multipart`) |
+| 3rd upload for same `:id` | `429 RECEIPT_RATE_LIMIT` (`match.call` by `params.id`) |
+| `GET .../receipts/preview` | PNG bytes (`encoding: "file"`) |
+| `?format=base64` | Tiny PNG from `encoding: "base64"` |
+
+Frontend sketch:
+
+```js
+const expense = await fetch('/api/expenses', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'x-tenant': 'acme' },
+  body: JSON.stringify({
+    reference: 'EXP-200',
+    title: 'Airport taxi',
+    category: 'travel',
+    amount: 42.75
+  })
+}).then((r) => r.json());
+
+const form = new FormData();
+form.append('note', 'taxi');
+form.append('receipt', pngFile);
+await fetch(`/api/expenses/${expense.id}/receipts`, {
+  method: 'POST',
+  headers: { 'x-tenant': 'acme' },
+  body: form
+});
+
+const preview = await fetch(`/api/expenses/${expense.id}/receipts/preview`);
+const blob = await preview.blob();
+
+await fetch(`/api/expenses/${expense.id}`, { method: 'DELETE' });
+await fetch(`/api/expenses/${expense.id}`, { method: 'POST' }); // restore
+```
+
+### Example: OAuth2 token (form-urlencoded)
+
+**App:** any client that talks to a real OAuth2 `/oauth/token` (SPA auth code exchange helpers, mobile ROPC in staging, machine-to-machine `client_credentials`, or a BFF). Bodies are **`application/x-www-form-urlencoded`**, not JSON — use `as: "form"` + `match.body` on the same fields the IdP expects.
+
+This is different from [JWT access + refresh](#example-k--real-project-jwt-access--refresh-tokens) (JSON login) and from multipart `FormData` uploads.
+
+Full sample: [`mocks/48-oauth-form-token.json`](./mocks/48-oauth-form-token.json).
+
+```json
+{
+  "oauth/token": {
+    "POST": {
+      "nameResponse": "ok",
+      "request": {
+        "as": "form",
+        "payload": {
+          "grant_type": {
+            "type": "string",
+            "enum": ["password", "refresh_token", "client_credentials"]
+          },
+          "client_id": { "type": "string", "minLength": 3 },
+          "client_secret?": { "type": "string", "minLength": 8 },
+          "username?": { "type": "string", "minLength": 2 },
+          "password?": { "type": "string", "minLength": 4 },
+          "refresh_token?": { "type": "string", "minLength": 8 },
+          "scope?": { "type": "string", "minLength": 3 }
+        },
+        "error": {
+          "response": "invalid_request",
+          "format": "map",
+          "key": "errors"
+        }
+      },
+      "responses": [
+        {
+          "name": "password-ok",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "grant_type": "password",
+              "username": "ada",
+              "password": "secret"
+            }
+          },
+          "body": {
+            "token_type": "Bearer",
+            "access_token": "access_ada_ok",
+            "refresh_token": "rt_ada_ok",
+            "expires_in": 3600
+          }
+        },
+        {
+          "name": "password-bad",
+          "statusCode": 401,
+          "match": { "body": { "grant_type": "password" } },
+          "body": {
+            "error": "invalid_grant",
+            "error_description": "Invalid username or password"
+          }
+        },
+        {
+          "name": "refresh-reuse",
+          "statusCode": 401,
+          "match": {
+            "body": {
+              "grant_type": "refresh_token",
+              "refresh_token": "rt_reused"
+            }
+          },
+          "body": {
+            "error": "invalid_grant",
+            "error_description": "Refresh token already used"
+          }
+        },
+        {
+          "name": "refresh-ok",
+          "statusCode": 200,
+          "match": { "body": { "grant_type": "refresh_token" } },
+          "body": {
+            "token_type": "Bearer",
+            "access_token": "access_rotated",
+            "refresh_token": "rt_rotated",
+            "expires_in": 3600
+          }
+        },
+        {
+          "name": "client-ok",
+          "statusCode": 200,
+          "match": {
+            "body": {
+              "grant_type": "client_credentials",
+              "client_id": "svc_payments"
+            }
+          },
+          "body": {
+            "token_type": "Bearer",
+            "access_token": "access_svc_payments",
+            "expires_in": 900
+          }
+        },
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "token_type": "Bearer",
+            "access_token": "access_fallback",
+            "expires_in": 3600
+          }
+        },
+        {
+          "name": "invalid_request",
+          "statusCode": 400,
+          "body": { "error": "invalid_request", "errors": {} }
+        }
+      ]
+    }
+  }
+}
+```
+
+| Request | Result |
+|---------|--------|
+| Valid urlencoded `grant_type=password` + `ada` / `secret` | `200` + tokens (`match.body`) |
+| Same grant, wrong password | `401 invalid_grant` (broader `match.body` after the specific one) |
+| `refresh_token=rt_reused` | `401` reuse detection |
+| Other refresh | `200` rotated tokens |
+| `client_credentials` + `client_id=svc_payments` | M2M token |
+| Bad `grant_type` / missing `client_id` | `400` + `errors` map (`request` before match) |
+| JSON body instead of form | `400` (`as: "form"` Content-Type gate) |
+
+Frontend sketch:
+
+```js
+const token = await fetch('/oauth/token', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body: new URLSearchParams({
+    grant_type: 'password',
+    client_id: 'web_app',
+    username: 'ada',
+    password: 'secret',
+    scope: 'openid profile'
+  })
+}).then((r) => r.json());
+
+await fetch('/oauth/revoke', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body: new URLSearchParams({
+    token: token.access_token,
+    token_type_hint: 'access_token',
+    client_id: 'web_app'
+  })
+});
+```
 
 ### Example: Food delivery — simple folder mocks
 
@@ -7458,11 +8557,13 @@ mocks/
     "POST": {
       "nameResponse": "ok",
       "request": {
-        "body": {
+        "payload": {
           "email": { "type": "string", "format": "email" },
           "password": { "type": "string", "minLength": 6 }
         },
-        "invalidResponse": "invalid"
+        "error": {
+          "response": "invalid"
+        }
       },
       "responses": [
         {
@@ -7587,12 +8688,14 @@ mocks/
     "POST": {
       "nameResponse": "created",
       "request": {
-        "body": {
+        "payload": {
           "menuItemId": { "type": "string", "minLength": 1 },
           "qty": { "type": "number", "min": 1, "max": 20 },
           "name": { "type": "string", "minLength": 1 }
         },
-        "invalidResponse": "invalid"
+        "error": {
+          "response": "invalid"
+        }
       },
       "responses": [
         {
@@ -7619,10 +8722,12 @@ mocks/
     "PATCH": {
       "nameResponse": "ok",
       "request": {
-        "body": {
+        "payload": {
           "qty": { "type": "number", "min": 1, "max": 20 }
         },
-        "invalidResponse": "invalid"
+        "error": {
+          "response": "invalid"
+        }
       },
       "responses": [
         { "name": "ok", "statusCode": 200, "action": "patch", "body": {} },
@@ -7717,12 +8822,14 @@ mocks/
       "nameResponse": "created",
       "delay": 200,
       "request": {
-        "body": {
+        "payload": {
           "orderId": { "type": "string", "minLength": 1 },
           "amount": { "type": "number", "min": 1 },
           "currency": { "type": "string", "enum": ["USD", "EUR", "MXN"] }
         },
-        "invalidResponse": "invalid"
+        "error": {
+          "response": "invalid"
+        }
       },
       "responses": [
         {
@@ -7910,7 +9017,7 @@ These errors occur when individual response objects are invalid:
 | `The "delay" "X" is not a valid number`      | Response-level `delay` is not a number  | Use a number of milliseconds: `"delay": 500`                  |
 | `The "delay" must be greater than or equal to 0` | Response-level `delay` is negative  | Use `0` or a positive number                                  |
 | `The "match" property must be an object`     | `match` is not an object                | Use `"match": { "params": {...} }`, `"query": {...}`, `"body": {...}` and/or `"call": 1` |
-| `The "match" property must include "params", "query", "body" and/or "call"` | `match` is empty | Add at least `"params"`, `"query"`, `"body"`, or `"call"` inside `match` |
+| `The "match" property must include "params", "query", "body", "headers", "multipart" and/or "call"` | `match` is empty | Add at least one of those keys inside `match` |
 | `The "match.params" property must be an object` | `match.params` is not an object    | Use an object of route params: `"params": { "id": "1" }`       |
 | `The "match.params" property must not be empty` | `match.params` is `{}`             | Add at least one route param key/value to match                |
 | `The "match.query" property must be an object` | `match.query` is not an object        | Use an object of query keys/values: `"query": { "page": "1" }` |
@@ -7932,18 +9039,20 @@ These errors occur when individual response objects are invalid:
 | `The "proxy.target" property is required`      | Proxy object without target           | Add `"target": "https://api.staging.com"`                     |
 | `The "proxy.target" must be a valid http or https URL` | Invalid `proxy.target` URL | Use a full `http://` or `https://` URL |
 | `The "proxy.path" must be a string` | `proxy.path` is not a string | Use e.g. `"path": "/v2/users"` |
-| `The "request" property must be an object` | `request` is not an object | Use `"request": { "body": {...} }` and/or `"query": {...}` |
-| `The "request" property must include "body" and/or "query"` | Empty `request` | Add at least `body` or `query` |
-| `The "request.body" property must be an object` | `body` is not an object | Use `"body": { "email": "string" }` |
-| `The "request.body" property must not be empty` | `body` is `{}` | Add at least one field rule |
+| `The "request" property must be an object` | `request` is not an object | Use `"request": { "payload": {...} }` and/or `"query": {...}` |
+| `The "request" property must include "payload", "query" and/or "headers"` | Missing all of them | Add `payload`, `query`, and/or `headers` |
+| `The "request.payload" property must be an object` | `payload` is not an object (and not a raw file/rule shorthand) | Use `"payload": { "email": "string" }` |
+| `The "request.payload" property must not be empty` | `payload` is `{}` | Add at least one field rule |
 | `The "request.query" property must be an object` | `query` is not an object | Use `"query": { "page?": { "type": "number" } }` |
 | `The "request.query" property must not be empty` | `query` is `{}` | Add at least one field rule |
-| `The "request.body" contains an invalid field name` | Empty field name (e.g. `"?"`) | Use a real field name; `?` only as optional suffix |
+| `The "request.payload" contains an invalid field name` | Empty field name (e.g. `"?"`) | Use a real field name; `?` only as optional suffix |
 | `field must be a type string or a rule object with "type"` | Invalid field schema | Use `"email": "string"` or `{ "type": "string", ... }` |
-| `type must be one of: string, number, boolean, object, array` | Unknown `type` | Use one of the supported types |
-| `string rules ... require type "string"` | `minLength`/`pattern`/`format` on non-string | Set `"type": "string"` |
+| `type must be one of: string, number, boolean, object, array, file` | Unknown `type` | Use one of the supported types |
+| `string rules ... require type "string"` | `minLength`/`maxLength` on non-string | Set `"type": "string"` |
+| `pattern requires type "string" or "file"` | `pattern` on other types | Use string or file |
 | `range rules (min, max) require type "number"` | `min`/`max` on non-number | Set `"type": "number"` |
-| `array rules ... require type "array"` | `minItems`/`items` on non-array | Set `"type": "array"` |
+| `rules (minItems, maxItems) require type "array" or "file"` | Counts on wrong type | Use array or file |
+| `items requires type "array"` | `items` on non-array | Set `"type": "array"` |
 | `properties requires type "object"` | `properties` on non-object | Set `"type": "object"` |
 | `properties must be a non-empty object` | `properties: {}` | Add nested fields |
 | `minLength must be a non-negative number` | Negative bound | Use `0` or a positive number |
@@ -7953,12 +9062,12 @@ These errors occur when individual response objects are invalid:
 | `enum must be a non-empty array` | Empty enum | Add at least one allowed value |
 | `enum values must be strings or numbers` | Invalid enum item types | Use only strings/numbers in `enum` |
 | `message must be a string` | Non-string custom message | Use `"message": "..." ` |
-| `request.invalidResponse must be a non-empty string` | Missing/empty/non-string | Use a response `name` string |
-| `request.invalidResponse "X" does not exist in responses` | Unknown response name | Point to an existing response `name` |
-| `request.errorFormat must be one of: array, map` | Invalid error format | Use `"array"` or `"map"` |
-| `request.errorDetail must be a non-empty string or object` | Empty/invalid template | Use a string or object of string templates |
-| `request.errorDetail object values must be strings` | Non-string template value | Use only string values in the object |
-| `request.errorDetailsKey must be a non-empty string` | Empty key | Use e.g. `"errors"` or `"fields"` |
+| `request.error.response must be a non-empty string` | Missing/empty/non-string | Use a response `name` string |
+| `request.error.response "X" does not exist in responses` | Unknown response name | Point to an existing response `name` |
+| `request.error.format must be one of: array, map` | Invalid error format | Use `"array"` or `"map"` |
+| `request.error.detail must be a non-empty string or object` | Empty/invalid template | Use a string or object of string templates |
+| `request.error.detail object values must be strings` | Non-string template value | Use only string values in the object |
+| `request.error.key must be a non-empty string` | Empty key | Use e.g. `"errors"` or `"fields"` |
 
 ### Store / action Errors
 
@@ -8002,6 +9111,11 @@ These errors occur when `store` or `action` configuration is invalid:
 | `The store notFound response "X" does not exist in responses` | Named notFound response missing on get/update/patch/delete/restore | Add that `name` to the method’s `responses` |
 | `The "action" property requires a "store" on the endpoint` | Action without store | Add `store` to the endpoint |
 | `The "action" property cannot be used together with "proxy"` | Action + proxy | Remove one of them |
+| `The "encoding" property cannot be used together with "proxy" or "action"` | Encoding + proxy/action on same response | Use separate responses, or drop `encoding` / `proxy` / `action` |
+| `The "encoding" property must be one of: file, base64` | Unknown encoding | Use `"file"` or `"base64"` |
+| `The "body" property must be a string when encoding is "file"` (or `"base64"`) | Non-string body with encoding | Use a path string or base64 string |
+| `The "request.body" property is not supported; use "payload"` | Legacy key | Rename to `payload` |
+| `The "request.invalidResponse" property is not supported; use "error.response"` | Legacy key | Nest under `error` |
 | `The store conflict response "X" does not exist in responses` | Missing conflict response name | Add a response with that `name` on mutating methods |
 | `The "store.persist" property must be a boolean or an object` | Invalid persist shape | Use `true` or `{ "enabled": true }` |
 | `The "store.persist.enabled" must be a boolean` | Missing/invalid enabled | Set `"enabled": true/false` |

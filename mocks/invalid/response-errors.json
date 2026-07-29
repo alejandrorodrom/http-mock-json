@@ -90,5 +90,60 @@
         }
       ]
     }
+  },
+  "api/invalid/encoding-value": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "encoding": "hex",
+          "body": "00"
+        }
+      ]
+    }
+  },
+  "api/invalid/encoding-body-not-string": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": 200,
+          "encoding": "file",
+          "body": {
+            "path": "a.png"
+          }
+        }
+      ]
+    }
+  },
+  "api/invalid/encoding-with-proxy": {
+    "GET": {
+      "nameResponse": "live",
+      "proxy": "https://example.com",
+      "responses": [
+        {
+          "name": "live",
+          "proxy": true,
+          "encoding": "file",
+          "body": "a.png"
+        }
+      ]
+    }
+  },
+  "api/invalid/encoding-empty-path": {
+    "GET": {
+      "nameResponse": "empty",
+      "responses": [
+        {
+          "name": "empty",
+          "statusCode": 200,
+          "encoding": "file",
+          "body": "   "
+        }
+      ]
+    }
   }
 }

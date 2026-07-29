@@ -304,6 +304,7 @@ export const processMockData = (
           status: Number(response.statusCode),
           headers: mergeHeaders(fileDefaults?.headers, response.headers),
           body: (hasProperty(response, 'body') ? response.body : null) as JsonValue,
+          encoding: response.encoding,
           delay: response.delay !== undefined ? Number(response.delay) : undefined,
           match: response.match,
           proxy: response.proxy,

@@ -7,7 +7,7 @@ import {
   Rule
 } from '../types/request.type';
 import { isObject } from './guards.script';
-import { parseKey } from './request-key.script';
+import { isWholeBodyPayload, parseKey } from './request-key.script';
 
 const toRule = (schema: FieldSchema): Rule => {
   if (typeof schema === 'string') {
@@ -24,7 +24,11 @@ const toRule = (schema: FieldSchema): Rule => {
     enum: schema.enum,
     minItems: schema.minItems,
     maxItems: schema.maxItems,
-    message: schema.message
+    maxSize: schema.maxSize,
+    minSize: schema.minSize,
+    requireFilename: schema.requireFilename,
+    message: schema.message,
+    messages: schema.messages
   };
 
   if (typeof schema.pattern === 'string' && schema.pattern.length > 0) {
@@ -55,12 +59,36 @@ const toFields = (fields: Record<string, FieldSchema>): Field[] => {
 };
 
 export const normalizeRequest = (request: RawMockRequest): MockRequest => {
+  const error = request.error ?? {};
+  const payload = request.payload;
+
+  let fields: Field[] | undefined;
+  let rawPayload: Rule | undefined;
+
+  if (payload !== undefined) {
+    if (typeof payload === 'string' || Array.isArray(payload)) {
+      rawPayload = {
+        type: 'file',
+        format: payload
+      };
+    } else if (isWholeBodyPayload(payload, request.as)) {
+      rawPayload = toRule(payload);
+    } else if (isObject(payload)) {
+      fields = toFields(payload as Record<string, FieldSchema>);
+    }
+  }
+
   return {
-    body: request.body ? toFields(request.body) : undefined,
+    as: request.as,
+    payload: fields,
+    rawPayload,
     query: request.query ? toFields(request.query) : undefined,
-    invalidResponse: request.invalidResponse,
-    errorFormat: request.errorFormat ?? 'array',
-    errorDetail: request.errorDetail,
-    errorDetailsKey: request.errorDetailsKey ?? ERROR_KEY
+    headers: request.headers ? toFields(request.headers) : undefined,
+    error: {
+      response: error.response,
+      format: error.format ?? 'array',
+      detail: error.detail,
+      key: error.key ?? ERROR_KEY
+    }
   };
 };

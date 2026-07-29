@@ -5,6 +5,43 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-07-29
+
+Major release on top of **3.0.0**.
+
+### Previous version
+
+**3.0.0** — list-on-by-default for `store.list`.
+
+### Breaking Changes
+
+- `request.body` is no longer valid — use `request.payload`
+- Flat error keys (`invalidResponse`, `errorFormat`, `errorDetail`, `errorDetailsKey`) are no longer valid — use `request.error.{ response, format, detail, key }`
+- Config validation error paths use `request.payload.*` and `request.error.*`
+- Repo mocks, e2e fixtures, and README examples migrate in this major (no alias / dual-read period)
+
+### Added
+
+- Tolerant body intake (`rawBody`) so multipart / binary requests survive to proxy and validators
+- Response `encoding: "file" | "base64"` with safe file paths under the mocks root
+- Request `as` (`json` | `form` | `multipart` | `raw` | `text`) with Content-Type mismatch → `error.response`
+- Multipart / form / raw / text validation, including `type: "file"` + `format` / size rules (`busboy`)
+- `match.headers` and `match.multipart` for scenario selection
+- Real-project sample: OAuth2 `/oauth/token` with `as: "form"` + `match.body` on urlencoded grants (`48-oauth-form-token`)
+
+### Migration
+
+- Rename `request.body` → `request.payload`
+- Nest flat error options under `request.error`
+- Prefer `as: "multipart"` (or omit for auto) when validating uploads; use `{ "type": "file", "format": ... }` for files
+- Use `encoding: "file"` / `"base64"` for binary mock responses instead of forcing JSON
+
+### Changed
+
+- Package / CLI version bumped to `4.0.0`
+
+---
+
 ## [3.0.0] - 2026-07-28
 
 Major release on top of **2.1.0**.

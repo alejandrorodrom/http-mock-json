@@ -199,6 +199,34 @@ const ERROR_CATALOG = [
     caseName: 'error/response-errors'
   },
   {
+    id: 'response.encoding-invalid',
+    message: 'The "encoding" property must be one of: file, base64',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/response-errors'
+  },
+  {
+    id: 'response.encoding-body-not-string',
+    message: 'The "body" property must be a string when encoding is "file"',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/response-errors'
+  },
+  {
+    id: 'response.encoding-with-proxy',
+    message: 'The "encoding" property cannot be used together with "proxy" or "action"',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/response-errors'
+  },
+  {
+    id: 'response.encoding-empty-path',
+    message: 'The "body" property must be a non-empty path string when encoding is "file"',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/response-errors'
+  },
+  {
     id: 'response.statusCode-warning',
     message: 'The "statusCode" 299 is not a standard HTTP status code',
     source: 'src/validators/response.validator.ts',
@@ -216,7 +244,7 @@ const ERROR_CATALOG = [
   },
   {
     id: 'match.empty',
-    message: 'The "match" property must include "params", "query", "body" and/or "call"',
+    message: 'The "match" property must include "params", "query", "body", "headers", "multipart" and/or "call"',
     source: 'src/validators/response.validator.ts',
     kind: 'validation',
     caseName: 'error/match-errors'
@@ -265,7 +293,7 @@ const ERROR_CATALOG = [
   },
   {
     id: 'match.call-reset-only-needs-match',
-    message: 'A "match.call" with only "reset": true must also include "params", "query" and/or "body"',
+    message: 'A "match.call" with only "reset": true must also include "params", "query", "body", "headers" and/or "multipart"',
     source: 'src/validators/response.validator.ts',
     kind: 'validation',
     caseName: 'error/match-errors'
@@ -320,6 +348,34 @@ const ERROR_CATALOG = [
     caseName: 'error/match-errors'
   },
   {
+    id: 'match.headers-not-object',
+    message: 'The "match.headers" property must be an object',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/match-errors'
+  },
+  {
+    id: 'match.headers-empty',
+    message: 'The "match.headers" property must not be empty',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/match-errors'
+  },
+  {
+    id: 'match.multipart-not-object',
+    message: 'The "match.multipart" property must be an object',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/match-errors'
+  },
+  {
+    id: 'match.multipart-empty',
+    message: 'The "match.multipart" property must not be empty',
+    source: 'src/validators/response.validator.ts',
+    kind: 'validation',
+    caseName: 'error/match-errors'
+  },
+  {
     id: 'match.call-loop-indexes-not-dense',
     message: 'When "match.call.loop" is true, "index" values should be contiguous from 1 to max',
     source: 'src/validators/method.validator.ts',
@@ -337,21 +393,21 @@ const ERROR_CATALOG = [
   },
   {
     id: 'request.empty',
-    message: 'The "request" property must include "body" and/or "query"',
+    message: 'The "request" property must include "payload", "query" and/or "headers"',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
-    id: 'request.body-not-object',
-    message: 'The "request.body" property must be an object',
+    id: 'request.payload-not-object',
+    message: 'The "request.payload" property must be an object',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
-    id: 'request.body-empty',
-    message: 'The "request.body" property must not be empty',
+    id: 'request.payload-empty',
+    message: 'The "request.payload" property must not be empty',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
@@ -372,147 +428,231 @@ const ERROR_CATALOG = [
   },
   {
     id: 'request.field-invalid',
-    message: 'The "request.body.email" field must be a type string or a rule object with "type"',
+    message: 'The "request.payload.email" field must be a type string or a rule object with "type"',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.field-name-invalid',
-    message: 'The "request.body" contains an invalid field name',
+    message: 'The "request.payload" contains an invalid field name',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.type-invalid',
-    message: 'The "request.body.email.type" must be one of: string, number, boolean, object, array',
+    message: 'The "request.payload.email.type" must be one of: string, number, boolean, object, array, file',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.string-rules-type',
-    message: 'The "request.body.age" string rules (minLength, maxLength, pattern, format) require type "string"',
+    message: 'The "request.payload.age" string rules (minLength, maxLength) require type "string"',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.range-rules-type',
-    message: 'The "request.body.name" range rules (min, max) require type "number"',
+    message: 'The "request.payload.name" range rules (min, max) require type "number"',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
-    id: 'request.array-rules-type',
-    message: 'The "request.body.name" array rules (minItems, maxItems, items) require type "array"',
+    id: 'request.count-rules-type',
+    message: 'The "request.payload.name" rules (minItems, maxItems) require type "array" or "file"',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.properties-type',
-    message: 'The "request.body.name.properties" requires type "object"',
+    message: 'The "request.payload.name.properties" requires type "object"',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.properties-empty',
-    message: 'The "request.body.address.properties" must be a non-empty object',
+    message: 'The "request.payload.address.properties" must be a non-empty object',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.bound-negative',
-    message: 'The "request.body.name.minLength" must be a non-negative number',
+    message: 'The "request.payload.name.minLength" must be a non-negative number',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.pattern-invalid',
-    message: 'The "request.body.code.pattern" is not a valid regular expression',
+    message: 'The "request.payload.code.pattern" is not a valid regular expression',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.pattern-empty',
-    message: 'The "request.body.code.pattern" must be a non-empty string',
+    message: 'The "request.payload.code.pattern" must be a non-empty string',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.items-on-file',
+    message: 'The "request.payload.avatar.items" requires type "array"',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.format-invalid',
-    message: 'The "request.body.email.format" must be one of: email, uuid, url, date',
+    message: 'The "request.payload.email.format" must be one of: email, uuid, url, date',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.enum-empty',
-    message: 'The "request.body.role.enum" must be a non-empty array',
+    message: 'The "request.payload.role.enum" must be a non-empty array',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.enum-values-invalid',
-    message: 'The "request.body.role.enum" values must be strings or numbers',
+    message: 'The "request.payload.role.enum" values must be strings or numbers',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.message-not-string',
-    message: 'The "request.body.email.message" must be a string',
+    message: 'The "request.payload.email.message" must be a string',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.invalid-response-missing',
-    message: 'The "request.invalidResponse" "missing-error" does not exist in responses',
+    message: 'The "request.error.response" "missing-error" does not exist in responses',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.invalid-response-empty',
-    message: 'The "request.invalidResponse" must be a non-empty string',
+    message: 'The "request.error.response" must be a non-empty string',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.error-format',
-    message: 'The "request.errorFormat" must be one of: array, map',
+    message: 'The "request.error.format" must be one of: array, map',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.error-detail-values',
-    message: 'The "request.errorDetail" object values must be strings',
+    message: 'The "request.error.detail" object values must be strings',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.error-detail-shape',
-    message: 'The "request.errorDetail" must be a non-empty string or object',
+    message: 'The "request.error.detail" must be a non-empty string or object',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
   },
   {
     id: 'request.error-details-key',
-    message: 'The "request.errorDetailsKey" must be a non-empty string',
+    message: 'The "request.error.key" must be a non-empty string',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.as-invalid',
+    message: 'The "request.as" must be one of: json, form, multipart, raw, text',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.whole-body-missing-as',
+    message: 'The "request.payload" rule object requires "as": "text" or "as": "raw" (or use type "file")',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.text-field-map',
+    message: 'The "request.payload" must be a single rule object when "as" is "text" or "raw"',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.file-requires-multipart',
+    message: 'The "request.payload" fields with type "file" require "as": "multipart"',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.error-response-encoding',
+    message: 'The "request.error.response" cannot reference a response with "encoding"',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.file-rules-type',
+    message: 'The "request.payload.avatar" file rules (maxSize, minSize, requireFilename) require type "file"',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.messages-not-object',
+    message: 'The "request.payload.email.messages" must be a non-empty object',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.legacy-body',
+    message: 'The "request.body" property is not supported; use "payload"',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.legacy-invalid-response',
+    message: 'The "request.invalidResponse" property is not supported; use "error.response"',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.file-format-invalid',
+    message: 'The "request.payload.avatar.format" value "not-a-mime" must be a MIME type, wildcard (e.g. image/*), or known alias',
+    source: 'src/validators/request.validator.ts',
+    kind: 'validation',
+    caseName: 'error/request-errors'
+  },
+  {
+    id: 'request.raw-payload-format-invalid',
+    message: 'The "request.payload.format" value "not-a-mime" must be a MIME type, wildcard (e.g. image/*), or known alias',
     source: 'src/validators/request.validator.ts',
     kind: 'validation',
     caseName: 'error/request-errors'
@@ -2101,7 +2241,7 @@ const ERROR_CATALOG = [
   },
   {
     id: 'watch.request-config-invalid',
-    message: 'The "request.body.email.format" must be one of: email, uuid, url, date',
+    message: 'The "request.payload.email.format" must be one of: email, uuid, url, date',
     source: 'src/validators/request.validator.ts',
     kind: 'watch',
     caseName: 'runtime/watch-request-failed'

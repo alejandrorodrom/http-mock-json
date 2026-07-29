@@ -308,5 +308,65 @@
         }
       ]
     }
+  },
+  "api/invalid/match-headers-not-object": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "headers": "x-role=admin"
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-headers-empty": {
+    "GET": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "headers": {}
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-multipart-not-object": {
+    "POST": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "multipart": ["avatar"]
+          },
+          "body": {}
+        }
+      ]
+    }
+  },
+  "api/invalid/match-multipart-empty": {
+    "POST": {
+      "nameResponse": "success",
+      "responses": [
+        {
+          "name": "success",
+          "statusCode": "200",
+          "match": {
+            "multipart": {}
+          },
+          "body": {}
+        }
+      ]
+    }
   }
 }

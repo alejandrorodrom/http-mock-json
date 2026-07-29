@@ -3,8 +3,13 @@
     "store": {
       "id": "hr-employees",
       "key": {
-        "fields": ["orgId", "id"],
-        "conflict": { "response": "duplicate-key" }
+        "fields": [
+          "orgId",
+          "id"
+        ],
+        "conflict": {
+          "response": "duplicate-key"
+        }
       },
       "seed": [
         {
@@ -16,7 +21,11 @@
           "status": "active",
           "salary": 72000,
           "hiredAt": 1600000000,
-          "profile": { "dept": "platform", "level": 3, "city": "Madrid" }
+          "profile": {
+            "dept": "platform",
+            "level": 3,
+            "city": "Madrid"
+          }
         },
         {
           "orgId": "acme",
@@ -27,7 +36,11 @@
           "status": "active",
           "salary": 58000,
           "hiredAt": 1620000000,
-          "profile": { "dept": "product", "level": 2, "city": "Barcelona" }
+          "profile": {
+            "dept": "product",
+            "level": 2,
+            "city": "Barcelona"
+          }
         },
         {
           "orgId": "acme",
@@ -38,7 +51,11 @@
           "status": "leave",
           "salary": 81000,
           "hiredAt": 1580000000,
-          "profile": { "dept": "platform", "level": 4, "city": "Madrid" }
+          "profile": {
+            "dept": "platform",
+            "level": 4,
+            "city": "Madrid"
+          }
         },
         {
           "orgId": "acme",
@@ -49,7 +66,11 @@
           "status": "active",
           "salary": 95000,
           "hiredAt": 1550000000,
-          "profile": { "dept": "people", "level": 5, "city": "Remote" }
+          "profile": {
+            "dept": "people",
+            "level": 5,
+            "city": "Remote"
+          }
         },
         {
           "orgId": "acme",
@@ -60,7 +81,11 @@
           "status": "active",
           "salary": 64000,
           "hiredAt": 1680000000,
-          "profile": { "dept": "data", "level": 2, "city": "Berlin" }
+          "profile": {
+            "dept": "data",
+            "level": 2,
+            "city": "Berlin"
+          }
         },
         {
           "orgId": "acme",
@@ -71,7 +96,11 @@
           "status": "terminated",
           "salary": 42000,
           "hiredAt": 1500000000,
-          "profile": { "dept": "success", "level": 1, "city": "Lima" }
+          "profile": {
+            "dept": "success",
+            "level": 1,
+            "city": "Lima"
+          }
         },
         {
           "orgId": "globex",
@@ -82,7 +111,11 @@
           "status": "active",
           "salary": 88000,
           "hiredAt": 1640000000,
-          "profile": { "dept": "platform", "level": 3, "city": "Seoul" }
+          "profile": {
+            "dept": "platform",
+            "level": 3,
+            "city": "Seoul"
+          }
         }
       ],
       "template": {
@@ -94,7 +127,11 @@
         "status": "active",
         "salary": 0,
         "hiredAt": 0,
-        "profile": { "dept": "", "level": 1, "city": "" }
+        "profile": {
+          "dept": "",
+          "level": 1,
+          "city": ""
+        }
       },
       "unique": {
         "fields": [
@@ -102,53 +139,130 @@
             "field": "email",
             "conflict": {
               "response": "email-taken",
-              "detail": { "field": "{{field}}", "value": "{{value}}" }
+              "detail": {
+                "field": "{{field}}",
+                "value": "{{value}}"
+              }
             }
           }
         ],
         "conflict": {
           "response": "duplicate-fields",
-          "detail": { "field": "{{field}}", "value": "{{value}}" }
+          "detail": {
+            "field": "{{field}}",
+            "value": "{{value}}"
+          }
         }
       },
       "persist": true,
       "list": {
-        "page": { "query": "page", "default": 1 },
+        "page": {
+          "query": "page",
+          "default": 1
+        },
         "pageSize": {
           "query": "pageSize",
           "default": 3,
           "max": 50,
-          "aliases": ["limit"]
+          "aliases": [
+            "limit"
+          ]
         },
         "sort": {
           "query": "sort",
           "default": "name",
-          "fields": ["id", "name", "salary", "hiredAt", "role"]
+          "fields": [
+            "id",
+            "name",
+            "salary",
+            "hiredAt",
+            "role"
+          ]
         },
-        "order": { "query": "order", "default": "asc" },
+        "order": {
+          "query": "order",
+          "default": "asc"
+        },
         "filter": {
           "fields": [
             "status",
             "role",
-            { "field": "salary", "op": "gte", "query": "minSalary" },
-            { "field": "salary", "op": "lte", "query": "maxSalary" },
-            { "field": "profile.level", "op": "gt", "query": "minLevel" },
-            { "field": "profile.level", "op": "lt", "query": "maxLevel" },
-            { "field": "hiredAt", "op": "gte", "query": "hiredAfter" },
-            { "field": "hiredAt", "op": "lte", "query": "hiredBefore" },
-            { "field": "status", "op": "ne", "query": "excludeStatus" },
-            { "field": "role", "op": "in", "query": "roles" },
-            { "field": "profile.dept", "op": "eq", "query": "dept" },
-            { "field": "profile.city", "op": "eq", "query": "city" }
+            {
+              "field": "salary",
+              "op": "gte",
+              "query": "minSalary"
+            },
+            {
+              "field": "salary",
+              "op": "lte",
+              "query": "maxSalary"
+            },
+            {
+              "field": "profile.level",
+              "op": "gt",
+              "query": "minLevel"
+            },
+            {
+              "field": "profile.level",
+              "op": "lt",
+              "query": "maxLevel"
+            },
+            {
+              "field": "hiredAt",
+              "op": "gte",
+              "query": "hiredAfter"
+            },
+            {
+              "field": "hiredAt",
+              "op": "lte",
+              "query": "hiredBefore"
+            },
+            {
+              "field": "status",
+              "op": "ne",
+              "query": "excludeStatus"
+            },
+            {
+              "field": "role",
+              "op": "in",
+              "query": "roles"
+            },
+            {
+              "field": "profile.dept",
+              "op": "eq",
+              "query": "dept"
+            },
+            {
+              "field": "profile.city",
+              "op": "eq",
+              "query": "city"
+            }
           ],
           "or": [
-            { "field": "profile.dept", "op": "eq", "query": "anyDept" },
-            { "field": "profile.city", "op": "eq", "query": "anyCity" },
-            { "field": "role", "op": "eq", "query": "anyRole" }
+            {
+              "field": "profile.dept",
+              "op": "eq",
+              "query": "anyDept"
+            },
+            {
+              "field": "profile.city",
+              "op": "eq",
+              "query": "anyCity"
+            },
+            {
+              "field": "role",
+              "op": "eq",
+              "query": "anyRole"
+            }
           ],
           "search": {
             "query": "q",
-            "fields": ["name", "email", "profile.city", "profile.dept"]
+            "fields": [
+              "name",
+              "email",
+              "profile.city",
+              "profile.dept"
+            ]
           }
         }
       }
@@ -159,7 +273,11 @@
         {
           "name": "forbidden-org",
           "statusCode": 403,
-          "match": { "params": { "orgId": "blocked" } },
+          "match": {
+            "params": {
+              "orgId": "blocked"
+            }
+          },
           "body": {
             "code": "ORG_FORBIDDEN",
             "message": "HR directory is not available for this organization"
@@ -193,36 +311,77 @@
     "POST": {
       "nameResponse": "create",
       "request": {
-        "body": {
-          "name": { "type": "string", "minLength": 2, "maxLength": 80 },
-          "email": { "type": "string", "format": "email" },
+        "payload": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
           "role": {
             "type": "string",
-            "enum": ["engineer", "designer", "manager", "support"]
+            "enum": [
+              "engineer",
+              "designer",
+              "manager",
+              "support"
+            ]
           },
-          "salary": { "type": "number", "min": 1, "max": 500000 },
-          "hiredAt": { "type": "number", "min": 1 },
+          "salary": {
+            "type": "number",
+            "min": 1,
+            "max": 500000
+          },
+          "hiredAt": {
+            "type": "number",
+            "min": 1
+          },
           "status?": {
             "type": "string",
-            "enum": ["active", "leave", "terminated"]
+            "enum": [
+              "active",
+              "leave",
+              "terminated"
+            ]
           },
           "profile": {
             "type": "object",
             "properties": {
-              "dept": { "type": "string", "minLength": 2 },
-              "level": { "type": "number", "min": 1, "max": 10 },
-              "city": { "type": "string", "minLength": 2 }
+              "dept": {
+                "type": "string",
+                "minLength": 2
+              },
+              "level": {
+                "type": "number",
+                "min": 1,
+                "max": 10
+              },
+              "city": {
+                "type": "string",
+                "minLength": 2
+              }
             }
           }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
           "name": "forbidden-org",
           "statusCode": 403,
-          "match": { "params": { "orgId": "blocked" } },
-          "body": { "code": "ORG_FORBIDDEN" }
+          "match": {
+            "params": {
+              "orgId": "blocked"
+            }
+          },
+          "body": {
+            "code": "ORG_FORBIDDEN"
+          }
         },
         {
           "name": "validation-error",
@@ -236,51 +395,90 @@
         {
           "name": "email-taken",
           "statusCode": 409,
-          "body": { "code": "EMAIL_TAKEN", "conflicts": "{{conflicts}}" }
+          "body": {
+            "code": "EMAIL_TAKEN",
+            "conflicts": "{{conflicts}}"
+          }
         },
         {
           "name": "duplicate-fields",
           "statusCode": 409,
-          "body": { "code": "DUPLICATE", "conflicts": "{{conflicts}}" }
+          "body": {
+            "code": "DUPLICATE",
+            "conflicts": "{{conflicts}}"
+          }
         },
         {
           "name": "duplicate-key",
           "statusCode": 409,
-          "body": { "code": "DUPLICATE_KEY" }
+          "body": {
+            "code": "DUPLICATE_KEY"
+          }
         },
-        { "name": "create", "statusCode": 201, "action": "create" }
+        {
+          "name": "create",
+          "statusCode": 201,
+          "action": "create"
+        }
       ]
     }
   },
   "api/orgs/:orgId/employees/:id": {
-    "store": { "id": "hr-employees" },
+    "store": {
+      "id": "hr-employees"
+    },
     "GET": {
       "nameResponse": "get",
       "responses": [
         {
           "name": "forbidden-org",
           "statusCode": 403,
-          "match": { "params": { "orgId": "blocked" } },
-          "body": { "code": "ORG_FORBIDDEN" }
+          "match": {
+            "params": {
+              "orgId": "blocked"
+            }
+          },
+          "body": {
+            "code": "ORG_FORBIDDEN"
+          }
         },
-        { "name": "get", "statusCode": 200, "action": "get" }
+        {
+          "name": "get",
+          "statusCode": 200,
+          "action": "get"
+        }
       ]
     },
     "PATCH": {
       "nameResponse": "patch",
       "request": {
-        "body": {
+        "payload": {
           "status?": {
             "type": "string",
-            "enum": ["active", "leave", "terminated"]
+            "enum": [
+              "active",
+              "leave",
+              "terminated"
+            ]
           },
-          "salary?": { "type": "number", "min": 1, "max": 500000 },
+          "salary?": {
+            "type": "number",
+            "min": 1,
+            "max": 500000
+          },
           "role?": {
             "type": "string",
-            "enum": ["engineer", "designer", "manager", "support"]
+            "enum": [
+              "engineer",
+              "designer",
+              "manager",
+              "support"
+            ]
           }
         },
-        "invalidResponse": "validation-error"
+        "error": {
+          "response": "validation-error"
+        }
       },
       "responses": [
         {
@@ -295,19 +493,31 @@
         {
           "name": "email-taken",
           "statusCode": 409,
-          "body": { "code": "EMAIL_TAKEN", "conflicts": "{{conflicts}}" }
+          "body": {
+            "code": "EMAIL_TAKEN",
+            "conflicts": "{{conflicts}}"
+          }
         },
         {
           "name": "duplicate-fields",
           "statusCode": 409,
-          "body": { "code": "DUPLICATE", "conflicts": "{{conflicts}}" }
+          "body": {
+            "code": "DUPLICATE",
+            "conflicts": "{{conflicts}}"
+          }
         },
         {
           "name": "duplicate-key",
           "statusCode": 409,
-          "body": { "code": "DUPLICATE_KEY" }
+          "body": {
+            "code": "DUPLICATE_KEY"
+          }
         },
-        { "name": "patch", "statusCode": 200, "action": "patch" }
+        {
+          "name": "patch",
+          "statusCode": 200,
+          "action": "patch"
+        }
       ]
     },
     "DELETE": {
@@ -316,10 +526,20 @@
         {
           "name": "forbidden-org",
           "statusCode": 403,
-          "match": { "params": { "orgId": "blocked" } },
-          "body": { "code": "ORG_FORBIDDEN" }
+          "match": {
+            "params": {
+              "orgId": "blocked"
+            }
+          },
+          "body": {
+            "code": "ORG_FORBIDDEN"
+          }
         },
-        { "name": "remove", "statusCode": 204, "action": "delete" }
+        {
+          "name": "remove",
+          "statusCode": 204,
+          "action": "delete"
+        }
       ]
     }
   }

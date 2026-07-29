@@ -86,18 +86,18 @@ export const buildRequestError = (
   issues: RequestIssue[],
   responses: MockResponseConfig[]
 ): MockResponseConfig => {
-  const errors = request.errorFormat === 'map'
-    ? toMapErrors(issues, request.errorDetail)
-    : toArrayErrors(issues, request.errorDetail);
+  const errors = request.error.format === 'map'
+    ? toMapErrors(issues, request.error.detail)
+    : toArrayErrors(issues, request.error.detail);
 
   const payload = errors as JsonValue;
 
-  if (request.invalidResponse) {
-    const selected = responses.find(response => response.name === request.invalidResponse);
+  if (request.error.response) {
+    const selected = responses.find(response => response.name === request.error.response);
 
     if (!selected) {
       throw new Error(
-        `Invalid response "${ request.invalidResponse }" was not found in the responses array`
+        `Invalid response "${ request.error.response }" was not found in the responses array`
       );
     }
 
@@ -105,7 +105,7 @@ export const buildRequestError = (
       name: selected.name,
       status: selected.status,
       headers: selected.headers,
-      body: withErrors(selected.body, request.errorDetailsKey, payload),
+      body: withErrors(selected.body, request.error.key, payload),
       delay: selected.delay
     };
   }
@@ -116,7 +116,7 @@ export const buildRequestError = (
     headers: {},
     body: {
       message: ERROR_MESSAGE,
-      [request.errorDetailsKey]: payload
+      [request.error.key]: payload
     }
   };
 };
