@@ -69,6 +69,7 @@ Define the same endpoints your app will call. Switch success and failure scenari
 **Key Features:**
 
 - **Zero Configuration** - Get started in seconds with interactive setup
+- **CRUD Scaffold** - `mock-server add --crud` generates collection + item routes with `store` actions in one step
 - **Automatic Validation** - Comprehensive validation system prevents errors before they happen
 - **Hot Reload** - Watch mode automatically restarts server on file changes
 - **Multiple Responses** - Simulate different scenarios (success, error, etc.) for the same endpoint
@@ -305,17 +306,22 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
 
     ```
     mock-server add
+    mock-server add --crud
     ```
 
    | Flag      | Default | Description                                               |
    |-----------|---------|-----------------------------------------------------------|
    | -p --path | `mocks` | Path to the mocks directory                               |
+   | --crud    | `false` | Scaffold collection + item route with `store` actions (`list` / `create` / `get` / `update` / `patch` / `delete`). Skips the HTTP verb prompt. `store.id` is taken from the last path segment. If the endpoint ends with `/:param`, that param name is kept on the item route. |
 
    **Example:**
     ```
     mock-server add --path api-mocks
     mock-server add --path apps/folder1/mocks
+    mock-server add --crud
     ```
+
+   With `--crud`, an endpoint like `api/notes` writes both `api/notes` and `api/notes/:id` (same shape as [Example A — Simple](#example-a--simple-notes-crud), plus `PUT`/`PATCH`). `users/:userId` keeps `users/:userId` on the item route. If the JSON file already exists, you are asked before overwrite. Edit `seed` / `template` or `POST` items to start.
 
 ---
 

@@ -39,6 +39,6 @@ export interface WatchMock {
 export interface PromptAddMock {
   name: string;
   endpoint: string;
-  httpVerbs: HttpVerbs[];
-  confirm: string;
+  httpVerbs?: HttpVerbs[];
+  confirm: boolean;
 }

@@ -1,10 +1,11 @@
 import { HttpVerbs } from "../../../constants/http-verbs.constant";
+import { normalizeEndpoint } from "./normalize-endpoint";
 
 interface StructureMock {
   nameResponse: string;
   responses: Array<{
     name: string;
-    statusCode: string;
+    statusCode: number;
     body: object;
   }>
 }
@@ -17,7 +18,7 @@ export const structureMock = (endpoint: string, httpVerbs: HttpVerbs[]) => {
   });
 
   const endpointMap = new Map<string, object>();
-  endpointMap.set(endpoint, Object.fromEntries(httpMap.entries()));
+  endpointMap.set(normalizeEndpoint(endpoint), Object.fromEntries(httpMap.entries()));
 
   return Object.fromEntries(endpointMap.entries());
 }
@@ -28,12 +29,12 @@ const structureHttpVerb = (): StructureMock => {
     responses: [
       {
         name: 'success',
-        statusCode: '200',
+        statusCode: 200,
         body: {},
       },
       {
         name: 'error',
-        statusCode: '404',
+        statusCode: 404,
         body: {},
       }
     ]

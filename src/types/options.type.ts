@@ -7,4 +7,4 @@ export type StartOptions = {
   resetStore?: StoreResetOption;
 };
 export type InitOptions = { path: string, mock: boolean, script: boolean };
-export type AddOptions = { path: string };
+export type AddOptions = { path: string; crud?: boolean };

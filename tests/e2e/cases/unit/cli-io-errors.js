@@ -5,27 +5,7 @@ const path = require('path');
 const prompts = require('prompts');
 const { runUnitUseCase, PROJECT_ROOT } = require('../../lib/execute-mock-file');
 const { createWorkspace } = require('../../lib/server-harness');
-const { stripAnsi } = require('../../lib/strip-ansi');
-
-/**
- * @param {() => void | Promise<void>} fn
- * @returns {Promise<string>}
- */
-async function captureLogs(fn) {
-  const logs = [];
-  const originalLog = console.log;
-  console.log = (...args) => {
-    logs.push(stripAnsi(args.map(String).join(' ')));
-  };
-
-  try {
-    await fn();
-  } finally {
-    console.log = originalLog;
-  }
-
-  return logs.join('\n');
-}
+const { captureLogs } = require('../../lib/capture-logs');
 
 module.exports = {
   name: 'unit/cli-io-errors',

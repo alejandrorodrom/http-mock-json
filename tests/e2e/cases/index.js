@@ -76,7 +76,8 @@ const systemCases = [
   require('./system/cli-version-help'),
   require('./system/start-custom-path'),
   require('./system/init-cli'),
-  require('./system/cli-commander-errors')
+  require('./system/cli-commander-errors'),
+  require('./system/add-cli-flags')
 ];
 
 const runtimeCases = [
@@ -137,6 +138,7 @@ const unitCases = [
   require('./unit/mock-config-filters'),
   require('./unit/mock-config-advanced'),
   require('./unit/add-mock'),
+  require('./unit/add-crud-mock'),
   require('./unit/init-with-mock'),
   require('./unit/cli-io-errors')
 ];

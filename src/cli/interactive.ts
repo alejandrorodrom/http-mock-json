@@ -12,7 +12,7 @@ export const interactive = () => {
 
   mock
     .name('mock-server')
-    .version('2.0.2', '-v, --version', 'Output the version number')
+    .version('2.1.0', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.');
 
@@ -124,6 +124,11 @@ export const interactive = () => {
       '-p, --path <path>',
       `Path to the mocks directory (default: ${ DEFAULT_MOCKS_DIR })`,
       DEFAULT_MOCKS_DIR
+    )
+    .option(
+      '--crud',
+      'Generate collection + /:id with store actions (list/create/get/update/patch/delete)',
+      false
     )
     .description('Create a mock.')
     .action((options: AddOptions) => {

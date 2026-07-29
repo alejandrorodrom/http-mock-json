@@ -5,6 +5,28 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-07-28
+
+Minor release on top of **2.0.2**.
+
+### Previous version
+
+**2.0.2** — README badges and Sponsors section.
+
+### Added
+
+- `mock-server add --crud` scaffolds collection + item route with store actions (`list` / `create` / `get` / `update` / `patch` / `delete`)
+- E2E coverage for `--crud` edges, errors, overwrite confirm, and `--path` / `--crud` flag combinations (`unit/add-crud-mock`, `system/add-cli-flags`)
+
+### Changed
+
+- `add` asks before overwriting an existing mock JSON file
+- CRUD scaffold keeps a trailing `/:param` name (e.g. `users/:userId`) instead of forcing `:id`
+- Basic and CRUD scaffolds share endpoint normalization; generated `statusCode` values are numbers
+- Package / CLI version bumped to `2.1.0`
+
+---
+
 ## [2.0.2] - 2026-07-28
 
 Patch release on top of **2.0.1**. No public API or CLI contract changes.
@@ -219,6 +241,7 @@ See git tags (`v1.9.0` … `v1.2.9`) for earlier history (proxy, match, delay, s
 
 ---
 
+[2.1.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v2.0.2...v2.1.0
 [2.0.2]: https://github.com/alejandrorodrom/http-mock-json/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/alejandrorodrom/http-mock-json/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v1.18.1...v2.0.0
