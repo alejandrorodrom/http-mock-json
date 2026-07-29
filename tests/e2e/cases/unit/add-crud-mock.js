@@ -72,6 +72,8 @@ module.exports = {
       const failures = [];
       const { workspaceDir, cleanup } = createWorkspace(null, { skipMocksDir: true });
       const previousCwd = process.cwd();
+      const originalLog = console.log;
+      console.log = () => undefined;
 
       try {
         process.chdir(workspaceDir);
@@ -284,6 +286,7 @@ module.exports = {
           }
         }
       } finally {
+        console.log = originalLog;
         process.chdir(previousCwd);
         cleanup();
       }
