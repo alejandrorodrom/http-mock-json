@@ -167,7 +167,7 @@ That's it! Your mock server is running on `http://localhost:3000` 🎉
    | store.template | ❌     | object         | `{ "active": true }`                     | Base object merged on `create` / `update` (not on `patch`). Key placeholders ignored unless client sends them |
    | store.unique | ❌       | array/object   | `["email"]` or `{ "fields": ["email", { "fields": ["tenantId","email"] }], "conflict": {...} }` | Unique fields (simple or composite) + customizable `409` conflict response |
    | store.persist| ❌       | boolean/object | `true` or `{ "enabled": true, "file": "state.json" }` | Persist to disk under the mock files root (default `.store/<id>.json`). Custom `file` must be relative (no `..`) |
-   | store.list   | ❌       | boolean/object | `true` / `{ page, pageSize, offset, limit, cursor, sort, order, filter }` | Opt-in list engine for `action: "list"`: multi-sort, page/offset/cursor, filters (`eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in`, nested, `or`) + search. Response `body`/`headers` use placeholders (`{{items}}`, `{{next}}`, `{{nextCursor}}`, …) |
+   | store.list   | ❌       | boolean/object | `true` / `false` / `{ page, pageSize, offset, limit, cursor, sort, order, filter }` | List engine for `action: "list"` (on by default when omitted / `true`): multi-sort, page/offset/cursor, filters (`eq`/`ne`/`gt`/`gte`/`lt`/`lte`/`in`, nested, `or`) + search. Use `false` for a plain full array. Response `body`/`headers` use placeholders (`{{items}}`, `{{next}}`, `{{nextCursor}}`, …) |
    | store.softDelete | ❌   | boolean/object | `true` or `{ "field": "deletedAt" }`     | Soft delete: `action: "delete"` sets the field (ISO); `list`/`get` hide items unless `?includeDeleted=true`; `action: "restore"` clears it |
    | store.relations | ❌  | object         | `{ "userId": "users" }` / `{ "orderRef": { "join": { "from", "to" } } }` / `{ "posts": { "type": "many", "join": { "from": "userId" } } }` | FK (`one`) + reverse embed (`many`); `join.from`/`join.to`; `?expand=` incl. nested (max depth 3) |
    | store.notFound | ❌    | object         | `{ "response": "missing-user" }`         | Named `404` response for missing / soft-deleted items (`get` / `update` / `patch` / `delete` / `restore`). Placeholders: `{{key}}`, `{{message}}`, each key field |
@@ -2135,7 +2135,7 @@ Request pipeline (fixed order):
 
 | Action | Behavior | Success status | Common errors |
 |--------|----------|----------------|---------------|
-| `list` | Returns items. Filters by route `key` params. With `store.list`: filter (`fields`/`or`/`search`) → multi-sort → page/offset/cursor. Optional `body`/`headers` templates. Soft-deleted items omitted unless `?includeDeleted=true` | response `statusCode` | `400` (invalid page/sort/order/cursor/filter query) |
+| `list` | Returns items. Filters by route `key` params. List engine on by default (omit / `true` / object): filter (`fields`/`or`/`search`) → multi-sort → page/offset/cursor. `"list": false` returns a plain full array. Optional `body`/`headers` templates. Soft-deleted items omitted unless `?includeDeleted=true` | response `statusCode` | `400` (invalid page/sort/order/cursor/filter query) |
 | `get` | Loads one item; all `key` fields must come from route params. Soft-deleted → `404` unless `?includeDeleted=true` | response `statusCode` | `404` (default or `store.notFound`) |
 | `create` | Inserts; merges `template` + body; auto-generates missing numeric key fields; route params override key fields. Soft-deleted rows do not count toward `unique`/`key` | typically `201` | `400` (body not object), `409` (conflict) |
 | `update` | Full replace (`template` + body), preserves existing key. Soft-deleted → `404` | response `statusCode` | `404` / `400` / `409` |
@@ -2375,7 +2375,7 @@ Also fine: put the **entire** full definition on `api/notes/:id` and use `{ "id"
 | `template` | — | Defaults for `create` / `update`. Values on key fields are placeholders unless the client sends them |
 | `unique` | — | `["email"]` or `{ "fields": [...], "conflict": { "response", "detail" } }` |
 | `persist` | off | `true` / `{ "enabled": true, "file?": "relative/path.json" }` |
-| `list` | off | `true` / `{}` / object — sort (multi), page/offset/cursor, filters/search for `action: "list"` (see [Filters / search](#filters--search) and [List sort and pagination](#list-sort-and-pagination-storelist)) |
+| `list` | on (page defaults) | Omit / `true` / `{}` / object — sort (multi), page/offset/cursor, filters/search for `action: "list"`. `false` → plain full array (see [Filters / search](#filters--search) and [List sort and pagination](#list-sort-and-pagination-storelist)) |
 | `softDelete` | off | `true` / `{ "field": "deletedAt" }` — on the full definition only; see [Soft delete](#soft-delete) |
 | `relations` | off | `{ "userId": "users" }` or object map — FK / reverse embed; see [Relations](#relations) |
 | `notFound` | off | `{ "response": "missing-user" }` — named `404` for missing / soft-deleted items; see [Not found](#not-found-404) |
@@ -2605,8 +2605,8 @@ Implications of the pipeline:
 
 ### List sort and pagination (`store.list`)
 
-Opt-in on the **full store definition** only (not on `{ "id": "..." }` references).  
-Requires `action: "list"`. Without `store.list`, `list` still returns a plain array (optionally filtered by route params that overlap `key`).
+Configured on the **full store definition** only (not on `{ "id": "..." }` references).  
+Requires `action: "list"`. Omitting `store.list` (or setting `true` / `{}`) enables the list engine in **page mode** with defaults. Set `"list": false` to return a plain full array (optionally filtered by route params that overlap `key`).
 
 Static mocks (`match` + fixed `body`) are unrelated: they do **not** use this engine.
 
@@ -2616,7 +2616,7 @@ Static mocks (`match` + fixed `body`) are unrelated: they do **not** use this en
 2. Apply `store.list.filter`: `fields` (AND) → `or` → `search` (if configured)
 3. Multi-sort
 4. Paginate: **page** | **offset** | **cursor**
-5. If the response has `body` and/or `headers`, apply list placeholders; otherwise return the items array
+5. If the response has `body` and/or `headers`, apply list placeholders; otherwise return the items array (current page only when the engine is on)
 
 #### Shortcuts
 
@@ -2626,7 +2626,7 @@ Static mocks (`match` + fixed `body`) are unrelated: they do **not** use this en
 "list": false
 ```
 
-`true` and `{}` enable **page mode** with defaults. `false` disables the list engine (same as omitting `list`).
+Omitting `list`, `true`, and `{}` enable **page mode** with defaults. `false` disables the list engine (plain full array).
 
 | Option | Default |
 |--------|---------|

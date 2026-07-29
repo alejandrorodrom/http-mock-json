@@ -145,9 +145,39 @@
     "store": {
       "id": "plain",
       "key": "id",
+      "list": false,
       "seed": [
         { "id": 1, "name": "one" },
         { "id": 2, "name": "two" }
+      ]
+    },
+    "GET": {
+      "nameResponse": "list",
+      "responses": [
+        {
+          "name": "list",
+          "statusCode": 200,
+          "action": "list"
+        }
+      ]
+    }
+  },
+  "api/defaults": {
+    "store": {
+      "id": "defaults",
+      "key": "id",
+      "seed": [
+        { "id": 1, "name": "a" },
+        { "id": 2, "name": "b" },
+        { "id": 3, "name": "c" },
+        { "id": 4, "name": "d" },
+        { "id": 5, "name": "e" },
+        { "id": 6, "name": "f" },
+        { "id": 7, "name": "g" },
+        { "id": 8, "name": "h" },
+        { "id": 9, "name": "i" },
+        { "id": 10, "name": "j" },
+        { "id": 11, "name": "k" }
       ]
     },
     "GET": {

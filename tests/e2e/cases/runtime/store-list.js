@@ -319,13 +319,41 @@ module.exports = {
       ));
 
       const plain = await request(`${ baseUrl }/api/plain`);
-      failures.push(...expectStatus(plain.status, 200, 'plain no list config'));
+      failures.push(...expectStatus(plain.status, 200, 'plain list false'));
       failures.push(...expectEqual(plain.body.length, 2, 'plain full array'));
       failures.push(...expectEqual(
         plain.body.map(item => item.id),
         [1, 2],
         'plain ids'
       ));
+
+      const defaults = await request(`${ baseUrl }/api/defaults`);
+      failures.push(...expectStatus(defaults.status, 200, 'defaults omit list'));
+      failures.push(...expectEqual(defaults.body.length, 10, 'defaults pageSize 10'));
+      failures.push(...expectEqual(
+        defaults.body.map(item => item.id),
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        'defaults first page ids'
+      ));
+
+      const defaultsPage2 = await request(`${ baseUrl }/api/defaults?page=2`);
+      failures.push(...expectStatus(defaultsPage2.status, 200, 'defaults page 2'));
+      failures.push(...expectEqual(
+        defaultsPage2.body.map(item => item.id),
+        [11],
+        'defaults page 2 ids'
+      ));
+
+      const defaultsPageSize = await request(`${ baseUrl }/api/defaults?pageSize=1`);
+      failures.push(...expectStatus(defaultsPageSize.status, 200, 'defaults pageSize 1'));
+      failures.push(...expectEqual(
+        defaultsPageSize.body.map(item => item.id),
+        [1],
+        'defaults pageSize 1 ids'
+      ));
+
+      const defaultsBadPage = await request(`${ baseUrl }/api/defaults?page=abc`);
+      failures.push(...expectStatus(defaultsBadPage.status, 400, 'defaults invalid page'));
 
       const feed1 = await request(`${ baseUrl }/api/feed`);
       failures.push(...expectStatus(feed1.status, 200, 'feed first page'));

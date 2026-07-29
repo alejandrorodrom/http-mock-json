@@ -93,11 +93,11 @@ const normalizeOrderDefault = (value: unknown): StoreListOrder => {
 export const normalizeList = (
   list: RawStoreList | undefined
 ): StoreListConfig | undefined | null => {
-  if (list === undefined || list === false) {
+  if (list === false) {
     return undefined;
   }
 
-  if (list === true) {
+  if (list === undefined || list === true) {
     return defaultPageListConfig();
   }
 

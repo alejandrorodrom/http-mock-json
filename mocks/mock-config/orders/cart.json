@@ -25,8 +25,7 @@
         {
           "name": "ok",
           "statusCode": 200,
-          "action": "list",
-          "body": []
+          "action": "list"
         }
       ]
     },

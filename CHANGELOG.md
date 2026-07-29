@@ -5,6 +5,32 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-07-28
+
+Major release on top of **2.1.0**.
+
+### Previous version
+
+**2.1.0** — `add --crud` scaffold and overwrite confirm.
+
+### Breaking Changes
+
+- Omitting `store.list` now enables the list engine with the same page-mode defaults as `"list": true` (default `pageSize` 10, sort `id`, etc.). Previously, omitting `list` returned a plain full array.
+- `"list": false` is the explicit opt-out for a plain full array (previously the same as omitting `list`)
+- Invalid list query values (e.g. `?page=abc`) now return `400` when the engine is on (previously ignored when `list` was omitted)
+- A `body` on `action: "list"` (including a dummy `[]`) is applied as a list template when the engine is on; omit `body` to return the items array
+
+### Migration
+
+- If you relied on `action: "list"` returning every item with no pagination, set `"list": false` on the full store definition
+- Remove dummy `body` values on list responses (e.g. `[]`) unless you intend them as templates
+
+### Changed
+
+- Package / CLI version bumped to `3.0.0`
+
+---
+
 ## [2.1.0] - 2026-07-28
 
 Minor release on top of **2.0.2**.
