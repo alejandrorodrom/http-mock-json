@@ -1,6 +1,6 @@
 {
   "name": "http-mock-json",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Mock your real API in JSON — status codes, errors, validation, latency, and mutable data — so the frontend can develop and test without waiting on a backend.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

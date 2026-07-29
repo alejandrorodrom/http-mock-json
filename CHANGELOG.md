@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2026-07-28
+
+Patch release on top of **2.0.1**. No public API or CLI contract changes.
+
+### Previous version
+
+**2.0.1** — mock-config sample and examples index in the README.
+
+### Added
+
+- README badges for CI, E2E, and npm audit (GitHub Actions status on `main`)
+- README [Sponsors](./README.md#sponsors-) section with GitHub Sponsors link
+
+### Changed
+
+- Package / CLI version bumped to `2.0.2`
+
+---
+
 ## [2.0.1] - 2026-07-28
 
 Patch release on top of **2.0.0**. No public API or CLI contract changes.
@@ -200,6 +219,7 @@ See git tags (`v1.9.0` … `v1.2.9`) for earlier history (proxy, match, delay, s
 
 ---
 
+[2.0.2]: https://github.com/alejandrorodrom/http-mock-json/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/alejandrorodrom/http-mock-json/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v1.18.1...v2.0.0
 [1.18.1]: https://github.com/alejandrorodrom/http-mock-json/compare/v1.18.0...v1.18.1
