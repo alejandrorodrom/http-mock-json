@@ -60,7 +60,7 @@
     "express": "^5.1.0",
     "figlet": "^1.9.4",
     "prompts": "^2.4.2",
-    "sisteransi": "^1.0.5"
+    "sisteransi": "^2.0.0"
   },
   "devDependencies": {
     "@types/busboy": "^1.5.4",
