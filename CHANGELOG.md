@@ -5,6 +5,30 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.1] - 2026-07-30
+
+Patch release on top of **4.0.0**. No public API or CLI contract changes.
+
+### Previous version
+
+**4.0.0** — body compatibility, response encoding, and `request.payload` / `request.error`.
+
+### Added
+
+- Full docs set under [`docs/`](./docs/) (getting started, CLI, store, validation, troubleshooting, FAQ, real-world)
+- Community files: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`
+- GitHub issue / PR templates and Dependabot config
+- Architecture diagram in README (`assets/architecture.webp`)
+- Project page link ([rodriguezrom.com](https://www.rodriguezrom.com/libraries/http-mock-json))
+
+### Changed
+
+- README restructured as a short landing; deep guides live in `docs/`
+- Expanded npm `keywords` for discoverability
+- Package / CLI version bumped to `4.0.1`
+
+---
+
 ## [4.0.0] - 2026-07-29
 
 Major release on top of **3.0.0**.
@@ -101,7 +125,7 @@ Patch release on top of **2.0.1**. No public API or CLI contract changes.
 ### Added
 
 - README badges for CI, E2E, and npm audit (GitHub Actions status on `main`)
-- README [Sponsors](./README.md#sponsors-) section with GitHub Sponsors link
+- README [Sponsors](./README.md#sponsors) section with GitHub Sponsors link
 
 ### Changed
 
@@ -120,7 +144,7 @@ Patch release on top of **2.0.0**. No public API or CLI contract changes.
 ### Added
 
 - Runnable folder-organization sample at [`mocks/mock-config/`](./mocks/mock-config) (auth / orders / payments) for use with `-f` / `--path`
-- README section [Examples in this repository](./README.md#examples-in-this-repository-) — curated index of `mocks/` samples to copy
+- README section [Examples in this repository](./docs/examples.md) — curated index of `mocks/` samples to copy
 - E2E harness `copyTree` to seed workspaces from a fixture directory (used by mock-config cases)
 
 ### Changed
@@ -304,6 +328,9 @@ See git tags (`v1.9.0` … `v1.2.9`) for earlier history (proxy, match, delay, s
 
 ---
 
+[4.0.1]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.0.0...v4.0.1
+[4.0.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v3.0.0...v4.0.0
+[3.0.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v2.1.0...v3.0.0
 [2.1.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v2.0.2...v2.1.0
 [2.0.2]: https://github.com/alejandrorodrom/http-mock-json/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/alejandrorodrom/http-mock-json/compare/v2.0.0...v2.0.1

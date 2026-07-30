@@ -1,0 +1,49 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please fill in the sections below so we can reproduce the issue.
+  - type: input
+    id: package-version
+    attributes:
+      label: Package version
+      description: Output of `npm ls http-mock-json` or the version from package.json
+      placeholder: "4.0.0"
+    validations:
+      required: true
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js version
+      description: Output of `node -v`
+      placeholder: "v20.x"
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal mock JSON and commands that trigger the bug
+      placeholder: |
+        1. Create mocks/foo.json with …
+        2. Run `mock-server start`
+        3. curl …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include relevant CLI / server logs
+    validations:
+      required: true

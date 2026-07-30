@@ -1,6 +1,6 @@
 {
   "name": "http-mock-json",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Mock your real API in JSON — status codes, errors, validation, latency, and mutable data — so the frontend can develop and test without waiting on a backend.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,10 +28,19 @@
   },
   "keywords": [
     "mock",
-    "json",
-    "api",
+    "mock-server",
+    "http-mock",
+    "api-mock",
+    "json-server",
     "rest",
-    "express"
+    "api",
+    "testing",
+    "frontend",
+    "nodejs",
+    "typescript",
+    "express",
+    "dev-server",
+    "stub"
   ],
   "author": "Alejandro Rodriguez Romero",
   "license": "MIT",
