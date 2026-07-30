@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.2] - 2026-07-30
+
+Patch release on top of **4.0.1**. No public API or CLI contract changes.
+
+### Previous version
+
+**4.0.1** — docs set and community files.
+
+### Changed
+
+- README: remove duplicate `# http-mock-json` heading (banner already shows the title)
+- Package / CLI version bumped to `4.0.2`
+
+---
+
 ## [4.0.1] - 2026-07-30
 
 Patch release on top of **4.0.0**. No public API or CLI contract changes.
@@ -328,6 +343,7 @@ See git tags (`v1.9.0` … `v1.2.9`) for earlier history (proxy, match, delay, s
 
 ---
 
+[4.0.2]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v3.0.0...v4.0.0
 [3.0.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v2.1.0...v3.0.0

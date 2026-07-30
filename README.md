@@ -2,8 +2,6 @@
   <img src="assets/title.png" alt="http-mock-json" width="800" />
 </p>
 
-# http-mock-json
-
 [![npm version](https://img.shields.io/npm/v/http-mock-json?style=flat-square)](https://www.npmjs.com/package/http-mock-json)
 [![npm downloads](https://img.shields.io/npm/dm/http-mock-json?style=flat-square)](https://www.npmjs.com/package/http-mock-json)
 [![license](https://img.shields.io/npm/l/http-mock-json?style=flat-square)](LICENSE)
