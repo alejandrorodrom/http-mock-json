@@ -69,6 +69,6 @@
     "@types/figlet": "^1.7.0",
     "@types/node": "^18.19.0",
     "@types/prompts": "^2.4.9",
-    "typescript": "^5.9.3"
+    "typescript": "^7.0.2"
   }
 }
