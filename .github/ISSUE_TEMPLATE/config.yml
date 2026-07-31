@@ -2,7 +2,7 @@ blank_issues_enabled: false
 contact_links:
   - name: Documentation
     url: https://github.com/alejandrorodrom/http-mock-json/blob/main/docs/README.md
-    about: Read the guides before opening an issue
+    about: Read the docs (README + FAQ / Troubleshooting) before opening an issue
   - name: Security vulnerability
     url: https://github.com/alejandrorodrom/http-mock-json/security/advisories/new
     about: Report a security issue privately (see SECURITY.md)

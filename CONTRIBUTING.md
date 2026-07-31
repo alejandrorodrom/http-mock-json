@@ -28,7 +28,7 @@ Requirements: Node.js `>= 18`.
 1. Fork the repo and create a branch from `main`.
 2. Keep changes focused (one concern per PR when possible).
 3. Run `npm run build` and `npm test` before opening the PR.
-4. Update docs under `docs/` (and the root [README](README.md) if the landing story changes).
+4. Update the root [README](README.md) for guide/reference changes. Update [docs/faq.md](docs/faq.md) / [docs/troubleshooting.md](docs/troubleshooting.md) when the change is Q&A or symptom→fix help. Keep [docs/README.md](docs/README.md) in sync if section anchors move.
 5. If you add or change mock behavior, add or update fixtures under `mocks/` and cases under `tests/e2e/`.
 
 Use the [pull request template](.github/PULL_REQUEST_TEMPLATE.md) when opening a PR.

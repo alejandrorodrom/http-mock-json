@@ -1,43 +1,40 @@
-# Real-world projects 🏢
+# Real-world
 
-The [Advanced examples](advanced-examples.md#advanced-examples) teach one feature at a time. This section shows **product-style scenarios** you can paste into your own mock JSON files and adapt to your frontend routes.
+> Part of [Documentation](README.md). Related: [Store recipes](store-recipes.md) · [Examples](examples.md) · [Advanced examples](advanced-examples.md) · [Mock config](../README.md#mock-config-reference).
 
-### What each scenario covers
+The [Advanced examples](advanced-examples.md) teach one feature at a time. This section shows **multi-feature product scenarios** (multipart, OAuth form, RBAC, folder layouts, hybrid proxy, …) you can paste into your own mock JSON files and adapt to your frontend routes.
+
+**Boundary:** store-centric app walkthroughs (todo, catalog, JWT, billing, …) live in [Store recipes](store-recipes.md). Use this section when several features combine beyond a single store recipe.
+
+Store field/actions reference: [Store](../README.md#store-reference). Folder layout details: [Mock config](../README.md#mock-config-reference). CLI flags: [CLI](../README.md#cli-reference).
+
+**Also see [Store recipes](store-recipes.md)** for store-backed walkthroughs (Examples C–R), including:
+
+- Todo / notes, SaaS board, catalog, helpdesk, HR directory  
+- Blog CMS (relations + soft delete), multi-tenant orders  
+- Auth lockout, JWT refresh, password reset, async export, notifications  
+- Signed URL upload, feature flags, billing, onboarding wizard  
+
+#### What each scenario covers
 
 | Scenario | Features used | Frontend focus |
 |----------|---------------|----------------|
-| [Todo / notes app](store.md#example-c--real-project-todo--notes-app) | `store` + `request` + `persist` | Mutable list, toggle done, survive restart |
-| [SaaS projects board](store.md#example-d--real-project-saas-projects-board) | `store` + `match` + `unique` + `persist` | Org-scoped CRUD, slug conflicts, forbidden org |
-| [E-commerce catalog](store.md#example-e--real-project-e-commerce-catalog) | `store` + advanced `filter` + `request` + `match` + `delay` | Admin table, price/stock/warehouse filters, checkout |
-| [Multi-tenant helpdesk](store.md#example-f--real-project-multi-tenant-helpdesk) | `store` + page/cursor + date/channel filters + `or` | Inbox facets, SLA, activity feed |
-| [HR employee directory](store.md#example-g--real-project-hr-employee-directory) | All filter ops + nested + `or` + search | People admin: salary, level, hire window, roles |
-| [Blog CMS with authors](store.md#example-h--real-project-blog-cms-with-authors) | `relations` + `softDelete` + `list` + `request` + `unique` + `persist` | Expand, trash/restore, FK + restrict delete |
-| [Multi-tenant orders](store.md#example-i--real-project-multi-tenant-orders) | Composite `join` + `cascade` + `list` + `request` + `persist` | Order + line items, tenant routes, expand parent |
-| [Auth lockout + sessions](store.md#example-j--real-project-auth-lockout--sessions) | `match.call` + `request` + `delay` + headers + `store` + `persist` | Per-email lockout, reset on success, session revoke |
-| [JWT access + refresh](store.md#example-k--real-project-jwt-access--refresh-tokens) | `request` + `match.body` + `match.call` + `match.query` | Login / refresh rotation / reuse / logout / `/me` |
-| [Password reset](store.md#example-l--real-project-password-reset) | `request` + `match.params` + `match.body` + `delay` | Forgot / validate token / set password |
-| [Async export job](store.md#example-m--real-project-async-export-job) | `match.call` + `202` + `Retry-After` + `delay` | Create job, poll queued→ready, download |
-| [Notifications inbox](store.md#example-n--real-project-notifications-inbox) | `store` + `list` filter + `patch` + `persist` | Unread filter, mark read, mark-all ack |
-| [Signed URL upload](store.md#example-o--real-project-signed-url-upload) | `request` + `match` + `delay` + `413`/`410` | Initiate → PUT content → complete → asset |
 | [Profile onboarding (multipart + binary)](#example-profile-onboarding-multipart--binary) | `as` multipart/raw + `type: "file"` + `encoding: "file"` + `match.headers` / `match.multipart` + `proxy` | Create profile with FormData, serve avatar bytes, raw re-upload, admin vs public |
 | [Ticket attachments (multi-file + download)](#example-ticket-attachments-multi-file--download) | Multi-file `type: "file"` + `encoding` file/base64 + `request.headers` tenant + `match.multipart` | Helpdesk: create ticket, upload screenshots/PDF, download bytes |
 | [Expense reports (store + binary)](#example-expense-reports-store--binary) | `store` + soft delete/restore + `list` filters + multipart `type: "file"` + `encoding` + `match.call` + `delay` + `match.multipart` | Create/list/patch expenses, upload receipts with rate limit, preview bytes, trash/restore |
 | [OAuth2 token (form-urlencoded)](#example-oauth2-token-form-urlencoded) | `as: "form"` + `request.payload` + `match.body` on urlencoded fields | Password / refresh / client_credentials grants + revoke (not JSON login) |
-| [Feature flags / config](store.md#example-p--real-project-feature-flags--app-config) | `match.query` + `match.params` + `delay` | Boot config, tenant flags, maintenance |
-| [Billing / subscription](store.md#example-q--real-project-billing--subscription) | `request` + `match` + `402`/`403`/`409` | Plans, trial, past_due, upgrade, pay invoice |
-| [Onboarding wizard](store.md#example-r--real-project-onboarding-wizard) | `request` + `match` + `409` | Multi-step save, resume, complete |
-| SaaS signup + org invite | `request` + `match` | Form validation vs business errors (`409`, `403`) |
-| Checkout resilience | `match` + `delay` + headers | `402` / `429` / `503`, retries, idempotency |
-| Multi-tenant RBAC | `match.params` + `match.query` | Admin vs member, `403` across orgs |
-| REST CRUD + pagination | `match` + headers | Tables, create/update/delete, `404` / `409` / `410` |
-| Request + proxy | `request` + `proxy` | Validate locally, forward only when valid |
-| Global `--proxy` | CLI `--proxy` | Unmocked routes go to a real backend |
-| Webhooks | `request` (array + enum) | Register callback URLs and event lists |
-| [Food delivery — simple folders](#example-food-delivery-simple-folder-mocks) | `mock.config.json` + `prefix` + `delay` + `headers` | Split auth / restaurants like microservices |
-| [Food delivery — cart + store](#example-food-delivery-cart--store-namespaces) | folders + `store` + `storeNamespace` + `request` + `persist` | Mutable cart per service namespace |
-| [Food delivery — hybrid live payments](#example-food-delivery-hybrid-live-payments) | `proxyUnmatched` + `stripPrefix` + `match` + `enabled` + `strictDuplicates` | Mock catalog/orders; live payment gateway |
+| [SaaS signup + org invite](#example-saas-signup--org-invite) | `request` + `match` | Form validation vs business errors (`409`, `403`) |
+| [Checkout resilience](#example-checkout-resilience-payments-ui) | `match` + `delay` + headers | `402` / `429` / `503`, retries, idempotency |
+| [Multi-tenant RBAC](#example-multi-tenant-rbac) | `match.params` + `match.query` | Admin vs member, `403` across orgs |
+| [REST CRUD + pagination](#example-rest-crud--pagination) | `match` + headers | Tables, create/update/delete, `404` / `409` / `410` |
+| [Request + proxy](#example-request-validation--proxy-mock-vs-live) | `request` + `proxy` | Validate locally, forward only when valid |
+| [Global `--proxy`](#example-global---proxy-for-unmatched-routes) | CLI `--proxy` ([CLI](../README.md#cli-reference)) | Unmatched routes go to a real backend |
+| [Webhooks](#example-webhooks-registration) | `request` (array + enum) | Register callback URLs and event lists |
+| [Food delivery — simple folders](#example-food-delivery--simple-folder-mocks) | `mock.config.json` + `prefix` + `delay` + `headers` | Split auth / orders like microservices |
+| [Food delivery — cart + store](#example-food-delivery--cart--store-namespaces) | folders + `store` + `storeNamespace` + `request` + `persist` | Mutable cart per service namespace |
+| [Food delivery — hybrid live payments](#example-food-delivery--hybrid-live-payments) | `proxyUnmatched` + `stripPrefix` + `match` + `enabled` + `strictDuplicates` | Mock auth/orders; live payment gateway |
 
-### Example: SaaS signup + org invite
+#### Example: SaaS signup + org invite
 
 Validate the payload first, then branch with `match` for business errors (`409` email taken, `403` insufficient role).
 
@@ -124,9 +121,11 @@ Validate the payload first, then branch with `match` for business errors (`409` 
 | Invite member on `org_1` | `201` invite |
 | Invite `owner` on `org_2` | `403 INSUFFICIENT_ROLE` |
 
-### Example: Checkout resilience (payments UI)
+#### Example: Checkout resilience (payments UI)
 
 Drive edge cases with `match.query` / `match.body` — useful for retry banners, idempotent pay buttons, and `Retry-After` handling.
+
+Runnable fixture: [`mocks/19-checkout-resilience.json`](../mocks/19-checkout-resilience.json). Catalog + checkout store recipe: [Example E](store-recipes.md#example-e--real-project-e-commerce-catalog).
 
 ```json
 {
@@ -191,9 +190,11 @@ Drive edge cases with `match.query` / `match.body` — useful for retry banners,
 | Declined test card | `402` | Payment error copy |
 | Duplicate idempotency key | `409` | “Already processed” |
 
-### Example: Multi-tenant RBAC
+#### Example: Multi-tenant RBAC
 
 Same route shape (`/orgs/:orgId/...`), different outcomes by `params` + `query.role`.
+
+Runnable fixture: [`mocks/20-multi-tenant-rbac.json`](../mocks/20-multi-tenant-rbac.json). Store-backed workspace docs: [`mocks/30-store-rbac.json`](../mocks/30-store-rbac.json).
 
 ```json
 {
@@ -254,17 +255,17 @@ Same route shape (`/orgs/:orgId/...`), different outcomes by `params` + `query.r
 | `GET /api/v1/orgs/org_2/projects?role=member` | `403` forbidden |
 | Missing match (no role / unknown org) | `401` via `nameResponse` |
 
-### Example: Auth login with validation + business match
+#### Example: Auth login with validation + business match
 
-For **per-email lockout**, `Retry-After`, `call.reset` on success, and a **sessions** store after login, use the full pasteable mock in [Example J — Auth lockout + sessions](store.md#example-j--real-project-auth-lockout--sessions).
+For **per-email lockout**, `Retry-After`, `call.reset` on success, and a **sessions** store after login, use the full pasteable mock in [Example J — Auth lockout + sessions](store-recipes.md#example-j--real-project-auth-lockout--sessions).
 
-That scenario combines `request` (invalid payload never advances the counter), `match.call` (`index` / `by` / `reset`), `delay`, custom headers, and `store` + `persist`.
+That scenario combines `request` (invalid payload never advances the counter), `match.call` (`index` / `by` / `reset`), `delay`, custom headers, and `store` + `persist`. Related call-matrix fixture: [`mocks/40-match-call.json`](../mocks/40-match-call.json).
 
-For **access + refresh token** flows (rotation, reuse detection, logout, protected `/me`), see [Example K — JWT access + refresh tokens](store.md#example-k--real-project-jwt-access--refresh-tokens).
+For **access + refresh token** flows (rotation, reuse detection, logout, protected `/me`), see [Example K — JWT access + refresh tokens](store-recipes.md#example-k--real-project-jwt-access--refresh-tokens).
 
-For **forgot / reset password** (no email enumeration, expired/used tokens), see [Example L — Password reset](store.md#example-l--real-project-password-reset).
+For **forgot / reset password** (no email enumeration, expired/used tokens), see [Example L — Password reset](store-recipes.md#example-l--real-project-password-reset).
 
-### Example: REST CRUD + pagination
+#### Example: REST CRUD + pagination
 
 Typical resource UI: list with filters/pages, get by id, create, update conflict, soft-delete gone.
 
@@ -409,7 +410,7 @@ Typical resource UI: list with filters/pages, get by id, create, update conflict
 | `PATCH` with stale `version: 2` | `409` conflict |
 | `DELETE .../products/prod_1` | `204` |
 
-### Example: Request validation + proxy (mock vs live)
+#### Example: Request validation + proxy (mock vs live)
 
 Validate first. Invalid bodies never hit the upstream. Valid bodies can stay local or forward with `proxy`.
 
@@ -459,9 +460,9 @@ Validate first. Invalid bodies never hit the upstream. Valid bodies can stay loc
 | `{ "title": "local-draft" }` | Local mock body |
 | `{ "title": "live-post" }` | Proxied to upstream `/posts` |
 
-### Example: Global `--proxy` for unmocked routes
+#### Example: Global `--proxy` for unmatched routes
 
-Mock only the routes you care about. Everything else can fall through to a real API:
+Mock only the routes you care about. Everything else can fall through to a real API ([CLI](../README.md#cli-reference) `--proxy`):
 
 ```bash
 mock-server start --proxy https://api.staging.com
@@ -492,7 +493,7 @@ mock-server start --proxy https://api.staging.com
 
 Use this when the frontend needs one or two controlled responses and the rest of the backend already works in staging.
 
-### Example: Webhooks registration
+#### Example: Webhooks registration
 
 Validate callback URL, event list, and secret before returning a webhook id.
 
@@ -561,13 +562,13 @@ Validate callback URL, event list, and secret before returning a webhook id.
 | Valid registration | `201` + `webhookId` |
 | `GET .../webhooks/wh_1/deliveries` | Delivery history for UI |
 
-### Example: Profile onboarding (multipart + binary)
+#### Example: Profile onboarding (multipart + binary)
 
 **App:** signup / profile UI that uploads `FormData` (fields + avatar), shows the avatar from a binary GET, and later replaces it with a raw `PUT`. Optional header switches admin view or live proxy.
 
 Full sample on GitHub: [`mocks/44-profile-body-compat.json`](../mocks/44-profile-body-compat.json) (put a PNG at `assets/sample.png` under your mocks root for `encoding: "file"`).
 
-See also [Body compatibility](body-compatibility.md#body-compatibility-request--response-) for the `as` / `file` / `encoding` rules.
+See also [Body compatibility](../README.md#body-compatibility) for the `as` / `file` / `encoding` rules.
 
 ```json
 {
@@ -762,7 +763,7 @@ await fetch('/api/profiles/prof_1/avatar', {
 });
 ```
 
-### Example: Ticket attachments (multi-file + download)
+#### Example: Ticket attachments (multi-file + download)
 
 **App:** helpdesk UI — create a ticket (JSON + tenant header), upload several screenshots (+ optional PDF) via `FormData`, then download attachment bytes for the inbox preview.
 
@@ -938,7 +939,7 @@ const preview = await fetch('/api/tickets/tkt_1/attachments/att_img');
 const blob = await preview.blob();
 ```
 
-### Example: Expense reports (store + binary)
+#### Example: Expense reports (store + binary)
 
 **App:** employee expense UI — mutable reports in a `store` (create / list / filter / soft-delete / restore), then attach a receipt image via multipart, hit upload rate limits with `match.call`, OCR delay with `match.multipart`, and serve preview bytes with `encoding`.
 
@@ -1069,11 +1070,11 @@ await fetch(`/api/expenses/${expense.id}`, { method: 'DELETE' });
 await fetch(`/api/expenses/${expense.id}`, { method: 'POST' }); // restore
 ```
 
-### Example: OAuth2 token (form-urlencoded)
+#### Example: OAuth2 token (form-urlencoded)
 
 **App:** any client that talks to a real OAuth2 `/oauth/token` (SPA auth code exchange helpers, mobile ROPC in staging, machine-to-machine `client_credentials`, or a BFF). Bodies are **`application/x-www-form-urlencoded`**, not JSON — use `as: "form"` + `match.body` on the same fields the IdP expects.
 
-This is different from [JWT access + refresh](store.md#example-k--real-project-jwt-access--refresh-tokens) (JSON login) and from multipart `FormData` uploads.
+This is different from [JWT access + refresh](store-recipes.md#example-k--real-project-jwt-access--refresh-tokens) (JSON login) and from multipart `FormData` uploads.
 
 Full sample: [`mocks/48-oauth-form-token.json`](../mocks/48-oauth-form-token.json).
 
@@ -1225,156 +1226,76 @@ await fetch('/oauth/revoke', {
 });
 ```
 
-### Example: Food delivery — simple folder mocks
+#### Example: Food delivery — simple folder mocks
 
-**App:** a food-delivery frontend that already talks to gateway paths (`/api/auth/...`, `/api/restaurants/...`). Start by mirroring two microservices with `mock.config.json` — no store yet.
+**App:** a food-delivery frontend that talks to gateway paths (`/api/auth/...`, `/api/orders/...`, `/api/payments/...`). Start by splitting services with `mock.config.json` — auth first, no store yet.
+
+Runnable layout in the repo: [`mocks/mock-config/`](../mocks/mock-config/) ([Mock config](../README.md#mock-config-reference) reference).
 
 ```text
-mocks/
+mocks/mock-config/
   mock.config.json
+  health.json
   auth/
     login.json
-  restaurants/
-    list.json
+  orders/          # next scenario
+  payments/        # hybrid scenario
+  payments-v2/     # disabled alternate
 ```
 
-`mocks/mock.config.json`:
+Auth folder config (from the real `mock.config.json`):
 
 ```json
 {
-  "port": 3100,
-  "headers": {
-    "X-Mock-App": "food-delivery"
-  },
+  "headers": { "X-Mock-App": "food-delivery" },
+  "delay": 40,
+  "strictDuplicates": true,
   "folders": {
     "auth": {
       "prefix": "/api/auth",
-      "delay": 120,
+      "delay": 90,
       "headers": { "X-Service": "auth" }
-    },
-    "restaurants": {
-      "prefix": "/api/restaurants",
-      "delay": 80,
-      "headers": { "X-Service": "restaurants" }
     }
   }
 }
 ```
 
-`mocks/auth/login.json`:
-
-```json
-{
-  "login": {
-    "POST": {
-      "nameResponse": "ok",
-      "request": {
-        "payload": {
-          "email": { "type": "string", "format": "email" },
-          "password": { "type": "string", "minLength": 6 }
-        },
-        "error": {
-          "response": "invalid"
-        }
-      },
-      "responses": [
-        {
-          "name": "ok",
-          "statusCode": 200,
-          "body": { "token": "tok_demo", "userId": "u_1" }
-        },
-        {
-          "name": "invalid",
-          "statusCode": 422,
-          "body": { "message": "Invalid login", "errors": [] }
-        }
-      ]
-    }
-  }
-}
-```
-
-`mocks/restaurants/list.json`:
-
-```json
-{
-  "nearby": {
-    "GET": {
-      "nameResponse": "ok",
-      "responses": [
-        {
-          "name": "ok",
-          "statusCode": 200,
-          "body": {
-            "data": [
-              { "id": "r_1", "name": "Pasta Place", "etaMin": 25 },
-              { "id": "r_2", "name": "Burger Lab", "etaMin": 35 }
-            ]
-          }
-        },
-        {
-          "name": "empty-area",
-          "statusCode": 200,
-          "match": { "query": { "area": "desert" } },
-          "body": { "data": [] }
-        }
-      ]
-    }
-  }
-}
-```
+**See [`mocks/mock-config/auth/login.json`](../mocks/mock-config/auth/login.json)** for the login contract (`request` + `422` invalid + `200` token).
 
 | Call | Result |
 |------|--------|
-| `POST /api/auth/login` (valid) | `200` + token, ~120ms, headers `X-Mock-App` + `X-Service: auth` |
+| `POST /api/auth/login` (valid email/password) | `200` + `token`, ~90ms, headers `X-Mock-App` + `X-Service: auth` |
 | Invalid login body | `422` from `request` |
-| `GET /api/restaurants/nearby` | Restaurant list (~80ms) |
-| `GET /api/restaurants/nearby?area=desert` | Empty list via `match.query` |
-| `mock-server start` (no `-p`) | Listens on **3100** from config |
+| Start against this tree | `mock-server start -f mocks/mock-config` (see [CLI](../README.md#cli-reference); `-p` is port) |
 
-### Example: Food delivery — cart + store namespaces
+Add more service folders (`orders`, catalog, etc.) the same way: one folder + `prefix` + optional per-folder `delay` / `headers`.
 
-**Next step:** add an orders microservice with a mutable cart. Use `storeNamespace` so `cart` in orders does not collide with a future `cart` in another service.
+#### Example: Food delivery — cart + store namespaces
 
-```text
-mocks/
-  mock.config.json
-  auth/
-    login.json
-  restaurants/
-    list.json
-  orders/
-    cart.json
-```
+**Next step:** enable the orders microservice with a mutable cart. Use `storeNamespace` so `"id": "cart"` in orders does not collide with a future `cart` in another service.
 
-`mocks/mock.config.json`:
+**See:**
+
+- [`mocks/mock-config/mock.config.json`](../mocks/mock-config/mock.config.json) — `orders.prefix`, `storeNamespace: "orders"`, `exclude: ["*-draft.json"]`
+- [`mocks/mock-config/orders/cart.json`](../mocks/mock-config/orders/cart.json) — store CRUD for `cart/items`
+- [`mocks/mock-config/orders/cart-draft.json`](../mocks/mock-config/orders/cart-draft.json) — ignored by `exclude` (draft on disk only)
+
+Relevant config slice:
 
 ```json
 {
-  "port": 3100,
-  "strictDuplicates": true,
-  "headers": { "X-Mock-App": "food-delivery" },
   "folders": {
-    "auth": {
-      "prefix": "/api/auth",
-      "delay": 120
-    },
-    "restaurants": {
-      "prefix": "/api/restaurants",
-      "delay": 80
-    },
     "orders": {
       "prefix": "/api/orders",
-      "delay": 100,
-      "headers": { "X-Service": "orders" },
       "storeNamespace": "orders",
-      "include": ["cart.json"]
+      "exclude": ["*-draft.json"],
+      "headers": { "X-Service": "orders" }
     }
   }
 }
 ```
 
-`mocks/orders/cart.json`:
+Cart shape (abbreviated — full file in the fixture):
 
 ```json
 {
@@ -1394,7 +1315,7 @@ mocks/
     "GET": {
       "nameResponse": "ok",
       "responses": [
-        { "name": "ok", "statusCode": 200, "action": "list", "body": [] }
+        { "name": "ok", "statusCode": 200, "action": "list" }
       ]
     },
     "POST": {
@@ -1405,27 +1326,12 @@ mocks/
           "qty": { "type": "number", "min": 1, "max": 20 },
           "name": { "type": "string", "minLength": 1 }
         },
-        "error": {
-          "response": "invalid"
-        }
+        "error": { "response": "invalid" }
       },
       "responses": [
-        {
-          "name": "created",
-          "statusCode": 201,
-          "action": "create",
-          "body": {}
-        },
-        {
-          "name": "duplicate",
-          "statusCode": 409,
-          "body": { "code": "ITEM_ALREADY_IN_CART" }
-        },
-        {
-          "name": "invalid",
-          "statusCode": 422,
-          "body": { "message": "Invalid cart item", "errors": [] }
-        }
+        { "name": "created", "statusCode": 201, "action": "create" },
+        { "name": "duplicate", "statusCode": 409, "body": { "code": "ITEM_ALREADY_IN_CART" } },
+        { "name": "invalid", "statusCode": 422, "body": { "message": "Invalid cart item", "errors": [] } }
       ]
     }
   },
@@ -1434,15 +1340,11 @@ mocks/
     "PATCH": {
       "nameResponse": "ok",
       "request": {
-        "payload": {
-          "qty": { "type": "number", "min": 1, "max": 20 }
-        },
-        "error": {
-          "response": "invalid"
-        }
+        "payload": { "qty": { "type": "number", "min": 1, "max": 20 } },
+        "error": { "response": "invalid" }
       },
       "responses": [
-        { "name": "ok", "statusCode": 200, "action": "patch", "body": {} },
+        { "name": "ok", "statusCode": 200, "action": "patch" },
         { "name": "invalid", "statusCode": 422, "body": { "message": "Invalid qty", "errors": [] } }
       ]
     },
@@ -1456,66 +1358,42 @@ mocks/
 }
 ```
 
-With `storeNamespace: "orders"`, the runtime store id is `orders:cart` while JSON still uses `"id": "cart"`.
+With `storeNamespace: "orders"`, the runtime store id is `orders:cart` while JSON still uses `"id": "cart"`. Store field/actions: [Store](../README.md#store-reference).
 
 | Call | Result |
 |------|--------|
-| `GET /api/orders/cart/items` | Seeded cart lines (store list) |
+| `GET /api/orders/cart/items` | Seeded cart lines (`action: "list"`) |
 | `POST` new item | `201` create; survives restart (`persist`) |
 | `POST` same `menuItemId` again | `409` unique conflict (`duplicate`) |
 | Invalid `qty` | `422` from `request` |
+| `orders/cart-draft.json` | Not loaded (`exclude`) |
 | Duplicate final routes across folders | Blocked by `strictDuplicates` |
 
-### Example: Food delivery — hybrid live payments
+#### Example: Food delivery — hybrid live payments
 
-**Full flow for the payments UI:** keep auth/restaurants/orders mocked locally; only the payments microservice is partially live. Draft mocks stay on disk but out of the load set.
+**Full payments UI flow:** keep auth + orders mocked locally; open a controlled pipe to a real (or staging) payments gateway. Draft / alternate folder trees stay on disk but out of the load set.
 
-```text
-mocks/
-  mock.config.json
-  auth/
-    login.json
-  restaurants/
-    list.json
-  orders/
-    cart.json
-  payments/
-    intent.json
-    intent-draft.json
-  payments-v2/
-    intent.json
-```
+**See [`mocks/mock-config/`](../mocks/mock-config/)** for the complete tree:
 
-`mocks/mock.config.json`:
+| Path | Role |
+|------|------|
+| [`mock.config.json`](../mocks/mock-config/mock.config.json) | `stripPrefix`, `proxy` / `proxyUnmatched`, `include` / `exclude`, `enabled: false` |
+| [`payments/intent.json`](../mocks/mock-config/payments/intent.json) | Local `402` decline + happy `201` + `proxy: true` when `?mode=live` (needs an inherited target: folder/method/CLI) |
+| [`payments/intent-draft.json`](../mocks/mock-config/payments/intent-draft.json) | Draft file excluded by `*-draft.json` |
+| [`payments-v2/intent.json`](../mocks/mock-config/payments-v2/intent.json) | Same prefix, folder `enabled: false` (no clash under `strictDuplicates`) |
+
+Payments folder config (as in the fixture):
 
 ```json
 {
-  "port": 3100,
-  "strictDuplicates": true,
-  "headers": { "X-Mock-App": "food-delivery" },
   "folders": {
-    "auth": {
-      "prefix": "/api/auth",
-      "delay": 120
-    },
-    "restaurants": {
-      "prefix": "/api/restaurants",
-      "delay": 80
-    },
-    "orders": {
-      "prefix": "/api/orders",
-      "storeNamespace": "orders",
-      "include": ["cart.json"]
-    },
     "payments": {
       "prefix": "/api/payments",
-      "delay": 150,
-      "headers": { "X-Service": "payments" },
-      "include": ["intent.json"],
-      "exclude": ["*-draft.json"],
       "stripPrefix": true,
-      "proxyUnmatched": "http://localhost:3005",
-      "proxy": "http://localhost:3005"
+      "proxy": "https://payments.example.com",
+      "proxyUnmatched": "https://payments.example.com",
+      "include": ["intent.json"],
+      "headers": { "X-Service": "payments" }
     },
     "payments-v2": {
       "prefix": "/api/payments",
@@ -1525,39 +1403,19 @@ mocks/
 }
 ```
 
-`mocks/payments/intent.json` — controlled local scenarios, then proxy when you want the real gateway:
+Intent responses (abbreviated — full file in the fixture). `"proxy": true` needs an inherited target (folder/method/CLI); here the folder `proxy` supplies it:
 
 ```json
 {
   "intents": {
     "POST": {
       "nameResponse": "created",
-      "delay": 200,
-      "request": {
-        "payload": {
-          "orderId": { "type": "string", "minLength": 1 },
-          "amount": { "type": "number", "min": 1 },
-          "currency": { "type": "string", "enum": ["USD", "EUR", "MXN"] }
-        },
-        "error": {
-          "response": "invalid"
-        }
-      },
       "responses": [
         {
           "name": "card-declined",
           "statusCode": 402,
-          "match": {
-            "body": { "orderId": "ord_declined" }
-          },
+          "match": { "body": { "orderId": "ord_declined" } },
           "body": { "code": "CARD_DECLINED" }
-        },
-        {
-          "name": "rate-limited",
-          "statusCode": 429,
-          "match": { "query": { "scenario": "rate_limit" } },
-          "headers": { "Retry-After": "3" },
-          "body": { "code": "RATE_LIMITED" }
         },
         {
           "name": "live",
@@ -1571,11 +1429,6 @@ mocks/
             "intentId": "pi_mock_1",
             "status": "requires_confirmation"
           }
-        },
-        {
-          "name": "invalid",
-          "statusCode": 422,
-          "body": { "message": "Invalid payment intent", "errors": [] }
         }
       ]
     }
@@ -1587,21 +1440,21 @@ mocks/
 |------|--------|
 | `POST /api/payments/intents` (happy path) | Local `201` mock intent |
 | Body `orderId: "ord_declined"` | Local `402 CARD_DECLINED` |
-| `?scenario=rate_limit` | Local `429` + `Retry-After` |
-| `?mode=live` | Proxied to `http://localhost:3005/intents` (`stripPrefix`) |
-| `GET /api/payments/methods` (no mock) | `proxyUnmatched` → `http://localhost:3005/methods` |
-| `payments/intent-draft.json` | Ignored (`exclude`) |
+| `?mode=live` | Proxied to `https://payments.example.com/intents` (`stripPrefix`) |
+| `GET /api/payments/methods` (no mock) | `proxyUnmatched` → real gateway `/methods` |
+| `payments/intent-draft.json` | Ignored (`exclude` on orders; payments uses `include: ["intent.json"]` only) |
 | `payments-v2/` | Ignored (`enabled: false`), no clash with `strictDuplicates` |
 
-This is the usual frontend setup while payments is still owned by another team: you own auth/catalog/cart mocks, and only open a pipe to the real payments service when needed.
+This is the usual frontend setup while payments is still owned by another team: you own auth/cart mocks, and only open a pipe to the real payments service when needed. Pair with [Checkout resilience](#example-checkout-resilience-payments-ui) for richer `429` / idempotency UX.
 
-### Tips for your project
+#### Tips for your project
 
-1. Paste the JSON into a mock JSON file in the directory created by `mock-server init` (or the path you pass to `start`).
-2. For microservices, prefer folders + `mocks/mock.config.json` (see the food-delivery examples above) instead of one giant flat file.
+1. Paste the JSON into a mock JSON file in the directory created by `mock-server init` (or the path you pass to `start` — [CLI](../README.md#cli-reference)).
+2. For microservices, prefer folders + `mock.config.json` (see [`mocks/mock-config/`](../mocks/mock-config/) and [Mock config](../README.md#mock-config-reference)) instead of one giant flat file.
 3. Rename route prefixes (`api/saas/...`, `/api/auth`) to match your frontend base URL.
 4. Keep `request` for contract checks and `match` for business branches — they stack, they don’t replace each other.
-5. Prefer one JSON file per product area (auth, billing, orgs) so hot reload stays fast while editing.
+5. Prefer one JSON file per product area (auth, billing, orgs) so watch mode stays snappy while editing.
+6. For store CRUD recipes (todo, catalog, helpdesk, JWT, …), start from [Store recipes](store-recipes.md); for field/actions reference use [Store](../README.md#store-reference).
 
 ---
 

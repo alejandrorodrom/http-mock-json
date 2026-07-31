@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.3] - 2026-07-30
+
+Patch release on top of **4.0.2**. No public API or CLI contract changes.
+
+### Previous version
+
+**4.0.2** — README heading cleanup.
+
+### Changed
+
+- **Docs model:** root [README](./README.md) holds getting started, concepts, and reference; [`docs/`](./docs/) holds [Examples](./docs/examples.md), [Advanced examples](./docs/advanced-examples.md), [Store recipes](./docs/store-recipes.md), [Real-world](./docs/real-world.md), [FAQ](./docs/faq.md), [Troubleshooting](./docs/troubleshooting.md), and the [index](./docs/README.md)
+- README: Learn / Reference / Recipes contents; Concepts glossary; CLI `-p` callout; CORS and 10 MiB / 413 body limit; store recipes vs real-world boundary; fix `mocks/` links from the repo root
+- Advanced examples: example map (1–10) at the top
+- CONTRIBUTING / PR template / issue config aligned to the README + docs layout
+- Package / CLI version bumped to `4.0.3`
+
+---
+
 ## [4.0.2] - 2026-07-30
 
 Patch release on top of **4.0.1**. No public API or CLI contract changes.
@@ -159,7 +177,7 @@ Patch release on top of **2.0.0**. No public API or CLI contract changes.
 ### Added
 
 - Runnable folder-organization sample at [`mocks/mock-config/`](./mocks/mock-config) (auth / orders / payments) for use with `-f` / `--path`
-- README section [Examples in this repository](./docs/examples.md) — curated index of `mocks/` samples to copy
+- README section [Examples in this repository](./README.md#examples) — curated index of `mocks/` samples to copy
 - E2E harness `copyTree` to seed workspaces from a fixture directory (used by mock-config cases)
 
 ### Changed
@@ -343,6 +361,7 @@ See git tags (`v1.9.0` … `v1.2.9`) for earlier history (proxy, match, delay, s
 
 ---
 
+[4.0.3]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.0.2...v4.0.3
 [4.0.2]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v3.0.0...v4.0.0
