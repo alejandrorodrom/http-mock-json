@@ -20,6 +20,9 @@ import {
   loadMockConfig,
   resolveFileDefaults
 } from '../../../scripts/mock-config.script';
+import { discoverRecordingFiles } from '../../../scripts/record-discover.script';
+import { RecordingsMode } from '../../../types/recordings.type';
+import { RECORDINGS_DIR } from '../../../constants/recordings.constant';
 
 export interface MocksData {
   apis: Api[];
@@ -27,9 +30,25 @@ export interface MocksData {
   config: MockConfig | null;
 }
 
+const recordingDefaultsFile = (file: string): string => {
+  const marker = `/${ RECORDINGS_DIR }/`;
+  const index = file.indexOf(marker);
+
+  if (index === -1) {
+    if (file.startsWith(`${ RECORDINGS_DIR }/`)) {
+      return file.slice(RECORDINGS_DIR.length + 1);
+    }
+
+    return file;
+  }
+
+  return `${ file.slice(0, index) }/`;
+};
+
 export const getMocksData = (
   folderPath: string,
-  loadedConfig?: LoadMockConfigResult
+  loadedConfig?: LoadMockConfigResult,
+  recordingsMode: RecordingsMode = 'include'
 ): MocksData => {
   if (!fs.existsSync(folderPath)) {
     throw new Error('The mocks directory does not exist');
@@ -41,8 +60,17 @@ export const getMocksData = (
   const { config, errors: configErrors } = loadedConfig ?? loadMockConfig(folderPath);
   addIssues(errorsByFile, MOCK_CONFIG_FILENAME, configErrors);
 
-  const { files, errors: discoveryErrors } = discoverMockFiles(folderPath, config);
-  addIssues(errorsByFile, MOCK_CONFIG_FILENAME, discoveryErrors);
+  const discovered = recordingsMode === 'only'
+    ? { files: [] as string[], errors: [] as ValidationIssue[] }
+    : discoverMockFiles(folderPath, config);
+  const mockFiles = discovered.files;
+  addIssues(errorsByFile, MOCK_CONFIG_FILENAME, discovered.errors);
+
+  const recordingFiles = recordingsMode === 'exclude'
+    ? []
+    : discoverRecordingFiles(folderPath, config);
+
+  const files = [...mockFiles, ...recordingFiles];
 
   if (!files.length) {
     const hasConfigIssues = hasItems(getAllIssues(errorsByFile));
@@ -53,23 +81,40 @@ export const getMocksData = (
 
   const mockData: Api[] = [];
   const stores = new Map<string, StoreDefinition>();
-  const parsed = new Map<string, RawMockFile>();
+  const parsed = new Map<string, { data: RawMockFile; source: 'mock' | 'recording' }>();
 
-  for (const file of files) {
+  for (const file of mockFiles) {
     const data = loadMockFile(file, folderPath, errorsByFile);
     if (data) {
-      parsed.set(file, data);
+      parsed.set(file, { data, source: 'mock' });
+    }
+  }
+
+  for (const file of recordingFiles) {
+    const data = loadMockFile(file, folderPath, errorsByFile);
+    if (data) {
+      parsed.set(file, { data, source: 'recording' });
     }
   }
 
   const fileDefaultsByPath = new Map(
-    [...parsed.keys()].map(file => [file, resolveFileDefaults(file, config)])
+    [...parsed.keys()].map(file => {
+      const source = parsed.get(file)?.source;
+      const defaultsKey = source === 'recording'
+        ? recordingDefaultsFile(file)
+        : file;
+      return [file, resolveFileDefaults(defaultsKey, config)] as const;
+    })
   );
 
-  for (const [file, data] of parsed) {
+  for (const [file, entry] of parsed) {
+    if (entry.source !== 'mock') {
+      continue;
+    }
+
     collectStoresFromData(
       file,
-      data,
+      entry.data,
       errorsByFile,
       warningsByFile,
       stores,
@@ -95,18 +140,42 @@ export const getMocksData = (
     ? new Map<string, string>()
     : undefined;
 
-  for (const [file, data] of parsed) {
+  const mockApis: Api[] = [];
+  const recordingApis: Api[] = [];
+
+  for (const [file, entry] of parsed) {
+    const target = entry.source === 'mock' ? mockApis : recordingApis;
     processMockData(
       file,
-      data,
+      entry.data,
       errorsByFile,
       warningsByFile,
-      mockData,
+      target,
       stores,
       fileDefaultsByPath.get(file),
-      routeOwners
+      entry.source === 'mock' ? routeOwners : undefined,
+      entry.source
     );
   }
+
+  const mockRouteKeys = new Set(
+    mockApis.map((api) => `${ api.method }:${ api.route }`)
+  );
+
+  for (const api of recordingApis) {
+    const routeKey = `${ api.method }:${ api.route }`;
+
+    if (mockRouteKeys.has(routeKey) && recordingsMode === 'include') {
+      logWarning(
+        `Recording skipped (mock wins): [${ api.method.toUpperCase() }] ${ api.route } from ${ api.sourceFile }`
+      );
+      continue;
+    }
+
+    mockData.push(api);
+  }
+
+  mockData.unshift(...mockApis);
 
   const totalWarnings = getAllIssues(warningsByFile);
   const totalErrors = getAllIssues(errorsByFile);

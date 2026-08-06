@@ -44,6 +44,22 @@ export const sendMockBody = (
   const encoding: ResponseEncoding | undefined = response.encoding;
 
   if (!encoding) {
+    const contentType = response.headers?.['Content-Type']
+      ?? response.headers?.['content-type']
+      ?? '';
+    const normalizedType = contentType.split(';')[0].trim().toLowerCase();
+    const isJsonType = normalizedType === ''
+      || normalizedType === 'application/json'
+      || normalizedType.endsWith('+json');
+
+    if (typeof response.body === 'string' && !isJsonType) {
+      res.set(response.headers)
+        .status(response.status)
+        .type(normalizedType || 'text/plain')
+        .send(response.body);
+      return;
+    }
+
     res.set(response.headers).status(response.status).json(response.body);
     return;
   }

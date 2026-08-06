@@ -5,6 +5,37 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - 2026-08-05
+
+Minor release on top of **4.0.3**.
+
+### Previous version
+
+**4.0.3** — docs model under `docs/` and README cleanup.
+
+### Added
+
+- **Record & Replay:** `mock-server start --record` captures proxied JSON/binary responses into `.recordings/` (folder-aware with `mock.config.json` prefixes)
+- Load modes: default loads mocks + recordings; `--exclude-recordings` (mocks only); `--recordings-only`
+- Startup log groups routes under **Mocks** / **Recordings** with load mode and counts
+- Path normalization on record: numeric segments → `:id` / `:id2`…; `v1`/`v2` kept literal; purely numeric paths (e.g. Picsum `/200/300`) stay literal so endpoints remain valid
+- Binary responses recorded with `encoding: "file"` under `.recordings/files/`
+- Proxy failures logged as `[proxy:error]` and never recorded
+- Record stores proxied bodies of any common shape: JSON, `text/*` / xml / csv (string + Content-Type), binary (`encoding: "file"`), invalid JSON kept as raw text; replay sends non-JSON string bodies with `.send()`
+- E2E coverage: `runtime/record-replay`, `runtime/record-replay-mock-config`, `runtime/record-replay-collision-dedupe`, `runtime/record-replay-multipart`, `unit/record-path` / `unit/record-match`; live public-API suite `runtime/record-replay-public-apis` under `--suite external`
+- Record `match.body` skips empty objects so multipart/raw proxied POSTs do not vacuous-match every JSON body
+- Record stores `match.headers` for `authorization` / `cookie` so auth and cookie variants of the same route replay correctly
+- Record parses multipart while proxying and stores `match.multipart` (fields + file metadata) so distinct uploads replay correctly
+
+### Changed
+
+- **Proxy redirects:** upstream redirects are no longer followed (`redirect: "manual"`). The mock returns the 3xx (+ `Location`) as-is for all proxy paths (response `proxy`, folder/`--proxy`, `proxyUnmatched`) — not only when `--record` is on. If you previously relied on fetch following redirects to a final 2xx, update clients or upstream URLs accordingly.
+- Package / CLI version bumped to `4.1.0`
+- E2E suites split: `npm test` / `test:e2e` run **classic** (local) only; **all** live-upstream cases (`proxy-live`, `global-proxy-unmatched`, `record-replay-public-apis`, …) via `test:e2e:external` (`--suite external`)
+- CI: classic e2e remains required; informational job/workflow `E2E External` runs the full external suite after classic (`continue-on-error`) so upstream outages do not fail the pipeline
+
+---
+
 ## [4.0.3] - 2026-07-30
 
 Patch release on top of **4.0.2**. No public API or CLI contract changes.

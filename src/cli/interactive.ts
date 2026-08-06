@@ -12,7 +12,7 @@ export const interactive = () => {
 
   mock
     .name('mock-server')
-    .version('4.0.3', '-v, --version', 'Output the version number')
+    .version('4.1.0', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.');
 
@@ -101,14 +101,41 @@ export const interactive = () => {
         return ids;
       }
     )
+    .option(
+      '--record',
+      'Record proxied responses into .recordings/ for later replay',
+      false
+    )
+    .option(
+      '--exclude-recordings',
+      'Do not load .recordings/ (mocks only)',
+      false
+    )
+    .option(
+      '--recordings-only',
+      'Load only .recordings/ (ignore regular mocks)',
+      false
+    )
     .description('Start mock server.')
     .action(async (options: StartOptions) => {
       try {
+        if (options.excludeRecordings && options.recordingsOnly) {
+          throw new Error('Cannot use --exclude-recordings and --recordings-only together');
+        }
+
+        const recordingsMode = options.recordingsOnly
+          ? 'only'
+          : options.excludeRecordings
+            ? 'exclude'
+            : 'include';
+
         await executeMock({
           port: options.port,
           folderPath: options.path,
           proxy: options.proxy,
-          resetStore: options.resetStore
+          resetStore: options.resetStore,
+          record: options.record === true,
+          recordingsMode
         });
       } catch (e) {
         if (!(e instanceof Error && e.message === 'Invalid mock configuration')) {

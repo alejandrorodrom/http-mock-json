@@ -11,7 +11,16 @@ import { logError } from '../../../scripts/log.script';
 import { executeMock } from './execute-mock';
 
 export const watchMock = (
-  { server, port, folderPath, mocks, proxy, persistWatchIgnored }: WatchMock
+  {
+    server,
+    port,
+    folderPath,
+    mocks,
+    proxy,
+    record,
+    recordingsMode,
+    persistWatchIgnored
+  }: WatchMock
 ) => {
   const connections: Connection = new Map();
   let isRestarting = false;
@@ -58,7 +67,9 @@ export const watchMock = (
           await executeMock({
             port: port,
             folderPath: folderPath,
-            proxy
+            proxy,
+            record,
+            recordingsMode
           });
         } catch (error) {
           if (!(error instanceof Error && error.message === 'Invalid mock configuration')) {

@@ -1,5 +1,6 @@
 import { JsonValue } from '../types/json.type';
 import { MethodProxyValue, ProxyValue } from '../types/proxy.type';
+import { ApiSource } from '../types/recordings.type';
 import { MockRequest, RawMockRequest } from '../types/request.type';
 import { ResponseEncoding } from '../types/response-encoding.type';
 import { StoreAction } from '../types/store.type';
@@ -47,6 +48,8 @@ export interface MockHttp {
   request?: MockRequest;
   storeId?: string;
   stripPrefix?: string;
+  source?: ApiSource;
+  sourceFile?: string;
   responses: MockResponseConfig[];
 }
 

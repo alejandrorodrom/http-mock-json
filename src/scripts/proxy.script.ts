@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { MethodProxyValue, ProxyTarget, ProxyValue } from '../types/proxy.type';
+import { ProxiedCapture } from '../types/recordings.type';
+import { logError } from './log.script';
 
 const REQUEST_HEADERS_TO_REPLACE = new Set(['host', 'content-length']);
 
@@ -10,6 +12,12 @@ const RESPONSE_HEADERS_TO_SKIP = new Set([
   'content-length',
   'content-encoding'
 ]);
+
+export type ProxyRequestOptions = {
+  stripPrefix?: string;
+  onProxied?: (capture: ProxiedCapture) => void;
+  onProxyError?: (detail: { url: string; method: string; error: string }) => void;
+};
 
 export const resolveProxy = (
   responseProxy: ProxyValue | undefined,
@@ -107,7 +115,7 @@ export const proxyRequest = async (
   proxy: ProxyTarget,
   req: Request,
   res: Response,
-  options?: { stripPrefix?: string }
+  options?: ProxyRequestOptions
 ): Promise<void> => {
   const url = buildProxyUrl(proxy, req, options?.stripPrefix);
   const headers = buildOutgoingHeaders(req);
@@ -117,22 +125,45 @@ export const proxyRequest = async (
     const upstream = await fetch(url, {
       method: req.method,
       headers,
-      body
+      body,
+      redirect: 'manual'
     });
+
+    const responseHeaders: Record<string, string> = {};
+    upstream.headers.forEach((value, key) => {
+      responseHeaders[key] = value;
+    });
+
+    const responseBody = Buffer.from(await upstream.arrayBuffer());
 
     res.status(upstream.status);
 
-    upstream.headers.forEach((value, key) => {
+    for (const [key, value] of Object.entries(responseHeaders)) {
       if (RESPONSE_HEADERS_TO_SKIP.has(key.toLowerCase())) {
-        return;
+        continue;
       }
 
       res.setHeader(key, value);
-    });
+    }
 
-    res.send(Buffer.from(await upstream.arrayBuffer()));
+    res.send(responseBody);
+
+    options?.onProxied?.({
+      status: upstream.status,
+      headers: responseHeaders,
+      body: responseBody,
+      url
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    options?.onProxyError?.({
+      url,
+      method: req.method.toUpperCase(),
+      error: message
+    });
+    logError(
+      `[proxy:error] ${ req.method.toUpperCase() } ${ req.originalUrl } → ${ url }\n  error: ${ message }\n  recorded: no`
+    );
     res.status(502).json({
       message: 'Proxy request failed',
       error: message,

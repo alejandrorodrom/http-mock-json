@@ -1,6 +1,6 @@
 import express, { Express, NextFunction, Request, Response } from 'express';
 import { getMocksData } from './files';
-import { logApi, logError } from '../../../scripts/log.script';
+import { logApisGrouped, logError, logWarning } from '../../../scripts/log.script';
 import cors from 'cors';
 import { validatePortAvailable } from './check-port';
 import { resetCallCounters, selectResponse } from '../../../scripts/match.script';
@@ -17,6 +17,7 @@ import {
   applyListTemplate
 } from '../../../scripts/store-list.script';
 import { buildPersistWatchIgnored } from '../../../scripts/store-persist.script';
+import { buildRecordingsWatchIgnored } from '../../../scripts/record-watch.script';
 import {
   captureUnhandledRawBody,
   stashRawBody
@@ -34,13 +35,29 @@ import {
 import { MockResponseConfig } from '../../../interfaces/data.interface';
 import { StartMock, StartMockResult } from '../../../interfaces/mock.interface';
 import { getProxyUnmatchedMounts } from '../../../scripts/mock-config.script';
+import {
+  createRecordStats,
+  recordProxiedResponse
+} from '../../../scripts/record-write.script';
+import { canonicalQuery } from '../../../scripts/record-path.script';
+import { JsonValue } from '../../../types/json.type';
+import { ProxiedCapture } from '../../../types/recordings.type';
 
 export const startMock = async (
-  { port, folderPath, proxy, resetStore, loadedConfig }: StartMock
+  {
+    port,
+    folderPath,
+    proxy,
+    resetStore,
+    loadedConfig,
+    record = false,
+    recordingsMode = 'include'
+  }: StartMock
 ): Promise<StartMockResult> => {
   await validatePortAvailable(port);
 
   const app: Express = express();
+  const recordStats = createRecordStats();
 
   app.use(cors({
     exposedHeaders: '*'
@@ -57,12 +74,27 @@ export const startMock = async (
   }));
   app.use(captureUnhandledRawBody);
 
-  const { apis, stores, config } = getMocksData(folderPath, loadedConfig);
+  const { apis, stores, config } = getMocksData(
+    folderPath,
+    loadedConfig,
+    recordingsMode
+  );
   resetCallCounters();
   const registry = new StoreRegistry(stores, {
     mocksDir: folderPath,
     resetStore
   });
+
+  const hasProxyTarget = Boolean(proxy)
+    || getProxyUnmatchedMounts(config).length > 0
+    || apis.some((api) => api.proxy !== undefined
+      || api.responses.some((response) => response.proxy !== undefined));
+
+  if (record && !hasProxyTarget) {
+    logWarning(
+      '--record is enabled but no proxy target is configured (CLI --proxy, folder proxy/proxyUnmatched, or response proxy)'
+    );
+  }
 
   app.get('/', (_req: Request, res: Response) => {
     res.send(`
@@ -86,14 +118,66 @@ export const startMock = async (
     `);
   });
 
+  logApisGrouped(apis, recordingsMode);
+
+  const isMultipartRequest = (req: Request): boolean => {
+    const contentType = req.headers['content-type'];
+    return typeof contentType === 'string' && contentType.includes('multipart/form-data');
+  };
+
+  const ensureMultipartParsed = async (req: Request): Promise<string | null> => {
+    if (req.multipart || !isMultipartRequest(req)) {
+      return null;
+    }
+
+    try {
+      req.multipart = await parseMultipart(req);
+      return null;
+    } catch (error) {
+      return error instanceof Error ? error.message : String(error);
+    }
+  };
+
+  const buildRecordHooks = (req: Request) => {
+    if (!record) {
+      return {};
+    }
+
+    const pathname = req.originalUrl.split('?')[0] || '/';
+
+    return {
+      onProxied: (capture: ProxiedCapture) => {
+        recordProxiedResponse(
+          folderPath,
+          config,
+          {
+            method: req.method,
+            originalUrl: req.originalUrl,
+            pathname,
+            query: canonicalQuery(req.query as Record<string, unknown>),
+            body: req.body as JsonValue | undefined,
+            headers: req.headers as Record<string, string | string[] | undefined>,
+            multipart: req.multipart
+          },
+          capture,
+          recordStats
+        );
+      },
+      onProxyError: () => {
+        recordStats.proxyFailures += 1;
+      }
+    };
+  };
+
   apis.forEach(value => {
-    logApi(value);
     app[value.method](value.route, async (req: Request, res: Response) => {
       let selectedResponse: MockResponseConfig | undefined;
 
-      if (needsMultipartParse(value)) {
+      if (needsMultipartParse(value) || (record && isMultipartRequest(req))) {
         try {
-          req.multipart = await parseMultipart(req);
+          if (!req.multipart) {
+            req.multipart = await parseMultipart(req);
+          }
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
 
@@ -102,7 +186,11 @@ export const startMock = async (
             return;
           }
 
-          if (value.request) {
+          if (!needsMultipartParse(value) && record) {
+            logWarning(
+              `[record] multipart parse failed for ${ req.method.toUpperCase() } ${ req.originalUrl }: ${ message }`
+            );
+          } else if (value.request) {
             selectedResponse = buildRequestError(
               value.request,
               [multipartParseIssue(message)],
@@ -153,7 +241,8 @@ export const startMock = async (
         }
 
         await proxyRequest(resolvedProxy, req, res, {
-          stripPrefix: value.stripPrefix
+          stripPrefix: value.stripPrefix,
+          ...buildRecordHooks(req)
         });
         return;
       }
@@ -218,18 +307,39 @@ export const startMock = async (
 
   for (const mount of getProxyUnmatchedMounts(config)) {
     app.use(mount.prefix, async (req: Request, res: Response) => {
+      if (record) {
+        const parseError = await ensureMultipartParsed(req);
+        if (parseError) {
+          logWarning(
+            `[record] multipart parse failed for ${ req.method.toUpperCase() } ${ req.originalUrl }: ${ parseError }`
+          );
+        }
+      }
+
       await proxyRequest(
         { target: mount.target },
         req,
         res,
-        { stripPrefix: mount.stripPrefix }
+        {
+          stripPrefix: mount.stripPrefix,
+          ...buildRecordHooks(req)
+        }
       );
     });
   }
 
   if (proxy) {
     app.use(async (req: Request, res: Response) => {
-      await proxyRequest({ target: proxy }, req, res);
+      if (record) {
+        const parseError = await ensureMultipartParsed(req);
+        if (parseError) {
+          logWarning(
+            `[record] multipart parse failed for ${ req.method.toUpperCase() } ${ req.originalUrl }: ${ parseError }`
+          );
+        }
+      }
+
+      await proxyRequest({ target: proxy }, req, res, buildRecordHooks(req));
     });
   }
 
@@ -255,8 +365,12 @@ export const startMock = async (
     next(error);
   });
 
+  if (record) {
+    console.log('Recording ON → writing to .recordings/');
+  }
+
   const server = app.listen(port, () => {
-    console.log(`Mock server is running in http://localhost:${ port } 🚀`);
+    console.log(`\nMock server is running in http://localhost:${ port } 🚀`);
     if (proxy) {
       console.log(`Global proxy target: ${ proxy }`);
     }
@@ -269,6 +383,9 @@ export const startMock = async (
 
   return {
     server,
-    persistWatchIgnored: buildPersistWatchIgnored(folderPath, stores)
+    persistWatchIgnored: buildRecordingsWatchIgnored(
+      buildPersistWatchIgnored(folderPath, stores)
+    ),
+    recordStats: record ? recordStats : undefined
   };
 };

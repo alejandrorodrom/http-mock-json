@@ -1,6 +1,6 @@
 {
   "name": "http-mock-json",
-  "version": "4.0.3",
+  "version": "4.1.0",
   "description": "Mock your real API in JSON — status codes, errors, validation, latency, and mutable data — so the frontend can develop and test without waiting on a backend.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,7 +14,9 @@
     "dev:start": "npm run build && npm run start",
     "dev:add": "npm run build && npm run add",
     "test": "npm run test:e2e",
-    "test:e2e": "node tests/run-e2e.js",
+    "test:e2e": "node tests/run-e2e.js --suite classic",
+    "test:e2e:external": "node tests/run-e2e.js --suite external",
+    "test:e2e:all": "node tests/run-e2e.js --suite all",
     "prepublish": "npm run build"
   },
   "type": "commonjs",

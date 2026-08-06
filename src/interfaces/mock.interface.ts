@@ -1,6 +1,7 @@
 import { Server } from "node:net";
 import { HttpVerbs } from "../constants/http-verbs.constant";
 import { MockConfig } from "../types/mock-config.type";
+import { RecordWriteStats, RecordingsMode } from "../types/recordings.type";
 import { StoreResetOption } from "../types/store.type";
 import { LocalIssue } from "../types/validation.type";
 
@@ -9,6 +10,8 @@ export interface ExecuteMock {
   folderPath: string;
   proxy?: string;
   resetStore?: StoreResetOption;
+  record?: boolean;
+  recordingsMode?: RecordingsMode;
 }
 
 export interface StartMock {
@@ -16,6 +19,8 @@ export interface StartMock {
   folderPath: string;
   proxy?: string;
   resetStore?: StoreResetOption;
+  record?: boolean;
+  recordingsMode?: RecordingsMode;
   loadedConfig?: {
     config: MockConfig | null;
     errors: LocalIssue[];
@@ -25,6 +30,7 @@ export interface StartMock {
 export interface StartMockResult {
   server: Server;
   persistWatchIgnored: (watchPath: string) => boolean;
+  recordStats?: RecordWriteStats;
 }
 
 export interface WatchMock {
@@ -33,6 +39,8 @@ export interface WatchMock {
   folderPath: string;
   mocks: string;
   proxy?: string;
+  record?: boolean;
+  recordingsMode?: RecordingsMode;
   persistWatchIgnored: (watchPath: string) => boolean;
 }
 

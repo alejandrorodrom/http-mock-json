@@ -2,10 +2,10 @@
 
 /**
  * @param {string} url
- * @param {RequestInit & { json?: unknown }} [options]
+ * @param {RequestInit & { json?: unknown, as?: 'auto' | 'json' | 'text' | 'buffer' }} [options]
  */
 async function request(url, options = {}) {
-  const { json, headers, ...rest } = options;
+  const { json, headers, as = 'auto', ...rest } = options;
   const finalHeaders = { ...(headers || {}) };
 
   let body = rest.body;
@@ -24,11 +24,22 @@ async function request(url, options = {}) {
   let payload = null;
 
   if (response.status !== 204) {
-    const text = await response.text();
-    if (text.length > 0) {
-      // application/json, application/problem+json, and other +json types
-      const isJson = /(?:\+|\/)json\b/i.test(contentType) || contentType.includes('application/json');
-      payload = isJson ? JSON.parse(text) : text;
+    if (as === 'buffer') {
+      payload = Buffer.from(await response.arrayBuffer());
+    } else {
+      const text = await response.text();
+      if (text.length > 0) {
+        const isJson = as === 'json'
+          || (
+            as === 'auto'
+            && (/(?:\+|\/)json\b/i.test(contentType) || contentType.includes('application/json'))
+          );
+        if (as === 'text') {
+          payload = text;
+        } else {
+          payload = isJson ? JSON.parse(text) : text;
+        }
+      }
     }
   }
 

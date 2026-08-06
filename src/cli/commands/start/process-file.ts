@@ -17,6 +17,7 @@ import { RawStoreConfig, StoreDefinition } from '../../../types/store.type';
 import { isStoreReference } from '../../../scripts/store-normalize.script';
 import { normalizeRequest } from '../../../scripts/request-norm.script';
 import { MockFileDefaults } from '../../../types/mock-config.type';
+import { ApiSource } from '../../../types/recordings.type';
 import { joinRoutePrefix, mergeHeaders, applyStoreNamespace, namespaceStoreDefinition } from '../../../scripts/mock-config.script';
 
 const collectConflictResponseNames = (definition: StoreDefinition): string[] => {
@@ -167,7 +168,8 @@ export const processMockData = (
   apis: Api[],
   stores: Map<string, StoreDefinition>,
   fileDefaults?: MockFileDefaults,
-  routeOwners?: Map<string, string>
+  routeOwners?: Map<string, string>,
+  source: ApiSource = 'mock'
 ): void => {
   for (const [route, endpointData] of iterateEntries(data)) {
     const endpointResult = validateEndpoint(route, endpointData);
@@ -327,6 +329,8 @@ export const processMockData = (
             : undefined,
           storeId,
           stripPrefix: fileDefaults?.stripPrefix,
+          source,
+          sourceFile: file,
           responses
         });
 

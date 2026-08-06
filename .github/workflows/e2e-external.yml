@@ -1,0 +1,30 @@
+name: E2E External
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-external-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-external:
+    name: E2E external (informational)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run all external e2e cases
+        run: npm run test:e2e:external

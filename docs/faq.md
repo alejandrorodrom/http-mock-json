@@ -149,9 +149,15 @@ Details and gotchas: [Store](../README.md#store-reference).
 
 A response can set `"proxy": true`, a URL string, or `{ "target", "path?" }`. When selected, the original request is forwarded and mock `body` / `action` is skipped.
 
-For `"proxy": true`, the target resolves from method → folder → root `mock.config.json` → CLI `--proxy`. If none is set, the runtime responds with **502** and a clear JSON message. Unmatched routes can still be forwarded via folder `proxyUnmatched` and/or global `--proxy`.
+For `"proxy": true`, the target resolves from method → folder → root `mock.config.json` → CLI `--proxy`. If none is set, the runtime responds with **502** and a clear JSON message. Unmatched routes can still be forwarded via folder `proxyUnmatched` and/or global `--proxy`. Upstream redirects are not followed; the mock returns the 3xx as-is ([CHANGELOG 4.1.0](../CHANGELOG.md)).
 
-See [Concepts](../README.md#concepts), [Mock config](../README.md#mock-config-reference), and [CLI](../README.md#cli-reference). Orphan / failed proxy: [Troubleshooting](troubleshooting.md#runtime-proxy).
+See [Concepts](../README.md#concepts), [Mock config](../README.md#mock-config-reference), and [CLI](../README.md#cli-reference). Orphan / failed proxy / unexpected 3xx: [Troubleshooting](troubleshooting.md#runtime-proxy).
+
+### How do Record & Replay work?
+
+Start with `--proxy` (or folder `proxyUnmatched`) and `--record`. Proxied JSON/binary responses are written under `.recordings/` (or `<folder>/.recordings/` when `mock.config.json` prefixes match). Stop the server, then run `mock-server start` again — recordings load by default alongside mocks.
+
+Use `--exclude-recordings` to ignore them, or `--recordings-only` to serve only recordings. JSON, text/HTML, binary, and other proxied bodies are recorded; redirects are captured without following. See [CLI — Record & Replay](../README.md#record--replay).
 
 ---
 

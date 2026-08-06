@@ -717,6 +717,8 @@ mock-server start --proxy https://jsonplaceholder.typicode.com
 
 `proxy` values (from types): string URL, `{ "target", "path?" }`, or `true` (use method / folder / root / `--proxy` target). Do not combine `proxy` with `encoding` or `action` on the same response — see [Mock file](../README.md#mock-file-reference) / [Body compatibility](../README.md#body-compatibility).
 
+Upstream redirects are **not** followed (`redirect: "manual"`): the mock returns the 3xx (+ `Location`) as received. Same rule for CLI `--proxy` and folder `proxyUnmatched`.
+
 Runtime orphan (`"proxy": true` with no target) → [`16-runtime-proxy-orphan.json`](../mocks/16-runtime-proxy-orphan.json). Upstream failure demos → [`17-proxy-request-failed.json`](../mocks/17-proxy-request-failed.json).
 
 ---

@@ -1,6 +1,7 @@
 import { MockHttp, MockResponseConfig } from '../interfaces/data.interface';
 import { HttpVerbs } from '../constants/http-verbs.constant';
 import { MethodProxyValue } from '../types/proxy.type';
+import { ApiSource } from '../types/recordings.type';
 import { MockRequest } from '../types/request.type';
 
 type httpVerbs = HttpVerbs.get | HttpVerbs.post | HttpVerbs.put | HttpVerbs.patch | HttpVerbs.delete;
@@ -14,6 +15,8 @@ export class Api {
   request?: MockRequest;
   storeId?: string;
   stripPrefix?: string;
+  source: ApiSource;
+  sourceFile: string;
   responses: MockResponseConfig[];
 
   constructor(data: MockHttp) {
@@ -25,6 +28,8 @@ export class Api {
     this.request = data.request;
     this.storeId = data.storeId;
     this.stripPrefix = data.stripPrefix;
+    this.source = data.source ?? 'mock';
+    this.sourceFile = data.sourceFile ?? '';
     this.responses = data.responses;
   }
 

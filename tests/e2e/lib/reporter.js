@@ -12,10 +12,16 @@ const { green, red, cyan, dim, bold, yellow } = require('colorette');
  * @property {'success' | 'error'} expectedOutcome
  */
 
-function printHeader() {
+/**
+ * @param {string} [suite]
+ */
+function printHeader(suite) {
   console.log('');
   console.log(bold(cyan('http-mock-json · e2e suite')));
   console.log(dim('CLI/server scenarios end-to-end (start + console/HTTP assertions)'));
+  if (suite) {
+    console.log(dim(`Suite: ${ suite }`));
+  }
   console.log('');
 }
 
@@ -45,16 +51,24 @@ function printCaseResult(result) {
 /**
  * @param {CaseResult[]} results
  * @param {number} totalMs
+ * @param {{ informational?: boolean }} [options]
  */
-function printSummary(results, totalMs) {
+function printSummary(results, totalMs, options = {}) {
   const passed = results.filter((r) => r.passed).length;
   const failed = results.length - passed;
+  const informational = options.informational === true;
 
   console.log('');
   console.log(dim('─'.repeat(56)));
 
   if (failed === 0) {
     console.log(green(bold(`Tests: ${ passed } passed, ${ failed } failed (${ results.length } total)`)));
+  } else if (informational) {
+    console.log(
+      yellow(bold(
+        `Tests: ${ passed } passed, ${ failed } failed (${ results.length } total) · informational`
+      ))
+    );
   } else {
     console.log(red(bold(`Tests: ${ passed } passed, ${ failed } failed (${ results.length } total)`)));
   }
@@ -63,11 +77,15 @@ function printSummary(results, totalMs) {
   console.log('');
 
   if (failed > 0) {
-    console.log(yellow('Failed cases:'));
+    console.log(yellow(informational ? 'Failed cases (informational — do not block):' : 'Failed cases:'));
     for (const result of results.filter((r) => !r.passed)) {
       console.log(`  ${ red('✖') } ${ result.name }`);
     }
     console.log('');
+    if (informational) {
+      console.log(yellow('External suite soft-fails: exit code 0 (upstream may be down).'));
+      console.log('');
+    }
   }
 }
 

@@ -65,7 +65,6 @@ module.exports = {
       failures.push(...expectEqual(listed.body[0]?.sku, 'NEW', 'persisted sku'));
       failures.push(...expectEqual(listed.body[0]?.order?.id, 2, 'expand after persist'));
 
-      // Orders file appears once the orders collection is mutated; items persist is enough here.
       failures.push(...expectEqual(fs.existsSync(itemsFile), true, 'items persist file remains'));
 
       await second.stop();

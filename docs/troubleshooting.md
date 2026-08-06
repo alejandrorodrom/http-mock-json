@@ -686,6 +686,22 @@ Bad example: [`mocks/invalid/proxy-errors.json`](../mocks/invalid/proxy-errors.j
 | **Fix** | Set method/folder/root `"proxy": "https://…"` or start with `--proxy https://…`. |
 | **See** | [Concepts](../README.md#concepts), [CLI](../README.md#cli-reference) |
 
+### Recordings not appearing / not replaying
+
+| | |
+|--|--|
+| **Symptom** | After `--record`, no files under `.recordings/`, or replay still needs the backend. |
+| **Cause** | Traffic hit a local mock (not proxied); proxy failed (`[proxy:error]`); started with `--exclude-recordings`; or `--record` without any proxy target. |
+| **Fix** | Confirm the request is unmatched or uses `"proxy"`; check `[proxy:error]` logs; restart without `--exclude-recordings`. See [Record & Replay](../README.md#record--replay). |
+
+### Proxied request returns 301 / 302 instead of the final response
+
+| | |
+|--|--|
+| **Symptom** | After upgrading to 4.1.0+, a proxied route that used to return 200 (or another final status) now returns `301` / `302` (often with `Location`). |
+| **Cause** | Proxy no longer follows upstream redirects (`redirect: "manual"`). Applies to all proxy paths, not only `--record`. |
+| **Fix** | Point `proxy` / `--proxy` at the final URL, or have the client follow `Location`. See [CHANGELOG 4.1.0](../CHANGELOG.md), [Concepts — proxy](../README.md#proxy--forward-to-a-real-backend), [Record & Replay](../README.md#record--replay). |
+
 ### `{ "message": "Proxy request failed", "error": "…", "target": "…" }`
 
 | | |

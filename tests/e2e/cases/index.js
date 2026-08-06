@@ -1,10 +1,5 @@
 'use strict';
 
-/**
- * Registry of all e2e case scripts.
- * The e2e runner loads each module and calls `.run()`.
- */
-
 const successCases = [
   require('./success/01-basic-multiple-responses'),
   require('./success/02-custom-headers'),
@@ -98,8 +93,6 @@ const runtimeCases = [
   require('./runtime/headers-and-null-body'),
   require('./runtime/all-http-methods'),
   require('./runtime/proxy-orphan-502'),
-  require('./runtime/proxy-live'),
-  require('./runtime/global-proxy-unmatched'),
   require('./runtime/proxy-request-failed'),
   require('./runtime/proxy-raw-body'),
   require('./runtime/response-encoding'),
@@ -139,7 +132,17 @@ const runtimeCases = [
   require('./runtime/mock-config-folders'),
   require('./runtime/mock-config-proxy-unmatched'),
   require('./runtime/mock-config-cascades'),
-  require('./runtime/mock-config-exhaustive')
+  require('./runtime/mock-config-exhaustive'),
+  require('./runtime/record-replay'),
+  require('./runtime/record-replay-mock-config'),
+  require('./runtime/record-replay-collision-dedupe'),
+  require('./runtime/record-replay-multipart')
+];
+
+const externalCases = [
+  require('./runtime/proxy-live'),
+  require('./runtime/global-proxy-unmatched'),
+  require('./runtime/record-replay-public-apis')
 ];
 
 const unitCases = [
@@ -157,11 +160,13 @@ const unitCases = [
   require('./unit/add-mock'),
   require('./unit/add-crud-mock'),
   require('./unit/init-with-mock'),
-  require('./unit/cli-io-errors')
+  require('./unit/cli-io-errors'),
+  require('./unit/record-path'),
+  require('./unit/record-match')
 ];
 
 /** @type {{ name: string, description: string, run: () => Promise<import('../lib/reporter').CaseResult> }[]} */
-const useCases = [
+const classicCases = [
   ...successCases,
   ...errorCases,
   ...systemCases,
@@ -169,8 +174,15 @@ const useCases = [
   ...unitCases
 ];
 
+const useCases = [
+  ...classicCases,
+  ...externalCases
+];
+
 module.exports = {
   useCases,
+  classicCases,
+  externalCases,
   successCases,
   errorCases,
   systemCases,

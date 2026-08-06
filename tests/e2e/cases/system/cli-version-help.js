@@ -17,7 +17,7 @@ module.exports = {
       expected: {
         outcome: 'cli',
         exitCode: 0,
-        stdoutIncludes: ['4.0.3']
+        stdoutIncludes: ['4.1.0']
       }
     });
 

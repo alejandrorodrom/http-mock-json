@@ -14,13 +14,13 @@
 
 > Mock your real API in JSON — status codes, errors, validation, latency, and mutable data — so the frontend can develop and test without waiting on a backend.
 
-Define the same endpoints your app will call. Switch success and failure scenarios, validate request shapes, persist collections, or proxy selected routes to a live server.
+Define the same endpoints your app will call. Switch success and failure scenarios, validate request shapes, persist collections, proxy selected routes to a live server — or **record staging once** and replay from `.recordings/` with no backend online.
 
 <p align="center">
-  <img src="assets/architecture.webp" alt="Architecture: frontend talks to http-mock-json locally; optional proxy to real backend or other live APIs" width="900" />
+  <img src="assets/architecture.webp" alt="Architecture: frontend talks to http-mock-json locally; optional proxy to a real backend, or record traffic and replay offline" width="900" />
 </p>
 
-The frontend keeps calling HTTP on your machine. Backend outages stop blocking you. Use flat `mocks/*.json` or microservice folders; proxy only the routes that should still hit a live service.
+The frontend keeps calling HTTP on your machine. Backend outages stop blocking you. Use flat `mocks/*.json` or microservice folders; proxy only the routes that should still hit a live service, or capture them with [Record & Replay](#record--replay) and keep working offline.
 
 ## Why http-mock-json
 
@@ -29,6 +29,7 @@ The frontend keeps calling HTTP on your machine. Backend outages stop blocking y
 - **Safe by default** — startup validation catches broken mocks before they waste your time
 - **Watch mode** — server restarts when mock files change
 - **Opt-in depth** — start static; add `match`, `request`, `store`, or `proxy` only when you need them
+- **Record & Replay** — point `--proxy` at staging, hit the app once with `--record`, then replay those fixtures locally without the upstream
 
 ## Quick Start
 
@@ -41,6 +42,16 @@ npx mock-server start
 ```
 
 Server defaults to `http://localhost:3000`. After `init`, `npm run mock:start` uses **`-p 3001`** (port). Full walkthrough: [Getting started](#getting-started).
+
+Prefer bootstrapping from a real API instead of hand-writing every mock?
+
+```bash
+npx mock-server start --proxy https://api.staging.com --record
+# exercise the app… then Ctrl+C
+npx mock-server start   # loads mocks + .recordings/ by default
+```
+
+Details: [Record & Replay](#record--replay).
 
 ## Demo — switch responses from JSON
 
@@ -97,7 +108,7 @@ Same URL, different backend behavior — controlled from JSON.
 
 This README is the full guide and reference. Quick help: [FAQ](docs/faq.md) · [Troubleshooting](docs/troubleshooting.md) · [Changelog](CHANGELOG.md).
 
-Day-one path: [Getting started](#getting-started) · [Concepts](#concepts) · [Examples](docs/examples.md). Lookup: [CLI](#cli-reference) · [Store](#store-reference).
+Day-one path: [Getting started](#getting-started) · [Concepts](#concepts) · [Examples](docs/examples.md). Lookup: [CLI](#cli-reference) · [Record & Replay](#record--replay) · [Store](#store-reference).
 
 ## Contents
 
@@ -107,6 +118,7 @@ Day-one path: [Getting started](#getting-started) · [Concepts](#concepts) · [E
 - [Concepts](#concepts) (includes a short glossary)
 - [Examples](docs/examples.md)
 - [Advanced examples](docs/advanced-examples.md)
+- [Record & Replay](#record--replay) — capture staging, replay offline
 
 **Reference** (lookup when needed):
 
@@ -322,9 +334,15 @@ Proxy can appear at several layers:
 - Method default target for `"proxy": true`
 - CLI `--proxy` and folder `mock.config.json` targets for `"proxy": true` and unmatched routes
 
-When a selected response has `proxy` set, the original request is forwarded and the mock `body` / `action` path is skipped. Unmatched routes can still be forwarded if you configured global or folder unmatched proxy mounts.
+When a selected response has `proxy` set, the original request is forwarded and the mock `body` / `action` path is skipped. Unmatched routes can still be forwarded if you configured global or folder unmatched proxy mounts. Upstream redirects are not followed (`redirect: "manual"`); the mock returns the 3xx response as-is.
 
 See [mock file](#mock-file-reference) and [CLI](#cli-reference).
+
+#### Record & Replay — capture staging, work offline
+
+Hand-writing every fixture is optional. With `--proxy` and `--record`, proxied responses are written under `.recordings/` (same mock JSON shape). Stop the server, start again without `--record`: recordings load by default next to your mocks, so the frontend keeps the same URLs with no upstream.
+
+Typical loop: record against staging → commit or share sanitized fixtures → day-to-day `mock-server start` (or `--recordings-only`). Full flags and behavior: [CLI — Record & Replay](#record--replay).
 
 ### Runtime pipeline (matching order)
 
@@ -358,10 +376,11 @@ CORS is enabled by default (browser frontends can call the mock server without a
 | **`match`** | Optional object on a response that selects it from the request (`params` / `query` / `body` / …). |
 | **`request`** | Method-level validation (`payload` / `query` / `headers`) before response selection. Distinct from **startup validation**. |
 | **store definition / reference** | Full `store` object vs `{ "id": "…" }` reuse. Prefer these over bare “schema”. |
+| **recording** | Fixture under `.recordings/` written by `--record` while proxying; loaded on `start` unless `--exclude-recordings`. |
 
 ### Expected result
 
-You can explain, for a given mock, which response will run: validation error, a `match`ed scenario, the `nameResponse` fallback, a store action, or a proxy forward.
+You can explain, for a given mock, which response will run: validation error, a `match`ed scenario, the `nameResponse` fallback, a store action, a proxy forward, or a loaded recording.
 
 ### Next steps
 
@@ -424,7 +443,10 @@ mock-server start
 |------|---------|-------------|
 | `-p, --port <port>` | — | Listen port (integer `1`–`65535`). Overrides `mock.config.json` `port` when set; otherwise config `port`, else **`3000`**. |
 | `-f, --path <path>` | `mocks` | Path to the mocks directory (JSON files + optional `mock.config.json`) |
-| `--proxy <url>` | — | Global proxy target (`http` / `https`). Used by responses with `"proxy": true` and by unmatched routes (after folder `proxyUnmatched` mounts). |
+| `--proxy <url>` | — | Global proxy target (`http` / `https`). Used by responses with `"proxy": true` and by unmatched routes (after folder `proxyUnmatched` mounts). Upstream redirects are not followed (`redirect: "manual"`); 3xx is returned as-is. |
+| `--record` | `false` | Record proxied responses into `.recordings/` (JSON + binary via `encoding: "file"`). Requires a proxy target (CLI `--proxy`, folder `proxy` / `proxyUnmatched`, or response `proxy`). |
+| `--exclude-recordings` | `false` | Do not load `.recordings/` (mocks only). |
+| `--recordings-only` | `false` | Load only `.recordings/` (ignore regular mock JSON). Incompatible with `--exclude-recordings`. |
 | `--reset-store [ids]` | — | Delete persisted store snapshots **before the initial start**. Bare `--reset-store` clears all. Comma-separated ids clear only those store ids (runtime ids, including `namespace:id` when `storeNamespace` is set). **Not** re-applied on watch reloads. |
 
 **Examples:**
@@ -432,10 +454,44 @@ mock-server start
 ```bash
 mock-server start --port 3001 --path api-mocks --proxy https://api.staging.com
 mock-server start --path apps/folder1/mocks
+mock-server start --proxy https://api.staging.com --record
+mock-server start --exclude-recordings
+mock-server start --recordings-only
 mock-server start --reset-store
 mock-server start --reset-store notes,users
 mock-server start --reset-store users:session
 ```
+
+#### Record & Replay
+
+Bootstrap realistic fixtures from a live API, then develop and test with the upstream offline. Recordings use the same mock JSON shape (including `match` for params/query/auth/multipart), so you can edit or commit them like any other mock.
+
+```bash
+# 1) Record (writes .recordings/ while proxying)
+mock-server start --proxy https://api.staging.com --record
+
+# 2) Stop with Ctrl+C (prints wrote / skipped / proxy failures)
+
+# 3) Replay (default loads mocks + recordings)
+mock-server start
+```
+
+With `mock.config.json` folders, recordings are grouped by longest matching `prefix` into `<folder>/.recordings/`. Without config, files go under `mocks/.recordings/`.
+
+| Behavior | Detail |
+|----------|--------|
+| What is recorded | Proxied traffic only (local mocks are not overwritten) |
+| JSON | Saved as normal response `body` (including primitives) |
+| Binary | `encoding: "file"` + bytes under `.recordings/files/` |
+| Bodies | JSON parsed when possible; `text/*` / xml / csv as strings; binary as `encoding: "file"`; unknown utf8 as text, otherwise binary. Proxied responses are recorded (no content-type skip for normal API payloads). |
+| Redirects | Not followed (`redirect: "manual"`); 3xx + `Location` are recorded |
+| Path params | Digits → `:id` / `:id2`…; segments like `v1` / `v2` stay literal |
+| Headers | Response headers mapped (including `Set-Cookie`); hop-by-hop omitted. Request `Authorization` / `Cookie` go into `match.headers` so variants of the same route replay correctly |
+| Match | Path params, query, non-empty JSON body, auth/cookie headers, and multipart fields/file metadata (`filename` / `mimeType` / `size`); response without `match` becomes the default (`nameResponse`) |
+| Collisions | In default load mode, a mock route wins over a recording (warning logged) |
+| Startup log | Routes grouped under **Mocks** and **Recordings** |
+
+`.recordings/` writes are ignored by the file watcher (same idea as `.store/`). The package `.gitignore` excludes `**/.recordings/` because recordings may store `Authorization` / `Cookie` in `match.headers` — commit them only when intentionally sanitized.
 
 **Breaking (≥ 2.0.0):** `--path` / `-f` is the mocks directory itself (default `mocks`).  
 Before 2.0.0, `-f apps/folder1` meant `apps/folder1/mocks`. Use `-f apps/folder1/mocks` now.

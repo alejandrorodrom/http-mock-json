@@ -297,6 +297,22 @@ async function startMockServer(options) {
     args.push('--proxy', options.proxy);
   }
 
+  if (options.record === true) {
+    args.push('--record');
+  }
+
+  if (options.excludeRecordings === true) {
+    args.push('--exclude-recordings');
+  }
+
+  if (options.recordingsOnly === true) {
+    args.push('--recordings-only');
+  }
+
+  if (Array.isArray(options.extraArgs)) {
+    args.push(...options.extraArgs);
+  }
+
   if (options.resetStore === true) {
     args.push('--reset-store');
   } else if (typeof options.resetStore === 'string' && options.resetStore.length > 0) {

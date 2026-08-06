@@ -1,18 +1,12 @@
 #!/usr/bin/env node
 'use strict';
 
-/**
- * E2E test runner (CLI / server scenarios end-to-end).
- *
- * 1) Preflight: error-catalog mappings (test inventory guard)
- * 2) Cases: each mock/CLI/runtime scenario in isolation
- *
- * Unit tests can live later under tests/unit/ with their own runner.
- */
-
 const { spawnSync } = require('child_process');
-const path = require('path');
-const { useCases } = require('./e2e/cases');
+const {
+  useCases,
+  classicCases,
+  externalCases
+} = require('./e2e/cases');
 const {
   assertErrorCatalog,
   printCatalogPreflight
@@ -21,7 +15,6 @@ const { printHeader, printCaseResult, printSummary } = require('./e2e/lib/report
 const { PROJECT_ROOT } = require('./e2e/lib/execute-mock-file');
 
 function ensureBuild() {
-  // Always rebuild so src/ changes (error messages, validators, etc.) are what the suite runs.
   const result = spawnSync('npm', ['run', 'build'], {
     cwd: PROJECT_ROOT,
     stdio: 'inherit',
@@ -34,26 +27,62 @@ function ensureBuild() {
   }
 }
 
-function parseFilter() {
+function parseArgs() {
   const args = process.argv.slice(2);
-  const filterIndex = args.findIndex((arg) => arg === '--filter' || arg === '-f');
+  let filter = null;
+  let suite = 'classic';
 
-  if (filterIndex >= 0 && args[filterIndex + 1]) {
-    return args[filterIndex + 1].toLowerCase();
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+
+    if (arg === '--filter' || arg === '-f') {
+      filter = (args[index + 1] || '').toLowerCase() || null;
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith('--only=')) {
+      filter = arg.slice('--only='.length).toLowerCase();
+      continue;
+    }
+
+    if (arg === '--suite') {
+      suite = (args[index + 1] || '').toLowerCase() || 'classic';
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith('--suite=')) {
+      suite = arg.slice('--suite='.length).toLowerCase();
+    }
   }
 
-  const onlyFlag = args.find((arg) => arg.startsWith('--only='));
-  if (onlyFlag) {
-    return onlyFlag.slice('--only='.length).toLowerCase();
+  if (!['classic', 'external', 'all'].includes(suite)) {
+    console.error(`Unknown suite "${ suite }". Use classic | external | all.`);
+    process.exit(1);
   }
 
-  return null;
+  return { filter, suite };
+}
+
+function casesForSuite(suite) {
+  if (suite === 'external') {
+    return externalCases;
+  }
+
+  if (suite === 'all') {
+    return useCases;
+  }
+
+  return classicCases;
 }
 
 async function main() {
   ensureBuild();
 
-  printHeader();
+  const { filter, suite } = parseArgs();
+
+  printHeader(suite);
 
   const catalogCheck = assertErrorCatalog(useCases.map((useCase) => useCase.name));
   printCatalogPreflight(catalogCheck);
@@ -63,18 +92,41 @@ async function main() {
     process.exit(1);
   }
 
-  const filter = parseFilter();
+  const pool = casesForSuite(suite);
   const selected = filter
-    ? useCases.filter((useCase) => useCase.name.toLowerCase().includes(filter))
-    : useCases;
+    ? pool.filter((useCase) => useCase.name.toLowerCase().includes(filter))
+    : pool;
 
   if (selected.length === 0) {
-    console.error(`No e2e cases matched filter: ${ filter }`);
+    if (filter) {
+      const elsewhere = useCases.filter((useCase) => (
+        useCase.name.toLowerCase().includes(filter) && !pool.includes(useCase)
+      ));
+      if (elsewhere.length > 0) {
+        console.error(
+          `Filter "${ filter }" matched ${ elsewhere.length } case(s) outside suite "${ suite }". `
+          + 'Use --suite external or --suite all.'
+        );
+      } else {
+        console.error(`No e2e cases matched filter: ${ filter }`);
+      }
+    } else {
+      console.error(`No e2e cases in suite: ${ suite }`);
+    }
     process.exit(1);
   }
 
   if (filter) {
     console.log(`Filter: ${ filter } (${ selected.length } case(s))\n`);
+  } else {
+    console.log(`Suite: ${ suite } (${ selected.length } case(s))\n`);
+  }
+
+  if (suite === 'external') {
+    console.log(
+      `Note: external suite (${ selected.length } case(s)) depends on third-party APIs `
+      + '(may fail when upstream is down).\n'
+    );
   }
 
   const startedAt = Date.now();
@@ -87,9 +139,15 @@ async function main() {
     printCaseResult(result);
   }
 
-  printSummary(results, Date.now() - startedAt);
-
   const failed = results.some((result) => !result.passed);
+  const informational = suite === 'external';
+
+  printSummary(results, Date.now() - startedAt, { informational });
+
+  if (informational) {
+    process.exit(0);
+  }
+
   process.exit(failed ? 1 : 0);
 }
 

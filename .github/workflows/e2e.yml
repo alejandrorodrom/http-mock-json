@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   e2e:
+    name: E2E classic
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -28,4 +29,10 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run test:e2e
+      - name: Run classic e2e suite
+        run: npm run test:e2e
+
+  e2e-external:
+    name: E2E external (informational)
+    needs: e2e
+    uses: ./.github/workflows/e2e-external.yml

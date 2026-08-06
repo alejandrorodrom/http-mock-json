@@ -18,10 +18,16 @@ Requirements: Node.js `>= 18`.
 | Command | Purpose |
 |---------|---------|
 | `npm run build` | Compile TypeScript to `dist/` |
-| `npm test` | Run the e2e suite (`tests/run-e2e.js`) |
+| `npm test` | Classic e2e suite (local / deterministic; required for PRs) |
+| `npm run test:e2e:external` | All external e2e cases (live third-party APIs; flaky if upstream is down) |
+| `npm run test:e2e:all` | Classic + external |
 | `npm run dev:start` | Build, then start the CLI against local mocks |
 | `npm run dev:init` | Build, then create a mocks folder (scaffold) |
 | `npm run dev:add` | Build, then add a new mock interactively |
+
+CI runs classic e2e as a required check. The full **external** suite (every live-upstream case) runs afterward as an **informational** job (`continue-on-error`) so third-party outages do not block merge.
+
+When adding a test that calls a real remote API, register it in `externalCases` in `tests/e2e/cases/index.js` — never in the classic suite.
 
 ## Pull requests
 

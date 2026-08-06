@@ -54,3 +54,6 @@ ui-debug.log
 
 # Persisted in-memory store snapshots
 **/.store/
+
+# Record/replay captures
+**/.recordings/
