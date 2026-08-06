@@ -1121,7 +1121,7 @@ Proxy value shapes and inheritance: [Mock file — proxy](#proxy-value-shapes), 
 
 There is **no** dual-read / alias period: legacy keys are rejected at startup with a clear error.
 
-Out of scope: record & replay, OpenAPI import, response multipart *builder*, GraphQL/XML.
+Out of scope: OpenAPI import, response multipart *builder*, GraphQL/XML.
 
 Folder organization (`mock.config.json`): [Mock config](#mock-config-reference).  
 Mutable store: [Store](#store-reference).
