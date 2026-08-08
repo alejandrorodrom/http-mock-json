@@ -57,7 +57,7 @@
     "busboy": "^1.6.0",
     "chokidar": "^5.0.0",
     "colorette": "^2.0.20",
-    "commander": "^14.0.2",
+    "commander": "^15.0.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "figlet": "^1.9.4",
