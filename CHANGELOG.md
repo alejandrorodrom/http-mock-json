@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.1] - 2026-08-08
+
+Patch release on top of **4.1.0**. No public API or CLI contract changes.
+
+### Previous version
+
+**4.1.0** — Record & Replay.
+
+### Fixed
+
+- **`format: "email"`:** enforce RFC-practical limits (overall ≤ 254 chars; local ≤ 64; domain/label bounds) so oversized or malformed addresses are rejected
+- E2E console matching: allow stable message prefixes so `JSON.parse` wording differences across Node versions do not fail `file.syntax-error` / error-catalog checks
+
+### Changed
+
+- Package / CLI version bumped to `4.1.1`
+
+---
+
 ## [4.1.0] - 2026-08-05
 
 Minor release on top of **4.0.3**.
@@ -392,6 +411,8 @@ See git tags (`v1.9.0` … `v1.2.9`) for earlier history (proxy, match, delay, s
 
 ---
 
+[4.1.1]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.1.0...v4.1.1
+[4.1.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.0.3...v4.1.0
 [4.0.3]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.0.2...v4.0.3
 [4.0.2]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.0.0...v4.0.1

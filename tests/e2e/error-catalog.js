@@ -1778,7 +1778,7 @@ const ERROR_CATALOG = [
   },
   {
     id: 'cli.version',
-    message: '3.0.0',
+    message: '4.1.1',
     source: 'src/cli/interactive.ts',
     kind: 'cli',
     caseName: 'system/cli-version-help'
