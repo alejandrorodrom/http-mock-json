@@ -46,7 +46,7 @@ const ERROR_CATALOG = [
   },
   {
     id: 'file.syntax-error',
-    message: 'JSON syntax error: Expected \',\' or \']\' after array element in JSON at position 244',
+    message: 'JSON syntax error:',
     source: 'src/cli/commands/start/process-file.ts',
     kind: 'validation',
     caseName: 'error/file-syntax-error'

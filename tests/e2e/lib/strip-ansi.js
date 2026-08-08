@@ -63,7 +63,9 @@ function extractConsoleMessages(output) {
 }
 
 /**
- * Exact coincidence against console output.
+ * Match against console output (exact message, or stable prefix).
+ * Prefix matches cover Node/V8 messages that gain version-specific suffixes
+ * (e.g. JSON.parse line/column text differs across Node 18–24).
  * @param {string} output
  * @param {string} expected
  * @returns {boolean}
@@ -73,7 +75,12 @@ function hasExactConsoleMatch(output, expected) {
     return true;
   }
 
-  return extractConsoleMessages(output).includes(expected);
+  const messages = extractConsoleMessages(output);
+  if (messages.includes(expected)) {
+    return true;
+  }
+
+  return messages.some((message) => message.startsWith(expected));
 }
 
 /**

@@ -14,7 +14,8 @@ module.exports = {
       stdoutIncludes: [
         '✖ Error:',
         'File: file-syntax-error.json',
-        'JSON syntax error: Expected \',\' or \']\' after array element in JSON at position 244'
+        // Prefix only: JSON.parse wording differs across Node 18 / 20 / 21+
+        'JSON syntax error:'
       ],
       stdoutExcludes: ['Mock server is running']
     }
