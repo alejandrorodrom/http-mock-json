@@ -18,7 +18,7 @@ See [Getting started](../README.md#getting-started) and [Concepts](../README.md#
 
 ### Which Node.js version do I need?
 
-**Node.js 18 or newer** (`engines` in the package).
+**Node.js 22.12 or newer** (`engines` in the package).
 
 See [Getting started](../README.md#getting-started).
 

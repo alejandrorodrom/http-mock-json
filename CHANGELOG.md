@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0] - 2026-08-08
+
+Major release on top of **4.1.1**.
+
+### Previous version
+
+**4.1.1** — email validation limits and e2e console matching.
+
+### Changed
+
+- **Breaking:** requires **Node.js >= 22.12** (previously `>= 18`). Node 18 and 20 are no longer supported. Aligns `engines` with the oldest Node.js release line that still receives official security updates, and with Commander 15’s runtime floor.
+- Dependencies: `commander` 14 → 15 (ESM; needs Node `>=22.12`), `sisteransi` 1 → 2 (ESM)
+- Dev toolchain: `typescript` 5.9 → 7; `@types/node` raised to the 22.x line (not 26) to match the runtime floor
+- Package / CLI version bumped to `5.0.0`
+- CI classic/e2e/audit jobs run on Node 22 (publish remains on Node 24)
+
+---
+
 ## [4.1.1] - 2026-08-08
 
 Patch release on top of **4.1.0**. No public API or CLI contract changes.
@@ -411,6 +429,7 @@ See git tags (`v1.9.0` … `v1.2.9`) for earlier history (proxy, match, delay, s
 
 ---
 
+[5.0.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.1.1...v5.0.0
 [4.1.1]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.1.0...v4.1.1
 [4.1.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.0.3...v4.1.0
 [4.0.3]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.0.2...v4.0.3

@@ -10,7 +10,7 @@
 [![E2E](https://img.shields.io/github/actions/workflow/status/alejandrorodrom/http-mock-json/e2e.yml?branch=main&style=flat-square&label=E2E)](https://github.com/alejandrorodrom/http-mock-json/actions/workflows/e2e.yml)
 [![npm audit](https://img.shields.io/github/actions/workflow/status/alejandrorodrom/http-mock-json/npm-audit.yml?branch=main&style=flat-square&label=npm%20audit)](https://github.com/alejandrorodrom/http-mock-json/actions/workflows/npm-audit.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)
-![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen?style=flat-square)
+![Node](https://img.shields.io/badge/node-%3E%3D22.12.0-brightgreen?style=flat-square)
 
 > Mock your real API in JSON — status codes, errors, validation, latency, and mutable data — so the frontend can develop and test without waiting on a backend.
 
@@ -33,7 +33,7 @@ The frontend keeps calling HTTP on your machine. Backend outages stop blocking y
 
 ## Quick Start
 
-Requires **Node.js >= 18**.
+Requires **Node.js >= 22.12**.
 
 ```bash
 npm install http-mock-json --save-dev
@@ -142,7 +142,7 @@ Install `http-mock-json`, create a mocks directory, add a first mock, and run th
 
 ### Prerequisites
 
-- Node.js 18 or newer
+- Node.js 22.12 or newer
 - A Node project with a `package.json` (recommended so `init` can add a start script)
 
 ### Steps
@@ -400,7 +400,7 @@ Lookup in this manual when needed:
 
 ## CLI reference
 
-Binary: `mock-server` (package `http-mock-json`, current version **4.0.3**). Requires **Node.js ≥ 18**.
+Binary: `mock-server` (package `http-mock-json`, current version **5.0.0**). Requires **Node.js ≥ 22.12**.
 
 Global options: `-h` / `--help`, `-v` / `--version`.
 

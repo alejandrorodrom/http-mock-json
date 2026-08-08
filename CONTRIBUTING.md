@@ -11,7 +11,7 @@ npm ci
 npm run build
 ```
 
-Requirements: Node.js `>= 18`.
+Requirements: Node.js `>= 22.12`.
 
 ## Scripts
 
