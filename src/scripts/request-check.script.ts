@@ -1,6 +1,7 @@
 import { Request } from 'express';
 import {
   DATE_RE,
+  EMAIL_MAX_LENGTH,
   EMAIL_RE,
   UUID_RE
 } from '../constants/request.constant';
@@ -93,7 +94,7 @@ const coerceQuery = (value: unknown, type: FieldType): unknown => {
 const matchFormat = (value: string, format: string): boolean => {
   switch (format) {
     case 'email':
-      return EMAIL_RE.test(value);
+      return value.length <= EMAIL_MAX_LENGTH && EMAIL_RE.test(value);
     case 'uuid':
       return UUID_RE.test(value);
     case 'url': {

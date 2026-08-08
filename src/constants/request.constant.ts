@@ -60,7 +60,9 @@ export const ERROR_STATUS = 400;
 
 export const ERROR_MESSAGE = 'Invalid request';
 
-export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{1,63}$/;
+
+export const EMAIL_MAX_LENGTH = 254;
 
 export const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
