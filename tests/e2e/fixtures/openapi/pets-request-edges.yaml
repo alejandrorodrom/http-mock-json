@@ -1,0 +1,179 @@
+openapi: 3.0.3
+info:
+  title: Pets Request Edges
+  version: 1.0.0
+servers:
+  - url: https://example.com
+paths:
+  /array-body:
+    post:
+      tags: [edges]
+      summary: Non-object requestBody (array) — payload skipped
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                ok: true
+  /no-schema:
+    post:
+      tags: [edges]
+      summary: requestBody without schema — payload skipped
+      requestBody:
+        content:
+          application/json:
+            example:
+              raw: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                ok: true
+  /weird-format:
+    post:
+      tags: [edges]
+      summary: Unsupported string format — format omitted
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                  format: hostname
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                ok: true
+  /form-login:
+    post:
+      tags: [edges]
+      summary: form-urlencoded body
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                token: abc
+  /allof-body:
+    post:
+      tags: [edges]
+      summary: allOf merge into object payload
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  required: [id]
+                  properties:
+                    id:
+                      type: string
+                - type: object
+                  properties:
+                    label:
+                      type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                ok: true
+  /anyof-body:
+    post:
+      tags: [edges]
+      summary: anyOf — first branch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - type: object
+                  required: [kind]
+                  properties:
+                    kind:
+                      type: string
+                      enum: [a]
+                - type: object
+                  required: [kind]
+                  properties:
+                    kind:
+                      type: string
+                      enum: [b]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                ok: true
+  /datetime-field:
+    post:
+      tags: [edges]
+      summary: date-time maps to date
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [when]
+              properties:
+                when:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                ok: true
+  /xml-only:
+    post:
+      tags: [edges]
+      summary: non JSON/form/multipart content — warn + first media
+      requestBody:
+        content:
+          application/xml:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                ok: true

@@ -13,7 +13,7 @@ export const interactive = () => {
 
   mock
     .name('mock-server')
-    .version('5.1.0', '-v, --version', 'Output the version number')
+    .version('5.2.0', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.');
 
@@ -195,8 +195,14 @@ export const interactive = () => {
       'Overwrite existing mock files without prompting',
       false
     )
+    .option(
+      '--no-request',
+      'Do not generate request.payload / query / headers from OpenAPI schemas'
+    )
     .description('Import an OpenAPI 3.x document into mock JSON files.')
-    .action(async (options: ImportOptions & { splitTags?: boolean; serverPrefix?: boolean }) => {
+    .action(async (
+      options: ImportOptions & { splitTags?: boolean; serverPrefix?: boolean; request?: boolean }
+    ) => {
       try {
         await importOpenApi({
           path: options.path,
@@ -205,7 +211,8 @@ export const interactive = () => {
           splitTags: options.splitTags !== false,
           overwrite: options.overwrite === true,
           prefix: options.prefix,
-          serverPrefix: options.serverPrefix !== false
+          serverPrefix: options.serverPrefix !== false,
+          request: options.request !== false
         });
       } catch (e) {
         logError(e);

@@ -67,7 +67,8 @@ export const importOpenApi = async (options: ImportOptions): Promise<void> => {
       splitTags: options.splitTags !== false,
       out: options.out,
       prefix: options.prefix,
-      useServerPrefix: options.serverPrefix !== false
+      useServerPrefix: options.serverPrefix !== false,
+      includeRequest: options.request !== false
     });
 
     if (mapped.bundles.length === 0 || mapped.endpointCount === 0) {

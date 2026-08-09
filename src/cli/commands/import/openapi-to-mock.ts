@@ -5,6 +5,7 @@ import { RawMockMethod, RawMockResponse } from '../../../interfaces/data.interfa
 import { normalizeEndpoint } from '../add/normalize-endpoint';
 import { OpenApiDocument } from './openapi-load';
 import { buildSchemaExample } from './schema-example';
+import { buildOperationRequest } from './schema-to-request';
 import { resolveOpenApiRoutePrefix } from './server-prefix';
 
 type HttpMethodLower = 'get' | 'post' | 'put' | 'patch' | 'delete';
@@ -129,9 +130,11 @@ const parseStatusCode = (code: string): { statusCode: number; name: string } => 
 
 const operationToMethod = (
   operation: Operation,
+  pathParameters: unknown[] | undefined,
   warnings: string[],
   pathKey: string,
-  method: string
+  method: string,
+  includeRequest: boolean
 ): RawMockMethod | null => {
   const responses = operation.responses ?? {};
   const entries = Object.entries(responses);
@@ -192,10 +195,24 @@ const operationToMethod = (
     return null;
   }
 
-  return {
+  const mockMethod: RawMockMethod = {
     nameResponse: defaultName ?? mockResponses[0].name,
     responses: mockResponses
   };
+
+  if (includeRequest) {
+    const built = buildOperationRequest(
+      operation,
+      pathParameters,
+      { method, pathKey }
+    );
+    warnings.push(...built.warnings);
+    if (built.request) {
+      mockMethod.request = built.request;
+    }
+  }
+
+  return mockMethod;
 };
 
 const titleFromDocument = (document: OpenApiDocument): string => {
@@ -220,10 +237,13 @@ export const openApiToMock = (
     out?: string;
     prefix?: string;
     useServerPrefix?: boolean;
+    /** When false, skip generating request.payload/query/headers (--no-request). */
+    includeRequest?: boolean;
   }
 ): OpenApiToMockResult => {
   const warnings: string[] = [];
   const paths = (document as OpenAPIV3.Document).paths ?? {};
+  const includeRequest = options.includeRequest !== false;
 
   const prefixResult = resolveOpenApiRoutePrefix(document, {
     prefix: options.prefix,
@@ -259,6 +279,7 @@ export const openApiToMock = (
     }
 
     const item = pathItem as PathItem;
+    const pathParameters = (item as { parameters?: unknown[] }).parameters;
 
     for (const method of SUPPORTED_METHODS) {
       const operation = item[method] as Operation | undefined;
@@ -266,7 +287,14 @@ export const openApiToMock = (
         continue;
       }
 
-      const mockMethod = operationToMethod(operation, warnings, endpoint, method);
+      const mockMethod = operationToMethod(
+        operation,
+        pathParameters,
+        warnings,
+        endpoint,
+        method,
+        includeRequest
+      );
       if (!mockMethod) {
         skippedOperations += 1;
         continue;

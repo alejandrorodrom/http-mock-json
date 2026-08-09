@@ -41,7 +41,8 @@ module.exports = {
           '--no-split-tags',
           '--prefix',
           '--no-server-prefix',
-          '--overwrite'
+          '--overwrite',
+          '--no-request'
         ]) {
           if (!combined.includes(flag)) {
             failures.push(`[import --help] Expected flag text ${ JSON.stringify(flag) }`);

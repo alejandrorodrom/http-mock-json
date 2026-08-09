@@ -23,4 +23,6 @@ export type ImportOptions = {
   prefix?: string;
   /** When false, ignore servers[0] path (--no-server-prefix). */
   serverPrefix?: boolean;
+  /** When false, skip generating request from OpenAPI (--no-request). Default true. */
+  request?: boolean;
 };

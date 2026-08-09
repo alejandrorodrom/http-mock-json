@@ -5,6 +5,29 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.0] - 2026-08-09
+
+Minor release on top of **5.1.0**.
+
+### Previous version
+
+**5.1.0** — OpenAPI `import` CLI.
+
+### Added
+
+- **`import` → `request`:** map OpenAPI `requestBody` schemas to `request.payload` and `parameters` (`query` / `header`) to `request.query` / `request.headers` (optional fields as `name?`)
+- Content-type hints: JSON (default), `multipart/*` → `as: "multipart"` (binary/byte → `type: "file"`), `application/x-www-form-urlencoded` → `as: "form"`
+- Schema subset: `integer`→`number`, `minLength`/`maxLength`/`minimum`/`maximum`/`pattern`/`enum`, formats `email`/`uuid`/`url`/`date` (`uri`→`url`, `date-time`→`date` + warning), nested `properties`/`items`, `allOf` merge, `oneOf`/`anyOf` first branch + warning
+- Cookie parameters skipped with a warning; `--no-request` keeps response-only stubs
+- E2E: `unit/import-openapi-request`, `runtime/import-openapi-request` cover request mapping edges (form/`allOf`/`anyOf`/`date-time`/xml media, circular/depth, `$ref` leftovers, runtime minLength/max/`as` mismatch); `system/import-cli-flags` covers `--no-request`
+
+### Changed
+
+- Package / CLI version bumped to `5.2.0`
+- Docs: README / FAQ / troubleshooting describe `import` → `request` without dumping the full schema matrix
+
+---
+
 ## [5.1.0] - 2026-08-09
 
 Minor release on top of **5.0.0**.

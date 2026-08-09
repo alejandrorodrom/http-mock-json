@@ -553,6 +553,7 @@ mock-server import --openapi ./openapi.yaml --no-server-prefix
 | `--prefix <path>` | from `servers[0].url` path | Route prefix written into `mock.config.json` `folders.*.prefix` (overrides the OpenAPI server path) |
 | `--no-server-prefix` | off | Ignore `servers[0]` path; write flat mock JSON at the mocks root (no `mock.config.json`) |
 | `--overwrite` | `false` | Overwrite existing files without prompting |
+| `--no-request` | off (generate `request`) | Do not emit `request.payload` / `query` / `headers` from OpenAPI schemas |
 
 **Behavior:**
 
@@ -560,8 +561,9 @@ mock-server import --openapi ./openapi.yaml --no-server-prefix
 - Only `GET` / `POST` / `PUT` / `PATCH` / `DELETE` are imported; other methods are skipped with a warning.
 - Every documented status becomes a `responses[]` entry (`success_200`, `error_404`, …). **`nameResponse` is the first 2xx** (else the first status). Error responses are present but inactive until you change `nameResponse` or add `match`.
 - Response bodies prefer `example` → `examples` → `schema.example` → a minimal schema-derived example → `{}`.
+- **`request` (default on):** also writes method-level `request` from `requestBody` and from query/header parameters (optional fields as `name?`). JSON, form, and multipart bodies are mapped when the schema is an object; path params stay in the route. Use `--no-request` for response-only stubs. Schemas the mock engine cannot represent are skipped with a warning (see [Troubleshooting — import](docs/troubleshooting.md#cli-import-openapi)).
 - **Server base path:** if `servers[0].url` has a path (e.g. `https://api.nasa.gov/planetary` → `/planetary`, or `/api/v3`), the import writes `mock.config.json` and puts tag files under folders that share that `prefix`. Endpoint keys stay relative (`apod`, not `planetary/apod`), so `GET /planetary/apod` works at runtime. Grouping is still **by OpenAPI tag**, not by prefix (the server path is usually one shared prefix).
-- **Swagger 2.0 is not supported** (convert to OpenAPI 3.x first). Does not generate `request`, store CRUD, or `match` in this version.
+- **Swagger 2.0 is not supported** (convert to OpenAPI 3.x first). Does not generate store CRUD or `match` in this version.
 
 ---
 

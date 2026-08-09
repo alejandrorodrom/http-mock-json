@@ -177,10 +177,10 @@ Offline generator only: `import` writes mock JSON; `start` still loads those fil
 
 | | |
 |---|---|
-| **Symptom** | Lines like `⚠ Path "/…" → "…" is not a valid mock endpoint; skipped`; `HEAD …: HTTP method not supported; skipped`; `…: no responses documented; skipped`; `…: unresolved $ref; skipped`; `…: no application/json content; using empty body`; `…: no example/schema; using empty body`; `Duplicate METHOD path; keeping first occurrence`; `servers[0].url "…" has unresolved variables; server path prefix skipped`. Summary may include `(N warnings)`. |
-| **Cause** | Path/param characters rejected by mock validation (e.g. `:item.id`); unsupported HTTP method; thin or awkward OpenAPI responses; duplicate verb+path; templated `servers[0].url` without usable defaults. |
-| **Fix** | Rename params to allowed forms (`:id`, `:item-id`); ignore or convert unsupported methods; add examples/`application/json`; pass `--prefix` or `--no-server-prefix` when the server URL cannot yield a path. Import continues for the rest. |
-| **See** | [CLI — import](../README.md#import), [Endpoint](../README.md#endpoint) |
+| **Symptom** | Yellow `⚠` lines during `import`, often with a summary like `(N warnings)`. Common themes: path/method skipped, thin responses (no example/JSON), or `request` mapping skipped/simplified. |
+| **Cause** | The OpenAPI document has something the importer cannot turn into a mock as-is — invalid path params, unsupported HTTP methods, missing examples, or request schemas outside what `request` supports (cookies, `oneOf`/`anyOf`, unknown `format`, circular/deep schemas, non-object or schema-less bodies). |
+| **Fix** | Usually safe to ignore if the written mocks are enough. Otherwise fix the spec, simplify the schema, or re-run with `--no-request`. Import still writes the rest. A later runtime `400` means client input failed `request` validation — that is expected, not an import bug. |
+| **See** | [CLI — import](../README.md#import), [Body compatibility](../README.md#body-compatibility) |
 
 ### `File "…" already exists. Overwrite?` / `Aborting...`
 

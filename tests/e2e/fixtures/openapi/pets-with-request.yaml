@@ -1,0 +1,197 @@
+openapi: 3.0.3
+info:
+  title: Pets With Request
+  version: 1.0.0
+servers:
+  - url: https://example.com
+paths:
+  /pets:
+    get:
+      tags: [pets]
+      summary: List pets
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [available, pending, sold]
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: X-Request-Id
+          in: header
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: session
+          in: cookie
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                pets:
+                  - id: 1
+                    name: doggie
+    post:
+      tags: [pets]
+      summary: Create pet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email]
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 40
+                email:
+                  type: string
+                  format: email
+                tag:
+                  type: string
+                age:
+                  type: integer
+                  minimum: 0
+                  maximum: 30
+                status:
+                  type: string
+                  enum: [available, pending, sold]
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              example:
+                id: 1
+                name: doggie
+                email: owner@example.com
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              example:
+                message: invalid
+  /pets/{petId}:
+    parameters:
+      - name: petId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: verbose
+        in: query
+        required: false
+        schema:
+          type: boolean
+    get:
+      tags: [pets]
+      summary: Get pet
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                id: 1
+                name: doggie
+        '404':
+          description: Not found
+          content:
+            application/json:
+              example:
+                message: Pet not found
+  /uploads:
+    post:
+      tags: [pets]
+      summary: Upload avatar
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                note:
+                  type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                ok: true
+  /token:
+    post:
+      tags: [pets]
+      summary: Form login
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                  minLength: 2
+                password:
+                  type: string
+                  minLength: 4
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                token: abc
+  /branch:
+    post:
+      tags: [pets]
+      summary: oneOf request body
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  required: [kind, name]
+                  properties:
+                    kind:
+                      type: string
+                      enum: [cat]
+                    name:
+                      type: string
+                - type: object
+                  required: [kind, breed]
+                  properties:
+                    kind:
+                      type: string
+                      enum: [dog]
+                    breed:
+                      type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                ok: true
