@@ -69,5 +69,19 @@
         }
       ]
     }
+  },
+  "api/v1/orders/:order-id": {
+    "GET": {
+      "nameResponse": "ok",
+      "responses": [
+        {
+          "name": "ok",
+          "statusCode": 200,
+          "body": {
+            "note": "Parameter names allow hyphen"
+          }
+        }
+      ]
+    }
   }
 }

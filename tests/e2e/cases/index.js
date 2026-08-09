@@ -80,7 +80,9 @@ const systemCases = [
   require('./system/start-custom-path'),
   require('./system/init-cli'),
   require('./system/cli-commander-errors'),
-  require('./system/add-cli-flags')
+  require('./system/add-cli-flags'),
+  require('./system/import-cli-flags'),
+  require('./system/import-cli-errors')
 ];
 
 const runtimeCases = [
@@ -136,7 +138,8 @@ const runtimeCases = [
   require('./runtime/record-replay'),
   require('./runtime/record-replay-mock-config'),
   require('./runtime/record-replay-collision-dedupe'),
-  require('./runtime/record-replay-multipart')
+  require('./runtime/record-replay-multipart'),
+  require('./runtime/import-openapi-public')
 ];
 
 const externalCases = [
@@ -159,6 +162,8 @@ const unitCases = [
   require('./unit/mock-config-advanced'),
   require('./unit/add-mock'),
   require('./unit/add-crud-mock'),
+  require('./unit/import-openapi'),
+  require('./unit/import-openapi-errors'),
   require('./unit/init-with-mock'),
   require('./unit/cli-io-errors'),
   require('./unit/record-path'),

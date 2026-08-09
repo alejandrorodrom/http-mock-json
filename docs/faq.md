@@ -12,7 +12,7 @@ Short answers to common questions. Full reference: [README](../README.md). Sympt
 
 It is a **CLI** (`mock-server`) that starts a local HTTP mock server from JSON files. Your app calls that server over HTTP (e.g. `http://localhost:3000/...`).
 
-The published package does **not** export an embeddable server/SDK. Use JSON mocks and `mock-server start` — not an in-process API.
+The published package does **not** export an embeddable server/SDK — use JSON mocks and `mock-server start`, not an in-process API. To scaffold mocks from an OpenAPI 3.x document, use the CLI [`import`](#can-i-import-an-openapi--swagger-file) command (that is not a library import).
 
 See [Getting started](../README.md#getting-started) and [Concepts](../README.md#concepts).
 
@@ -48,15 +48,22 @@ No. Only HTTP methods `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` on a plain HTT
 
 ## CLI & config
 
-### What’s the difference between `init`, `add`, and `add --crud`?
+### What’s the difference between `init`, `add`, `add --crud`, and `import`?
 
 - **`init`** — creates the mocks directory (and optionally a first mock + npm start script).
 - **`add`** — interactively scaffolds one mock file (endpoint + HTTP method).
 - **`add --crud`** — scaffolds collection + item routes with store `action`s (`list` / `create` / `get` / `update` / `patch` / `delete`).
+- **`import`** — generates mock JSON from an OpenAPI 3.x file or URL (stubs only; not loaded at `start` time).
 
-Both write into the **root** of the mocks directory (they do not create `mock.config.json` folder layouts).
+`init` / `add` write into the **root** of the mocks directory (no `mock.config.json` layout). `import` does the same when there is no server/`--prefix`; with a base path it also writes `mock.config.json` + one-level folders.
 
 See [CLI](../README.md#cli-reference).
+
+### Can I import an OpenAPI / Swagger file?
+
+Yes for **OpenAPI 3.x**: `mock-server import --openapi ./openapi.yaml`. It writes editable mock JSON (one file per tag by default). If `servers[0]` has a base path, it also writes `mock.config.json` with folder `prefix` so routes match the real URL (e.g. `/planetary` + `apod`). Swagger 2.0 is not supported — convert to OpenAPI 3 first. The import does not generate `request` validation or store CRUD yet.
+
+See [CLI — import](../README.md#import). Import errors/warnings: [Troubleshooting — import](troubleshooting.md#cli-import-openapi).
 
 ### What does `-f` / `--path` mean?
 
@@ -64,7 +71,7 @@ It is the **mocks directory itself** (default `mocks`), not a parent folder that
 
 Example: `mock-server start -f apps/folder1/mocks` (or any custom dir name).
 
-On `start`, short `-p` is **`--port`** (not path). On `init` / `add`, `-p` is **`--path`**.
+On `start`, short `-p` is **`--port`** (not path). On `init` / `add` / `import`, `-p` is **`--path`**.
 
 See [CLI](../README.md#cli-reference).
 

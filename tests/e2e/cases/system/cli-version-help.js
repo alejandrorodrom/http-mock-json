@@ -17,7 +17,7 @@ module.exports = {
       expected: {
         outcome: 'cli',
         exitCode: 0,
-        stdoutIncludes: ['5.0.0']
+        stdoutIncludes: ['5.1.0']
       }
     });
 
@@ -35,9 +35,10 @@ module.exports = {
         exitCode: 0,
         stdoutIncludes: [
           'Usage: mock-server [options] [command]',
-          'init [options]   Create the folder that will contain the mocks.',
-          'start [options]  Start mock server.',
-          'add [options]    Create a mock.'
+          'init [options]    Create the folder that will contain the mocks.',
+          'start [options]   Start mock server.',
+          'add [options]     Create a mock.',
+          'import [options]  Import an OpenAPI 3.x document into mock JSON files.'
         ]
       }
     });

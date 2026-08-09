@@ -5,6 +5,36 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.0] - 2026-08-09
+
+Minor release on top of **5.0.0**.
+
+### Previous version
+
+**5.0.0** — Node.js ≥ 22.12 and dependency floor.
+
+### Added
+
+- **`mock-server import`:** generate mock JSON from an OpenAPI 3.x file or URL (`--openapi`, `-p/--path`, `--out`, `--no-split-tags`, `--prefix`, `--no-server-prefix`, `--overwrite`)
+- Maps paths (`{id}` → `:id`), supported methods, and documented responses (`nameResponse` = first 2xx; error statuses kept inactive until switched)
+- Response bodies from `example` / `examples` / schema examples (minimal schema fallback)
+- Server base path (`servers[0]` or `--prefix`) → `mock.config.json` folders with shared `prefix`; tag files live under those folders; `--no-server-prefix` keeps a flat layout
+- Clear rejection of Swagger 2.0; skips unsupported methods/paths with warnings
+- E2E: `unit/import-openapi`, `unit/import-openapi-errors`, `system/import-cli-flags`, `system/import-cli-errors`, `runtime/import-openapi-public` (fixtures under `tests/e2e/fixtures/openapi/`)
+
+### Changed
+
+- Route params may include `-` (e.g. `:item-id` / OpenAPI `{item-id}`), matching literal path segments; `.` in param names remains invalid
+- Clearer invalid-path error: literals vs `:param` character rules
+- Package / CLI version bumped to `5.1.0`
+- Docs: CLI `import` reference, FAQ; OpenAPI import removed from “out of scope”
+
+### Dependencies
+
+- `@apidevtools/swagger-parser`, `openapi-types`
+
+---
+
 ## [5.0.0] - 2026-08-08
 
 Major release on top of **4.1.1**.
@@ -429,6 +459,7 @@ See git tags (`v1.9.0` … `v1.2.9`) for earlier history (proxy, match, delay, s
 
 ---
 
+[5.1.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v5.0.0...v5.1.0
 [5.0.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.1.1...v5.0.0
 [4.1.1]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.1.0...v4.1.1
 [4.1.0]: https://github.com/alejandrorodrom/http-mock-json/compare/v4.0.3...v4.1.0

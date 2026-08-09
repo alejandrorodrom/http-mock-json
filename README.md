@@ -400,11 +400,11 @@ Lookup in this manual when needed:
 
 ## CLI reference
 
-Binary: `mock-server` (package `http-mock-json`, current version **5.0.0**). Requires **Node.js ≥ 22.12**.
+Binary: `mock-server` (package `http-mock-json`, current version **5.1.0**). Requires **Node.js ≥ 22.12**.
 
 Global options: `-h` / `--help`, `-v` / `--version`.
 
-> **Flag `-p` depends on the command:** on `init` / `add`, `-p` is `--path` (mocks directory). On `start`, `-p` is `--port`; the mocks directory is `-f` / `--path`.
+> **Flag `-p` depends on the command:** on `init` / `add` / `import`, `-p` is `--path` (mocks directory). On `start`, `-p` is `--port`; the mocks directory is `-f` / `--path`.
 
 ---
 
@@ -528,7 +528,42 @@ mock-server add --crud
 
 With `--crud`, an endpoint like `api/notes` writes both `api/notes` and `api/notes/:id` (same shape as [Example A — Simple](#example-a--simple-notes-crud), plus `PUT` / `PATCH`). `users/:userId` keeps `users/:userId` on the item route. If the JSON file already exists, you are asked before overwrite. Edit `seed` / `template` or `POST` items to start.
 
-`add` / `init` write into the **root** of the mocks directory (they do not create `mock.config.json` folder layouts). For folder organization, see [Mock config](#mock-config-reference).
+`add` / `init` write into the **root** of the mocks directory (they do not create `mock.config.json` folder layouts). `import` writes to the root when there is no server/`--prefix`; with a route prefix it writes `mock.config.json` + one-level folders. For folder organization, see [Mock config](#mock-config-reference).
+
+---
+
+### `import`
+
+Generate mock JSON files from an **OpenAPI 3.x** document (local file or `http(s)` URL). Offline generator only — `start` still loads the written JSON, not the OpenAPI file.
+
+```bash
+mock-server import --openapi ./openapi.yaml
+mock-server import --openapi https://example.com/openapi.json -p mocks
+mock-server import --openapi ./openapi.yaml --no-split-tags --out my-api --overwrite
+mock-server import --openapi ./openapi.yaml --prefix /api/v1
+mock-server import --openapi ./openapi.yaml --no-server-prefix
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--openapi <source>` | (required) | OpenAPI 3.0 / 3.1 file path or URL |
+| `-p, --path <path>` | `mocks` | Path to the mocks directory |
+| `--out <name>` | from `info.title` (or `openapi`) | Base file name when using `--no-split-tags` |
+| `--no-split-tags` | off (split by tag) | Write a single JSON file instead of one file per OpenAPI tag (`untagged.json` when a tag is missing) |
+| `--prefix <path>` | from `servers[0].url` path | Route prefix written into `mock.config.json` `folders.*.prefix` (overrides the OpenAPI server path) |
+| `--no-server-prefix` | off | Ignore `servers[0]` path; write flat mock JSON at the mocks root (no `mock.config.json`) |
+| `--overwrite` | `false` | Overwrite existing files without prompting |
+
+**Behavior:**
+
+- Paths like `/pets/{petId}` become `pets/:petId`.
+- Only `GET` / `POST` / `PUT` / `PATCH` / `DELETE` are imported; other methods are skipped with a warning.
+- Every documented status becomes a `responses[]` entry (`success_200`, `error_404`, …). **`nameResponse` is the first 2xx** (else the first status). Error responses are present but inactive until you change `nameResponse` or add `match`.
+- Response bodies prefer `example` → `examples` → `schema.example` → a minimal schema-derived example → `{}`.
+- **Server base path:** if `servers[0].url` has a path (e.g. `https://api.nasa.gov/planetary` → `/planetary`, or `/api/v3`), the import writes `mock.config.json` and puts tag files under folders that share that `prefix`. Endpoint keys stay relative (`apod`, not `planetary/apod`), so `GET /planetary/apod` works at runtime. Grouping is still **by OpenAPI tag**, not by prefix (the server path is usually one shared prefix).
+- **Swagger 2.0 is not supported** (convert to OpenAPI 3.x first). Does not generate `request`, store CRUD, or `match` in this version.
+
+---
 
 ## Mock file reference
 
@@ -555,7 +590,7 @@ Related contracts: [Body compatibility](#body-compatibility), [Store](#store-ref
 
 | Rule | Detail |
 |------|--------|
-| Path pattern | Letters, numbers, `-`, `_`, `.`, `~`, `/`, and route params like `:id` (`VALID_ENDPOINT_REGEXP`) |
+| Path pattern | Literals: letters, numbers, `-`, `_`, `.`, `~`, `/`. Params like `:id` / `:item-id` (letters, numbers, `_`, `-` only — not `.`). |
 | Methods | At least one of `GET`, `POST`, `PUT`, `PATCH`, `DELETE` (case as written in JSON; validated uppercased) |
 | `store` | Optional; **not** an HTTP method. Sibling of methods. See [Store](#store-reference) |
 
@@ -1121,7 +1156,7 @@ Proxy value shapes and inheritance: [Mock file — proxy](#proxy-value-shapes), 
 
 There is **no** dual-read / alias period: legacy keys are rejected at startup with a clear error.
 
-Out of scope: OpenAPI import, response multipart *builder*, GraphQL/XML.
+Out of scope: response multipart *builder*, GraphQL/XML.
 
 Folder organization (`mock.config.json`): [Mock config](#mock-config-reference).  
 Mutable store: [Store](#store-reference).

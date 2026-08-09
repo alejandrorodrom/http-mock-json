@@ -94,7 +94,7 @@ const validateFolderPrefix = (folderName: string, prefix: unknown): LocalIssue[]
   if (!VALID_ENDPOINT_REGEXP.test(normalized)) {
     return [{
       endpoint: propertyPath,
-      message: `Invalid "${ propertyPath }". Allowed characters: letters, numbers, "-", "_", ".", "~", and "/".`
+      message: `Invalid "${ propertyPath }". Use a static path: letters, numbers, "-", "_", ".", "~", and "/". No route parameters.`
     }];
   }
 

@@ -1,0 +1,10 @@
+{
+  "folders": {
+    "pets": {
+      "prefix": "/api/v1"
+    },
+    "store": {
+      "prefix": "/api/v1"
+    }
+  }
+}

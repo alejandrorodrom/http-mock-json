@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Diagnostic catalog of **startup** failures/warnings and **runtime** surprises. Each entry goes from an observable symptom (often an exact message) to cause, fix, and a deeper README section.
+Diagnostic catalog of **CLI** failures (including `import`), **startup** failures/warnings, and **runtime** surprises. Each entry goes from an observable symptom (often an exact message) to cause, fix, and a deeper README section.
 
 Short Q&A lives in [FAQ](faq.md). Field and flag reference lives in the [README](../README.md)—not here.
 
@@ -124,6 +124,84 @@ File: …
 
 ---
 
+## CLI: `import` (OpenAPI)
+
+Offline generator only: `import` writes mock JSON; `start` still loads those files (not the OpenAPI document). Flags and behavior: [CLI — import](../README.md#import). FAQ: [Can I import an OpenAPI / Swagger file?](faq.md#can-i-import-an-openapi--swagger-file). In this repo, sample/error specs used by tests live under [`tests/e2e/fixtures/openapi/`](../tests/e2e/fixtures/openapi/).
+
+### `Missing required option: --openapi <file|url>` / `OpenAPI source is required`
+
+| | |
+|---|---|
+| **Symptom** | `import` exits with `✖` before writing files (Commander may also print `required option '--openapi <source>'`). |
+| **Cause** | `--openapi` was omitted or empty. |
+| **Fix** | Pass a local file or URL: `mock-server import --openapi ./openapi.yaml`. |
+| **See** | [CLI — import](../README.md#import) |
+
+### `OpenAPI file not found` / `OpenAPI source is not a file`
+
+| | |
+|---|---|
+| **Symptom** | Local `--openapi` path fails immediately. |
+| **Cause** | Path does not exist, or points at a directory (or other non-file). |
+| **Fix** | Use a real `.json` / `.yaml` / `.yml` file path relative to the cwd (or absolute). |
+| **See** | [CLI — import](../README.md#import) |
+
+### `Swagger … is not supported` / `Only OpenAPI 3.x is supported`
+
+| | |
+|---|---|
+| **Symptom** | Import rejects the document before or after parse. |
+| **Cause** | Spec is Swagger 2.0 (`swagger: "2.0"`) or missing/invalid `openapi: "3.x.x"`. |
+| **Fix** | Convert to OpenAPI 3.0/3.1 first; ensure the root has `openapi: "3.0.x"` or `"3.1.x"`. |
+| **See** | [CLI — import](../README.md#import), [FAQ](faq.md#can-i-import-an-openapi--swagger-file) |
+
+### `Failed to load OpenAPI document` / `Invalid OpenAPI document` / `Failed to resolve OpenAPI $ref`
+
+| | |
+|---|---|
+| **Symptom** | Import fails while parsing, validating, or dereferencing the spec. Message suffix comes from the OpenAPI parser. |
+| **Cause** | Broken JSON/YAML; unreachable URL; schema that fails OpenAPI validation; unresolved or cyclic `$ref`. |
+| **Fix** | Fix syntax; check the URL; validate the spec in an OpenAPI linter; repair `$ref` targets. Re-run with a local file to isolate network issues. |
+| **See** | [CLI — import](../README.md#import) |
+
+### `No importable operations found in the OpenAPI document`
+
+| | |
+|---|---|
+| **Symptom** | Spec loads, but nothing is written. |
+| **Cause** | No `GET`/`POST`/`PUT`/`PATCH`/`DELETE` operations left after skips (e.g. HEAD-only, all paths invalid for mock endpoints, empty `paths`). |
+| **Fix** | Add supported methods and valid path templates; check import warnings printed just before the error when present. |
+| **See** | [CLI — import](../README.md#import) |
+
+### Import warnings (non-fatal; files may still be written)
+
+| | |
+|---|---|
+| **Symptom** | Lines like `⚠ Path "/…" → "…" is not a valid mock endpoint; skipped`; `HEAD …: HTTP method not supported; skipped`; `…: no responses documented; skipped`; `…: unresolved $ref; skipped`; `…: no application/json content; using empty body`; `…: no example/schema; using empty body`; `Duplicate METHOD path; keeping first occurrence`; `servers[0].url "…" has unresolved variables; server path prefix skipped`. Summary may include `(N warnings)`. |
+| **Cause** | Path/param characters rejected by mock validation (e.g. `:item.id`); unsupported HTTP method; thin or awkward OpenAPI responses; duplicate verb+path; templated `servers[0].url` without usable defaults. |
+| **Fix** | Rename params to allowed forms (`:id`, `:item-id`); ignore or convert unsupported methods; add examples/`application/json`; pass `--prefix` or `--no-server-prefix` when the server URL cannot yield a path. Import continues for the rest. |
+| **See** | [CLI — import](../README.md#import), [Endpoint](../README.md#endpoint) |
+
+### `File "…" already exists. Overwrite?` / `Aborting...`
+
+| | |
+|---|---|
+| **Symptom** | Prompt per existing `mock.config.json` or mock JSON; saying no prints abort and stops. |
+| **Cause** | Target files already exist and `--overwrite` was not set. |
+| **Fix** | Confirm overwrite, or re-run with `--overwrite`. Note: abort mid-run may leave earlier files in that run already overwritten. |
+| **See** | [CLI — import](../README.md#import) |
+
+### `Path exists and is not a directory`
+
+| | |
+|---|---|
+| **Symptom** | Import cannot create/use the mocks `-p` path (or a tag folder). |
+| **Cause** | The path exists as a file, not a directory. |
+| **Fix** | Choose another `--path`, or remove/rename the blocking file. |
+| **See** | [CLI — import](../README.md#import) |
+
+---
+
 ## Startup: mock file load
 
 Bad examples: [`mocks/invalid/file-syntax-error.json`](../mocks/invalid/file-syntax-error.json), [`file-not-object.json`](../mocks/invalid/file-not-object.json), [`file-empty-endpoints.json`](../mocks/invalid/file-empty-endpoints.json).
@@ -179,13 +257,13 @@ Bad examples: [`mocks/invalid/file-syntax-error.json`](../mocks/invalid/file-syn
 
 Bad examples: [`mocks/invalid/endpoint-errors.json`](../mocks/invalid/endpoint-errors.json), [`method-errors.json`](../mocks/invalid/method-errors.json), [`method-responses-not-array.json`](../mocks/invalid/method-responses-not-array.json), [`response-errors.json`](../mocks/invalid/response-errors.json).
 
-### `Invalid path. Allowed characters: letters, numbers, "-", "_", ".", "~", "/", and parameters like ":id".`
+### `Invalid path. Literals: letters, numbers, "-", "_", ".", "~", "/". Params like ":id" or ":item-id" (letters, numbers, "_", "-" only).`
 
 | | |
 |---|---|
-| **Symptom** | Route key rejected (e.g. `#` in the path). |
-| **Cause** | Path characters outside the allowed set. |
-| **Fix** | Use `/` segments and `:param` style params only. |
+| **Symptom** | Route key rejected (e.g. `#` in the path, or `.` inside a `:param`). |
+| **Cause** | Path characters outside the allowed set for literals or params. |
+| **Fix** | Use `/` segments for literals; params like `:id` / `:item-id` (no `.` in the param name). |
 | **See** | [Mock file](../README.md#mock-file-reference), [Concepts](../README.md#concepts) |
 
 ### `Must be an object` / `Does not contain any HTTP methods`
@@ -421,9 +499,9 @@ Bad examples: [`mocks/invalid/store-errors.json`](../mocks/invalid/store-errors.
 
 | | |
 |---|---|
-| **Symptom** | `The "prefix" is only allowed inside "folders"`; invalid folder names; `stripPrefix` / `proxyUnmatched` require `prefix`; `storeNamespace` pattern errors; delay/proxy/headers/port issues on root or folders. |
-| **Cause** | Misplaced or mistyped folder config. |
-| **Fix** | Put `prefix` under `folders.<name>`; keep folder names to letters, numbers, `-`, `_`, `.`. |
+| **Symptom** | `The "prefix" is only allowed inside "folders"`; invalid folder names; `Invalid "folders….prefix". Use a static path: … No route parameters.`; `The "folders….prefix" cannot contain route parameters`; `stripPrefix` / `proxyUnmatched` require `prefix`; `storeNamespace` pattern errors; delay/proxy/headers/port issues on root or folders. |
+| **Cause** | Misplaced or mistyped folder config; prefix with illegal characters or `:params`. |
+| **Fix** | Put `prefix` under `folders.<name>`; keep folder names to letters, numbers, `-`, `_`, `.`; use a static prefix path (no `:id`). |
 | **See** | [Mock config](../README.md#mock-config-reference), [CLI](../README.md#cli-reference) |
 
 ### Proxy shape at validation time
@@ -737,15 +815,16 @@ Bad example: [`mocks/invalid/proxy-errors.json`](../mocks/invalid/proxy-errors.j
 
 ## Quick triage
 
-1. **No `Mock server is running`** → read the first `✖` line (port/path/CLI) before chasing mock JSON.
-2. **`✖ Error:` + `File:`** → fix that file; compare with [`mocks/invalid/`](../mocks/invalid/) only as a negative example.
-3. **`⚠ Warnings:`** → optional cleanup; server may already be up.
-4. **Wrong HTTP body but 2xx/4xx from your mock** → matching/`nameResponse`/request validation, not startup validation.
-5. **`409` / `Not found` from a store action** → unique/FK/restrict/missing key (or custom conflict/`notFound` response).
-6. **`413`** → body or multipart intake limit.
-7. **`502` with proxy `message`** → proxy target inheritance or upstream.
-8. **Store data “lost” after restart** → persist enabled? corrupt `.store`? `--reset-store`?
-9. **Watch died after an edit** → fix mocks and start again.
+1. **`import` failed** → see [CLI: import (OpenAPI)](#cli-import-openapi); fix the spec/flags, then `start` the generated JSON.
+2. **No `Mock server is running`** → read the first `✖` line (port/path/CLI) before chasing mock JSON.
+3. **`✖ Error:` + `File:`** → fix that file; compare with [`mocks/invalid/`](../mocks/invalid/) only as a negative example.
+4. **`⚠ Warnings:`** → optional cleanup; server may already be up (or import still wrote other operations).
+5. **Wrong HTTP body but 2xx/4xx from your mock** → matching/`nameResponse`/request validation, not startup validation.
+6. **`409` / `Not found` from a store action** → unique/FK/restrict/missing key (or custom conflict/`notFound` response).
+7. **`413`** → body or multipart intake limit.
+8. **`502` with proxy `message`** → proxy target inheritance or upstream.
+9. **Store data “lost” after restart** → persist enabled? corrupt `.store`? `--reset-store`?
+10. **Watch died after an edit** → fix mocks and start again.
 
 ---
 
@@ -755,6 +834,7 @@ Bad example: [`mocks/invalid/proxy-errors.json`](../mocks/invalid/proxy-errors.j
 |-------|-------|
 | Concepts / matching | [Concepts](../README.md#concepts) |
 | CLI flags & commands | [CLI](../README.md#cli-reference) |
+| OpenAPI `import` | [CLI — import](../README.md#import), [FAQ](faq.md#can-i-import-an-openapi--swagger-file) |
 | Mock file fields | [Mock file](../README.md#mock-file-reference) |
 | `mock.config.json` / folders | [Mock config](../README.md#mock-config-reference) |
 | Startup + request validation | [Validation](../README.md#validation-reference) |

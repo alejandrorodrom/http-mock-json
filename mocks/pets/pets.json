@@ -1,0 +1,84 @@
+{
+  "pets": {
+    "GET": {
+      "nameResponse": "success_200",
+      "responses": [
+        {
+          "name": "success_200",
+          "statusCode": 200,
+          "body": {
+            "pets": [
+              {
+                "id": 1,
+                "name": "doggie"
+              }
+            ]
+          }
+        },
+        {
+          "name": "error_500",
+          "statusCode": 500,
+          "body": {
+            "message": "boom"
+          }
+        }
+      ]
+    },
+    "POST": {
+      "nameResponse": "success_201",
+      "responses": [
+        {
+          "name": "success_201",
+          "statusCode": 201,
+          "body": {
+            "id": 0,
+            "name": "string"
+          }
+        },
+        {
+          "name": "error_400",
+          "statusCode": 400,
+          "body": {
+            "message": "invalid"
+          }
+        }
+      ]
+    }
+  },
+  "pets/:petId": {
+    "GET": {
+      "nameResponse": "success_200",
+      "responses": [
+        {
+          "name": "success_200",
+          "statusCode": 200,
+          "body": {
+            "id": 1,
+            "name": "doggie"
+          }
+        },
+        {
+          "name": "error_404",
+          "statusCode": 404,
+          "body": {
+            "message": "Pet not found"
+          }
+        }
+      ]
+    }
+  },
+  "items/:item-id": {
+    "GET": {
+      "nameResponse": "success_200",
+      "responses": [
+        {
+          "name": "success_200",
+          "statusCode": 200,
+          "body": {
+            "ok": true
+          }
+        }
+      ]
+    }
+  }
+}

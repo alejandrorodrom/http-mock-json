@@ -14,7 +14,7 @@ module.exports = {
       stdoutIncludes: [
         '✖ Error:',
         'File: endpoint-errors.json',
-        'Invalid path. Allowed characters: letters, numbers, "-", "_", ".", "~", "/", and parameters like ":id".',
+        'Invalid path. Literals: letters, numbers, "-", "_", ".", "~", "/". Params like ":id" or ":item-id" (letters, numbers, "_", "-" only).',
         'Must be an object',
         'Does not contain any HTTP methods'
       ],

@@ -2,8 +2,9 @@ import { Command } from 'commander';
 import { executeMock } from './commands/start/execute-mock';
 import { logError } from '../scripts/log.script';
 import { initialize } from "./commands/init/initialize";
-import { AddOptions, InitOptions, StartOptions } from "../types/options.type";
+import { AddOptions, ImportOptions, InitOptions, StartOptions } from "../types/options.type";
 import { addMock } from "./commands/add/add-mock";
+import { importOpenApi } from "./commands/import/import-openapi";
 import { isHttpUrl } from "../scripts/http-url.script";
 import { DEFAULT_MOCKS_DIR } from '../constants/mocks-path.constant';
 
@@ -12,7 +13,7 @@ export const interactive = () => {
 
   mock
     .name('mock-server')
-    .version('5.0.0', '-v, --version', 'Output the version number')
+    .version('5.1.0', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.');
 
@@ -160,6 +161,56 @@ export const interactive = () => {
     .description('Create a mock.')
     .action((options: AddOptions) => {
       addMock(options)
+    });
+
+  mock
+    .command('import')
+    .requiredOption(
+      '--openapi <source>',
+      'OpenAPI 3.x file path or http(s) URL'
+    )
+    .option(
+      '-p, --path <path>',
+      `Path to the mocks directory (default: ${ DEFAULT_MOCKS_DIR })`,
+      DEFAULT_MOCKS_DIR
+    )
+    .option(
+      '--out <name>',
+      'Output file base name when not splitting by tags'
+    )
+    .option(
+      '--no-split-tags',
+      'Write a single mock JSON file instead of one file per OpenAPI tag'
+    )
+    .option(
+      '--prefix <path>',
+      'Route prefix for mock.config folders (overrides OpenAPI servers[0] path)'
+    )
+    .option(
+      '--no-server-prefix',
+      'Do not use OpenAPI servers[0] path as mock.config folder prefix'
+    )
+    .option(
+      '--overwrite',
+      'Overwrite existing mock files without prompting',
+      false
+    )
+    .description('Import an OpenAPI 3.x document into mock JSON files.')
+    .action(async (options: ImportOptions & { splitTags?: boolean; serverPrefix?: boolean }) => {
+      try {
+        await importOpenApi({
+          path: options.path,
+          openapi: options.openapi,
+          out: options.out,
+          splitTags: options.splitTags !== false,
+          overwrite: options.overwrite === true,
+          prefix: options.prefix,
+          serverPrefix: options.serverPrefix !== false
+        });
+      } catch (e) {
+        logError(e);
+        process.exit(1);
+      }
     });
 
   try {

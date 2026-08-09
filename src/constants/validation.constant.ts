@@ -21,4 +21,4 @@ export const VALID_STATUS_CODES = [
   500, 501, 502, 503, 504, 505, 506, 507, 508, 511
 ];
 
-export const VALID_ENDPOINT_REGEXP = /^[a-zA-Z0-9._~-]+(?:\/[a-zA-Z0-9._~-]+|\/:[a-zA-Z0-9_]+)*$/;
+export const VALID_ENDPOINT_REGEXP = /^[a-zA-Z0-9._~-]+(?:\/[a-zA-Z0-9._~-]+|\/:[a-zA-Z0-9_-]+)*$/;

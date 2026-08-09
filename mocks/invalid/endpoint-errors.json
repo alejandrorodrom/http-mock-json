@@ -41,7 +41,7 @@
       ]
     }
   },
-  "api/users/:user-id": {
+  "api/users/:user.id": {
     "GET": {
       "nameResponse": "success",
       "responses": [
@@ -49,7 +49,7 @@
           "name": "success",
           "statusCode": "200",
           "body": {
-            "message": "Hyphen is not allowed inside :param names"
+            "message": "Dot is not allowed inside :param names"
           }
         }
       ]

@@ -16,7 +16,8 @@ module.exports = {
         '[GET] /api/v1/user_profile',
         '[GET] /api/v1/file.name',
         '[GET] /api/v1/cache~key',
-        '[GET] /api/v1/items/:item_id'
+        '[GET] /api/v1/items/:item_id',
+        '[GET] /api/v1/orders/:order-id'
       ],
       stdoutExcludes: ['✖ Error:']
     }

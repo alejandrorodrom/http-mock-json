@@ -15,7 +15,7 @@ export const validateEndpoint = (
   if (!VALID_ENDPOINT_REGEXP.test(endpoint)) {
     errors.push({
       endpoint,
-      message: 'Invalid path. Allowed characters: letters, numbers, "-", "_", ".", "~", "/", and parameters like ":id".'
+      message: 'Invalid path. Literals: letters, numbers, "-", "_", ".", "~", "/". Params like ":id" or ":item-id" (letters, numbers, "_", "-" only).'
     });
   }
 

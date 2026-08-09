@@ -54,7 +54,7 @@ const ERROR_CATALOG = [
   // --- endpoint ---
   {
     id: 'endpoint.invalid-path',
-    message: 'Invalid path. Allowed characters:',
+    message: 'Invalid path. Literals:',
     source: 'src/validators/endpoint.validator.ts',
     kind: 'validation',
     caseName: 'error/endpoint-errors'

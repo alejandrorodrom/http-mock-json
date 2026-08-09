@@ -1,0 +1,16 @@
+{
+  "store/inventory": {
+    "GET": {
+      "nameResponse": "success_200",
+      "responses": [
+        {
+          "name": "success_200",
+          "statusCode": 200,
+          "body": {
+            "available": 10
+          }
+        }
+      ]
+    }
+  }
+}
