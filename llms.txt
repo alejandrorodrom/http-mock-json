@@ -1,0 +1,19 @@
+# http-mock-json
+
+> Local HTTP mock CLI from JSON — status codes, errors, validation, mutable store, proxy, and record/replay so frontends develop without waiting on a backend.
+
+## Docs
+
+- [AI brief](docs/ai.md): read this first (assistants) — pipeline, presets, CLI, limits
+- [README](README.md): full guide and reference
+- [FAQ](docs/faq.md): short answers
+- [Troubleshooting](docs/troubleshooting.md): symptom → cause → fix
+
+## Optional
+
+- [Examples](docs/examples.md): copy-paste fixtures from the repo
+- [Advanced examples](docs/advanced-examples.md): one-feature walkthroughs
+- [Store recipes](docs/store-recipes.md): store-backed app walkthroughs
+- [Real-world](docs/real-world.md): multipart / folders / hybrid proxy
+- [Changelog](CHANGELOG.md): release notes
+- [Contributing](CONTRIBUTING.md): local setup and PR checklist

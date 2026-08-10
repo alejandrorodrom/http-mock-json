@@ -51,6 +51,10 @@ This README is the full guide and reference. Quick help: [FAQ](docs/faq.md) · [
 
 Day-one path: [Getting started](#getting-started) → optional [Concepts](#concepts). Everything else is lookup when you need it.
 
+### For AI assistants
+
+Start with the pocket brief [`docs/ai.md`](docs/ai.md) (pipeline, presets, CLI, limits). Index of priority docs: [`llms.txt`](llms.txt). These ship on npm under `node_modules/http-mock-json/` — open or `@`-mention them; IDEs do not auto-inject them into every chat.
+
 ## Contents
 
 **Learn** (day one):

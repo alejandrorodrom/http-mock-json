@@ -2,12 +2,13 @@
 
 The full guide and reference lives in the root [README](../README.md).
 
-This folder also has [Examples](examples.md), [Advanced examples](advanced-examples.md), [Store recipes](store-recipes.md), [Real-world](real-world.md), [FAQ](faq.md), and [Troubleshooting](troubleshooting.md).
+This folder also has [AI brief](ai.md), [Examples](examples.md), [Advanced examples](advanced-examples.md), [Store recipes](store-recipes.md), [Real-world](real-world.md), [FAQ](faq.md), and [Troubleshooting](troubleshooting.md). Repo index for assistants: [`llms.txt`](../llms.txt).
 
 ## Start here
 
 1. [README — Getting started](../README.md#getting-started) → optional [Concepts](../README.md#concepts)
 2. Stuck? [FAQ](faq.md) · [Troubleshooting](troubleshooting.md)
+3. AI / coding assistants: [AI brief](ai.md) first, then this README index
 
 ```bash
 npm install http-mock-json --save-dev
@@ -23,6 +24,7 @@ Copy fixtures and deeper walkthroughs come later ([Examples](examples.md)), not 
 | Need | Go to |
 |------|--------|
 | Install and first mock | [Getting started](../README.md#getting-started) |
+| AI / coding assistants (pocket brief) | [AI brief](ai.md) · [`llms.txt`](../llms.txt) |
 | Mental model + glossary | [Concepts](../README.md#concepts) |
 | Copy a fixture (later) | [Examples](examples.md) |
 | One feature at a time | [Advanced examples](advanced-examples.md) |
@@ -71,6 +73,8 @@ Copy fixtures and deeper walkthroughs come later ([Examples](examples.md)), not 
 
 | Doc | Contents |
 |-----|----------|
+| [AI brief](ai.md) | Pocket manual for assistants (pipeline, presets, limits) |
+| [`llms.txt`](../llms.txt) | Priority doc index (llmstxt.org-style) |
 | [FAQ](faq.md) | Short answers |
 | [Troubleshooting](troubleshooting.md) | Symptom → cause → fix |
 | [Root README](../README.md) | Full guide and reference |

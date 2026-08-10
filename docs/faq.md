@@ -8,6 +8,10 @@ Short answers to common questions. Full reference: [README](../README.md). Sympt
 
 ## Basics
 
+### How should an AI assistant learn this library?
+
+Read [`docs/ai.md`](ai.md) first (pipeline, presets, CLI cheat sheet, hard limits). Priority links live in [`llms.txt`](../llms.txt) at the package/repo root. Both ship on npm under `node_modules/http-mock-json/`. Open or `@`-mention them in the IDE — tools do not auto-inject them into every chat.
+
 ### What is http-mock-json? Can I embed it or import an API?
 
 It is a **CLI** (`mock-server`) that starts a local HTTP mock server from JSON files. Your app calls that server over HTTP (e.g. `http://localhost:3001/...`).

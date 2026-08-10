@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.1] - 2026-08-09
+
+Patch release on top of **6.0.0**. No public API or CLI contract changes.
+
+### Previous version
+
+**6.0.0** — default port `3001`, Next: footer, richer `static` preset.
+
+### Added
+
+- [`docs/ai.md`](docs/ai.md) — pocket brief for AI assistants (pipeline, presets, CLI, limits)
+- [`llms.txt`](llms.txt) — priority doc index (llmstxt.org-style); ships on npm with docs
+- README / docs index / FAQ links under “For AI assistants”
+
+### Changed
+
+- Package / CLI version bumped to `6.0.1`
+
+---
+
 ## [6.0.0] - 2026-08-09
 
 Major release on top of **5.3.0**.
