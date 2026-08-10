@@ -145,12 +145,12 @@ module.exports = {
           if (!staticJoined.includes(presetReadyHint('static'))) {
             failures.push(`[next] static missing preset hint. ${ staticJoined }`);
           }
-          if (presetReadyHint('static') !== '! set nameResponse to "error" to try the 404 body') {
+          if (presetReadyHint('static') !== '! Set nameResponse to "error" to try the 404 body') {
             failures.push(
               `[meta] static ready hint mismatch: ${ presetReadyHint('static') }`
             );
           }
-          if (!staticJoined.includes('set nameResponse to "error"') || !staticJoined.includes('404 body')) {
+          if (!staticJoined.includes('Set nameResponse to "error"') || !staticJoined.includes('404 body')) {
             failures.push(`[next] static hint should mention nameResponse + 404. ${ staticJoined }`);
           }
           if (staticJoined.includes('Edit nameResponse in the mock JSON')) {
@@ -165,7 +165,7 @@ module.exports = {
           if (!scenarioJoined.includes(presetReadyHint('scenarios'))) {
             failures.push(`[next] scenarios missing preset hint. ${ scenarioJoined }`);
           }
-          if (scenarioJoined.includes('set nameResponse to "error"')) {
+          if (scenarioJoined.includes('Set nameResponse to "error"')) {
             failures.push('[next] scenarios should not include static nameResponse tip');
           }
 
