@@ -113,7 +113,7 @@ export const presetLabel = (preset: AddPreset): string => {
 export const presetReadyHint = (preset: AddPreset): string => {
   switch (preset) {
     case 'static':
-      return '! Add a response body to the created mock';
+      return '! Set nameResponse to "error" to try the 404 body';
     case 'crud':
       return '! Collection + /:id store actions are ready — POST to create, GET to list';
     case 'crud-full':

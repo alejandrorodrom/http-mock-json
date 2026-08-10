@@ -28,6 +28,12 @@ module.exports = {
       } = require(
         path.join(PROJECT_ROOT, 'dist/src/cli/commands/add/presets.js')
       );
+      const {
+        formatAddNextStepsLines,
+        formatInitNextStepsLines
+      } = require(
+        path.join(PROJECT_ROOT, 'dist/src/cli/commands/add/next-steps.js')
+      );
       const { structureCrudFullMock } = require(
         path.join(PROJECT_ROOT, 'dist/src/cli/commands/add/structure-crud-mock.js')
       );
@@ -123,6 +129,50 @@ module.exports = {
           }
           if (presetInitialEndpoint('static') !== undefined) {
             failures.push('[meta] static should have no initial endpoint');
+          }
+        }
+
+        // --- Next: footer formatters ---
+        {
+          const staticLines = formatAddNextStepsLines('/data/animals/', 'static');
+          const staticJoined = staticLines.join('\n');
+          if (!staticJoined.includes('Next:')) {
+            failures.push(`[next] static missing Next:. ${ staticJoined }`);
+          }
+          if (!staticJoined.includes('curl -i http://localhost:3001/data/animals')) {
+            failures.push(`[next] static curl path. ${ staticJoined }`);
+          }
+          if (!staticJoined.includes(presetReadyHint('static'))) {
+            failures.push(`[next] static missing preset hint. ${ staticJoined }`);
+          }
+          if (presetReadyHint('static') !== '! set nameResponse to "error" to try the 404 body') {
+            failures.push(
+              `[meta] static ready hint mismatch: ${ presetReadyHint('static') }`
+            );
+          }
+          if (!staticJoined.includes('set nameResponse to "error"') || !staticJoined.includes('404 body')) {
+            failures.push(`[next] static hint should mention nameResponse + 404. ${ staticJoined }`);
+          }
+          if (staticJoined.includes('Edit nameResponse in the mock JSON')) {
+            failures.push(`[next] static should not duplicate nameResponse tip. ${ staticJoined }`);
+          }
+
+          const scenarioLines = formatAddNextStepsLines('api/events', 'scenarios');
+          const scenarioJoined = scenarioLines.join('\n');
+          if (!scenarioJoined.includes('Next:') || !scenarioJoined.includes('mock-server start')) {
+            failures.push(`[next] scenarios missing Next/start. ${ scenarioJoined }`);
+          }
+          if (!scenarioJoined.includes(presetReadyHint('scenarios'))) {
+            failures.push(`[next] scenarios missing preset hint. ${ scenarioJoined }`);
+          }
+          if (scenarioJoined.includes('set nameResponse to "error"')) {
+            failures.push('[next] scenarios should not include static nameResponse tip');
+          }
+
+          const initLines = formatInitNextStepsLines().join('\n');
+          if (!initLines.includes('Next:') || !initLines.includes('mock-server add')
+            || !initLines.includes('mock-server start')) {
+            failures.push(`[next] init footer. ${ initLines }`);
           }
         }
 
@@ -249,6 +299,29 @@ module.exports = {
           const parsed = JSON.parse(fs.readFileSync(mockFile, 'utf8'));
           if (!parsed.health?.GET || parsed.health?.POST) {
             failures.push(`[preset-static] Expected GET-only, got: ${ JSON.stringify(parsed) }`);
+          }
+          const successBody = parsed.health?.GET?.responses?.find((r) => r.name === 'success')?.body;
+          const errorBody = parsed.health?.GET?.responses?.find((r) => r.name === 'error')?.body;
+          if (successBody?.message !== 'ok') {
+            failures.push(`[preset-static] Expected success message "ok", got: ${ JSON.stringify(successBody) }`);
+          }
+          if (errorBody?.message !== 'Not found') {
+            failures.push(`[preset-static] Expected error message "Not found", got: ${ JSON.stringify(errorBody) }`);
+          }
+        }
+
+        // --- structureMock sample bodies ---
+        {
+          const { structureMock } = require(
+            path.join(PROJECT_ROOT, 'dist/src/cli/commands/add/structure-mock.js')
+          );
+          const shaped = structureMock('api/demo', ['get']);
+          const success = shaped['api/demo']?.GET?.responses?.find((r) => r.name === 'success');
+          const error = shaped['api/demo']?.GET?.responses?.find((r) => r.name === 'error');
+          if (success?.body?.message !== 'ok' || error?.body?.message !== 'Not found') {
+            failures.push(
+              `[structureMock] Expected sample bodies, got success=${ JSON.stringify(success?.body) } error=${ JSON.stringify(error?.body) }`
+            );
           }
         }
 

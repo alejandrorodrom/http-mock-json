@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { extname, join } from 'path';
-import { MOCK_CONFIG_FILENAME } from '../constants/mock-config.constant';
+import { DEFAULT_MOCK_PORT, MOCK_CONFIG_FILENAME } from '../constants/mock-config.constant';
 import { MockConfig, MockFileDefaults, MockFolderConfig, ProxyUnmatchedMount } from '../types/mock-config.type';
 import { StoreDefinition } from '../types/store.type';
 import { LocalIssue } from '../types/validation.type';
@@ -138,7 +138,7 @@ export const resolveMockPort = (
   cliPort: number | undefined,
   config: MockConfig | null
 ): number => {
-  return cliPort ?? config?.port ?? 3000;
+  return cliPort ?? config?.port ?? DEFAULT_MOCK_PORT;
 };
 
 export const getProxyUnmatchedMounts = (

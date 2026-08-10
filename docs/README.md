@@ -6,15 +6,17 @@ This folder also has [Examples](examples.md), [Advanced examples](advanced-examp
 
 ## Start here
 
-1. [README — Getting started](../README.md#getting-started) → [Concepts](../README.md#concepts) → [Examples](examples.md)
+1. [README — Getting started](../README.md#getting-started) → optional [Concepts](../README.md#concepts)
 2. Stuck? [FAQ](faq.md) · [Troubleshooting](troubleshooting.md)
 
 ```bash
 npm install http-mock-json --save-dev
 npx mock-server init
 npx mock-server start
-# → http://localhost:3000 (npm run mock:start after init → 3001)
+curl -i http://localhost:3001/<your-endpoint>
 ```
+
+Copy fixtures and deeper walkthroughs come later ([Examples](examples.md)), not on day one.
 
 ## When to read what
 
@@ -22,7 +24,7 @@ npx mock-server start
 |------|--------|
 | Install and first mock | [Getting started](../README.md#getting-started) |
 | Mental model + glossary | [Concepts](../README.md#concepts) |
-| Copy a fixture | [Examples](examples.md) |
+| Copy a fixture (later) | [Examples](examples.md) |
 | One feature at a time | [Advanced examples](advanced-examples.md) |
 | Store-backed app recipe | [Store recipes](store-recipes.md) |
 | Multipart / folders / hybrid proxy | [Real-world](real-world.md) |
@@ -32,14 +34,20 @@ npx mock-server start
 
 ## README section anchors
 
-**Learn**
+**Learn** (day one)
 
 | Section | Link |
 |---------|------|
 | Getting started | [README#getting-started](../README.md#getting-started) |
 | Concepts | [README#concepts](../README.md#concepts) |
+
+**Later**
+
+| Section | Link |
+|---------|------|
 | Examples | [examples.md](examples.md) |
 | Advanced examples | [advanced-examples.md](advanced-examples.md) |
+| Record & Replay | [README#record--replay](../README.md#record--replay) |
 
 **Reference**
 

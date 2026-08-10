@@ -48,8 +48,15 @@ module.exports = {
             failures.push(`[default-path] Expected exit 0, got ${ result.exitCode }`);
           }
           failures.push(...expectIncludes(result.stdout, [
-            'The mocks directory was created successfully'
+            'The mocks directory was created successfully',
+            'Next:'
           ], 'default-path'));
+          if (!result.stdout.includes('mock-server add')
+            || !result.stdout.includes('mock-server start')) {
+            failures.push(
+              `[default-path] Expected Next commands add+start. stdout:\n${ result.stdout }`
+            );
+          }
 
           if (!fs.existsSync(path.join(workspaceDir, 'mocks'))) {
             failures.push('[default-path] Expected ./mocks directory');
@@ -81,8 +88,15 @@ module.exports = {
             failures.push(`[custom-path] Expected exit 0, got ${ result.exitCode }`);
           }
           failures.push(...expectIncludes(result.stdout, [
-            'The mocks directory was created successfully'
+            'The mocks directory was created successfully',
+            'Next:'
           ], 'custom-path'));
+          if (!result.stdout.includes('mock-server add')
+            || !result.stdout.includes('mock-server start')) {
+            failures.push(
+              `[custom-path] Expected Next commands add+start. stdout:\n${ result.stdout }`
+            );
+          }
 
           if (!fs.existsSync(path.join(workspaceDir, 'api-mocks'))) {
             failures.push('[custom-path] Expected ./api-mocks directory');
@@ -118,14 +132,21 @@ module.exports = {
         } else {
           failures.push(...expectIncludes(result.stdout, [
             'The mocks directory was created successfully',
-            'The script was added successfully'
+            'The script was added successfully',
+            'Next:'
           ], 'script-true'));
+          if (!result.stdout.includes('mock-server add')
+            || !result.stdout.includes('mock-server start')) {
+            failures.push(
+              `[script-true] Expected Next commands add+start. stdout:\n${ result.stdout }`
+            );
+          }
 
           const pkg = JSON.parse(
             fs.readFileSync(path.join(workspaceDir, 'package.json'), 'utf8')
           );
 
-          if (pkg.scripts?.['mock:start'] !== 'mock-server start -p 3001') {
+          if (pkg.scripts?.['mock:start'] !== 'mock-server start') {
             failures.push(
               `[script-true] Unexpected scripts.mock:start: ${ JSON.stringify(pkg.scripts) }`
             );

@@ -30,12 +30,12 @@ const structureHttpVerb = (): StructureMock => {
       {
         name: 'success',
         statusCode: 200,
-        body: {},
+        body: { message: 'ok' },
       },
       {
         name: 'error',
         statusCode: 404,
-        body: {},
+        body: { message: 'Not found' },
       }
     ]
   };

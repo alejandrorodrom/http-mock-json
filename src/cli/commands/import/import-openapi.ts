@@ -7,9 +7,9 @@ import { MockConfig } from '../../../types/mock-config.type';
 import { resolveMocksDir } from '../../../scripts/mocks-path.script';
 import { logError, logMessage, logWarning } from '../../../scripts/log.script';
 import { printDuration } from '../../../scripts/duration.script';
-import { terminalPrompt } from '../../../scripts/unix.script';
 import { assertSourceIsOpenApi3, loadOpenApiDocument } from './openapi-load';
 import { openApiToMock } from './openapi-to-mock';
+import { printImportNextSteps } from '../add/next-steps';
 
 const ensureDir = (dir: string): void => {
   if (fs.existsSync(dir)) {
@@ -148,10 +148,7 @@ export const importOpenApi = async (options: ImportOptions): Promise<void> => {
     }
     console.log(dim(`! Files: ${ written.join(', ') }`));
 
-    console.log(`\n${ dim('You may find the following commands will be helpful:') }\n`);
-    console.log(`\t${ dim(terminalPrompt()) } ${ green('mock-server start') }`);
-    console.log(`\tStart mock server.\n`);
-    console.log('Happy coding! 🎈');
+    printImportNextSteps();
   } catch (e) {
     logError(e);
     process.exitCode = 1;

@@ -34,89 +34,32 @@ The frontend keeps calling HTTP on your machine. Backend outages stop blocking y
 
 ## Quick Start
 
-Requires **Node.js >= 22.12**.
+Requires **Node.js >= 22.12**. This package is a **CLI** (`mock-server`) that serves JSON mock files over HTTP (not an embeddable SDK).
 
 ```bash
 npm install http-mock-json --save-dev
 npx mock-server init
 npx mock-server start
+curl -i http://localhost:3001/<your-endpoint>
 ```
 
-Server defaults to `http://localhost:3000`. After `init`, `npm run mock:start` uses **`-p 3001`** (port). Full walkthrough: [Getting started](#getting-started).
-
-Prefer bootstrapping from a real API instead of hand-writing every mock?
-
-```bash
-npx mock-server start --proxy https://api.staging.com --record
-# exercise the app… then Ctrl+C
-npx mock-server start   # loads mocks + .recordings/ by default
-```
-
-Details: [Record & Replay](#record--replay).
-
-## Demo — switch responses from JSON
-
-This package is a **CLI** that boots a local HTTP server from JSON mock files (not an embeddable SDK). Your app calls `http://localhost:3000/...` the same way it would call staging.
-
-Minimal mock (simplified vs the fuller fixture [`mocks/01-basic-multiple-responses.json`](mocks/01-basic-multiple-responses.json)):
-
-```json
-{
-  "data/animals": {
-    "GET": {
-      "nameResponse": "success",
-      "responses": [
-        {
-          "name": "success",
-          "statusCode": "200",
-          "body": { "items": [{ "id": 1, "name": "Fox" }] }
-        },
-        {
-          "name": "error",
-          "statusCode": "500",
-          "body": { "message": "Upstream failed" }
-        }
-      ]
-    }
-  }
-}
-```
-
-```bash
-npx mock-server start
-curl -i http://localhost:3000/data/animals
-```
-
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json; charset=utf-8
-
-{"items":[{"id":1,"name":"Fox"}]}
-```
-
-Change `"nameResponse"` to `"error"` (watch mode reloads). The same URL now returns the failure your UI must handle:
-
-```http
-HTTP/1.1 500 Internal Server Error
-Content-Type: application/json; charset=utf-8
-
-{"message":"Upstream failed"}
-```
-
-Same URL, different backend behavior — controlled from JSON.
+Default port is **3001** (`npm run mock:start` after `init` uses the same). Full walkthrough: [Getting started](#getting-started).
 
 ## Documentation
 
 This README is the full guide and reference. Quick help: [FAQ](docs/faq.md) · [Troubleshooting](docs/troubleshooting.md) · [Changelog](CHANGELOG.md).
 
-Day-one path: [Getting started](#getting-started) · [Concepts](#concepts) · [Examples](docs/examples.md). Lookup: [CLI](#cli-reference) · [Record & Replay](#record--replay) · [Store](#store-reference).
+Day-one path: [Getting started](#getting-started) → optional [Concepts](#concepts). Everything else is lookup when you need it.
 
 ## Contents
 
-**Learn** (day-one path — skip Reference until you need it):
+**Learn** (day one):
 
 - [Getting started](#getting-started)
-- [Concepts](#concepts) (includes a short glossary)
+- [Concepts](#concepts) (optional — short glossary + how pieces fit)
+
+**Later** (when you need it):
+
 - [Examples](docs/examples.md)
 - [Advanced examples](docs/advanced-examples.md)
 - [Record & Replay](#record--replay) — capture staging, replay offline
@@ -139,7 +82,7 @@ Day-one path: [Getting started](#getting-started) · [Concepts](#concepts) · [E
 
 ### Goal
 
-Install `http-mock-json`, create a mocks directory, add a first mock, and run the server with watch mode so you can edit JSON and see changes reload.
+In about five minutes: install, create a first mock, start the server, `curl` a response, then switch scenarios by editing JSON.
 
 ### Prerequisites
 
@@ -154,8 +97,6 @@ Install `http-mock-json`, create a mocks directory, add a first mock, and run th
 npm install http-mock-json --save-dev
 ```
 
-The CLI binary is `mock-server`.
-
 #### 2. Initialize
 
 ```bash
@@ -164,26 +105,13 @@ npx mock-server init
 
 By default this will:
 
-1. Create a mocks directory (default name: `mocks`)
-2. Add a `mock:start` script to `package.json` (`mock-server start -p 3001`)
+1. Create a `mocks` directory
+2. Add a `mock:start` script (`mock-server start`)
 3. Prompt you to create a first mock file
 
-`--path` is the **mocks directory itself** (not a parent folder). Flag details live in the [CLI reference](#cli-reference).
+#### 3. Answer the prompts
 
-#### 3. Answer the first-mock prompts
-
-If mock creation is enabled (default), `init` uses the **`static`** preset and asks:
-
-1. **JSON file name** — e.g. `animals` → `mocks/animals.json`
-2. **Endpoint** — e.g. `data/animals` (route params like `data/animals/:id` are allowed)
-3. **HTTP methods** — select one or more of `GET`, `POST`, `PUT`, `PATCH`, `DELETE`
-4. **Confirm**
-
-That writes `nameResponse: "success"` plus empty `success` (`200`) and `error` (`404`) bodies. For store CRUD, auth, uploads, and other shapes, use `mock-server add --preset <name>` later ([CLI — add](#add)).
-
-#### 4. Fill in response bodies
-
-Open the generated file and put real data in each `body`. A minimal shape looks like this:
+`init` uses the **`static`** preset and asks for a file name, endpoint (e.g. `data/animals`), HTTP methods, then confirm. The scaffold already includes sample bodies so you can curl immediately:
 
 ```json
 {
@@ -193,20 +121,13 @@ Open the generated file and put real data in each `body`. A minimal shape looks 
       "responses": [
         {
           "name": "success",
-          "statusCode": "200",
-          "body": {
-            "animals": [
-              { "id": 1, "name": "Lion" },
-              { "id": 2, "name": "Tiger" }
-            ]
-          }
+          "statusCode": 200,
+          "body": { "message": "ok" }
         },
         {
           "name": "error",
-          "statusCode": "404",
-          "body": {
-            "message": "No animals found"
-          }
+          "statusCode": 404,
+          "body": { "message": "Not found" }
         }
       ]
     }
@@ -214,60 +135,40 @@ Open the generated file and put real data in each `body`. A minimal shape looks 
 }
 ```
 
-**Abbreviated shape (what you need day one):**
+Edit those bodies to match your API, or flip `"nameResponse"` to `"error"` to try the 404 path. More fields (`match`, `store`, `proxy`, …) come later in [Concepts](#concepts).
 
-| Piece | Role |
-|-------|------|
-| Top-level key | Endpoint path (`data/animals`, `users/:id`, …) |
-| Uppercase method | `GET` / `POST` / `PUT` / `PATCH` / `DELETE` |
-| `nameResponse` | Default response `name` when no `match` applies |
-| `responses[]` | Named scenarios; each needs `name`, and usually `statusCode` + `body` |
-
-Optional fields (`match`, `request`, `store`, `proxy`, `delay`, `action`, `encoding`, …) are covered in [Concepts](#concepts) and the [mock file reference](#mock-file-reference).
-
-**Tip:** Change `"nameResponse": "error"` to serve the error scenario by default without touching `match`.
-
-#### 5. Start the server
+#### 4. Start the server
 
 ```bash
 npx mock-server start
 ```
 
-Or, if `init` added the script:
+Or `npm run mock:start`. Both listen on **`http://localhost:3001`** by default. Watch mode reloads when you save mock files; validation errors block startup (and a bad reload).
+
+#### 5. Try it
 
 ```bash
-npm run mock:start
+curl -i http://localhost:3001/data/animals
 ```
 
-Port resolution: `--port` → `mock.config.json` `port` → **`3000`**. The `mock:start` script from `init` uses `-p 3001`.
-
-On start, the server checks port availability, then validates every mock file. Errors block startup; warnings (for example non-standard status codes) do not.
-
-**Watch mode is always on** for `start`: saving a mock file reloads the server. If a reload introduces validation errors, the restart is aborted, the problems are printed, and the previous process stops serving. Fix the mocks, then run `mock-server start` again.
+You should see `{ "message": "ok" }`. Change `"nameResponse"` to `"error"`, save, and curl again — same URL, `"Not found"` (watch mode reloads).
 
 ### Expected result
 
 - A mocks directory with at least one `.json` file
-- Server listening (e.g. `http://localhost:3000` or `3001` with the generated script)
-- Requests to your endpoint return the `nameResponse` body (or a `match`ed response once you add rules)
-- Edits to mock JSON trigger an automatic restart (failed validation aborts the restart — see watch note above)
-
-### Recommendations
-
-- Prefer `mock-server add --preset …` when you need a known shape (CRUD, login, list, upload); use [Examples](docs/examples.md) for fuller product scenarios.
-- Keep one endpoint’s methods together in the same file; split by domain across multiple JSON files as the API grows.
-- Use `request` for input shape checks, and store uniqueness / conflict responses for business `409`s — see [Concepts](#concepts).
-- For microservice-style layouts, use folder organization with `mock.config.json` (details in [Mock config](#mock-config-reference)).
-- Prefer fixing validation errors before relying on watch reloads; a failed restart leaves the server down until you fix the mocks and start again.
+- Server at `http://localhost:3001`
+- `curl` returns the `nameResponse` body
+- Editing `nameResponse` (or bodies) changes the next response after reload
 
 ### Next steps
 
-1. [Concepts](#concepts) — how `nameResponse`, `match`, `request`, `store`, and `proxy` fit together at runtime  
-2. [CLI — add](#add) — presets for common scaffolds  
-3. [Examples](docs/examples.md) — copyable mocks from this repository  
-4. [Advanced examples](docs/advanced-examples.md) — one-feature walkthroughs (`match`, delay, request validation, …)  
+1. [Concepts](#concepts) — how `nameResponse`, `match`, `request`, `store`, and `proxy` fit together  
 
-Lookup in this manual when needed: [CLI](#cli-reference), [Mock file](#mock-file-reference), [Store](#store-reference).
+When you need scaffolds or copy-paste fixtures: [CLI — add](#add) (`--preset …`), [Examples](docs/examples.md).
+
+### Other ways to start
+
+Prefer capturing a real API instead of hand-writing mocks? Use [Record & Replay](#record--replay) (`--proxy` + `--record`). OpenAPI → JSON: [CLI — import](#import).
 
 ## Concepts
 
@@ -441,7 +342,7 @@ mock-server start
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `-p, --port <port>` | — | Listen port (integer `1`–`65535`). Overrides `mock.config.json` `port` when set; otherwise config `port`, else **`3000`**. |
+| `-p, --port <port>` | — | Listen port (integer `1`–`65535`). Overrides `mock.config.json` `port` when set; otherwise config `port`, else **`3001`**. |
 | `-f, --path <path>` | `mocks` | Path to the mocks directory (JSON files + optional `mock.config.json`) |
 | `--proxy <url>` | — | Global proxy target (`http` / `https`). Used by responses with `"proxy": true` and by unmatched routes (after folder `proxyUnmatched` mounts). Upstream redirects are not followed (`redirect: "manual"`); 3xx is returned as-is. |
 | `--record` | `false` | Record proxied responses into `.recordings/` (JSON + binary via `encoding: "file"`). Requires a proxy target (CLI `--proxy`, folder `proxy` / `proxyUnmatched`, or response `proxy`). |
@@ -496,7 +397,7 @@ With `mock.config.json` folders, recordings are grouped by longest matching `pre
 **Breaking (≥ 2.0.0):** `--path` / `-f` is the mocks directory itself (default `mocks`).  
 Before 2.0.0, `-f apps/folder1` meant `apps/folder1/mocks`. Use `-f apps/folder1/mocks` now.
 
-**Port resolution:** CLI `-p` / `--port` → `mock.config.json` `port` → `3000`. (`init`’s `mock:start` script uses `-p 3001`.)
+**Port resolution:** CLI `-p` / `--port` → `mock.config.json` `port` → `3001`.
 
 **CORS:** enabled by default on the HTTP server (including exposing response headers to the browser).
 
@@ -524,7 +425,7 @@ mock-server add --path api-mocks --preset auth-login
 
 | Preset | Use when you need… | Writes |
 |--------|--------------------|--------|
-| `static` | A blank endpoint to fill by hand | One route; chosen verbs; empty `success` / `error` bodies |
+| `static` | A ready-to-curl endpoint you can edit | One route; chosen verbs; sample `success` / `error` bodies |
 | `scenarios` | Branching without a store | `GET` + `?scenario=ok\|missing\|error` (`match` + delay) |
 | `auth-login` | Login validation + happy/sad paths | `POST` + `request` + `match` (200 / 403) + 401 / 400 |
 | `crud` | Mutable collection + item | `store` actions: list / create / get / update / patch / delete |
@@ -814,7 +715,7 @@ Startup validation for `mock-server start`. Source of truth: `src/cli/commands/s
 When you run `mock-server start`:
 
 1. **Load `mock.config.json`** (if present under the mocks directory): parse + validate config shape. Errors are collected (not thrown yet). Used to resolve the listen port.
-2. **Resolve port:** CLI `-p` → config `port` → `3000`.
+2. **Resolve port:** CLI `-p` → config `port` → `3001`.
 3. **Port availability** (before mock routes are registered): socket check. If the port is in use, the process fails immediately without finishing mock validation.
 4. **Discover mock files:** root `*.json` (except `mock.config.json`); with config, also declared `folders/*` (respecting `enabled` / `include` / `exclude`). Missing declared folders → errors.
 5. **Parse each mock file:** must be a non-empty JSON object (syntax / empty-file errors collected here).
@@ -1217,7 +1118,7 @@ Filename is always `mock.config.json` (`MOCK_CONFIG_FILENAME`).
 | `proxy` | URL string \| `{ target, path? }` | — | Default proxy target. **Not** `true` |
 | `headers` | `Record<string, string>` | — | Default response headers |
 | `strictDuplicates` | boolean | `false` | When `true`, startup fails if the same HTTP method + final route is registered twice |
-| `port` | integer `1`–`65535` | `3000` (effective) | Default listen port. CLI `-p` / `--port` overrides |
+| `port` | integer `1`–`65535` | `3001` (effective) | Default listen port. CLI `-p` / `--port` overrides |
 | `folders` | object | — | Declared subfolders and their settings |
 
 `prefix` is **not** allowed at root — only inside `folders` (startup error if present).
@@ -1258,7 +1159,7 @@ Declared folder missing on disk → startup error.
 
 | Concern | Order |
 |---------|-------|
-| `port` | CLI `-p` → config `port` → `3000` |
+| `port` | CLI `-p` → config `port` → `3001` |
 | `delay` | response → method → folder → root → `0` |
 | `proxy` when response is `true` | method → folder → root config → CLI `--proxy` |
 | `headers` | merge `{ ...root, ...folder, ...response }` (same key → more specific wins) |
@@ -1362,14 +1263,14 @@ See [Mock file — proxy](#proxy-value-shapes). Orphan `proxy: true` with no met
   "folders": {
     "users": {
       "prefix": "/api/users",
-      "proxy": "http://localhost:3001",
+      "proxy": "http://localhost:4000",
       "stripPrefix": true
     }
   }
 }
 ```
 
-Incoming `GET /api/users/42` with `"proxy": true` → upstream `http://localhost:3001/42`.
+Incoming `GET /api/users/42` with `"proxy": true` → upstream `http://localhost:4000/42`.
 
 ---
 
@@ -1381,7 +1282,7 @@ Incoming `GET /api/users/42` with `"proxy": true` → upstream `http://localhost
     "users": {
       "prefix": "/api/users",
       "stripPrefix": true,
-      "proxyUnmatched": "http://localhost:3001"
+      "proxyUnmatched": "http://localhost:4000"
     }
   }
 }
@@ -2080,22 +1981,22 @@ Try:
 
 ```bash
 # Default → page (look for page= / {{page}} in the envelope)
-curl -s 'http://localhost:3000/api/mixed'
+curl -s 'http://localhost:3001/api/mixed'
 
 # Offset mode
-curl -s 'http://localhost:3000/api/mixed?offset=2'
+curl -s 'http://localhost:3001/api/mixed?offset=2'
 
 # Page wins when both are present
-curl -s 'http://localhost:3000/api/mixed?page=2&offset=0'
+curl -s 'http://localhost:3001/api/mixed?page=2&offset=0'
 
 # Cursor mode (token from a previous {{nextCursor}} / keyset bookmark)
-curl -s "http://localhost:3000/api/mixed?starting_after=${TOKEN}"
+curl -s "http://localhost:3001/api/mixed?starting_after=${TOKEN}"
 
 # Offset wins over cursor
-curl -s "http://localhost:3000/api/mixed?offset=1&starting_after=${TOKEN}"
+curl -s "http://localhost:3001/api/mixed?offset=1&starting_after=${TOKEN}"
 
 # Bad cursor → 400
-curl -si 'http://localhost:3000/api/mixed?starting_after=placeholder'
+curl -si 'http://localhost:3001/api/mixed?starting_after=placeholder'
 ```
 
 Tip: avoid giving `pageSize` the alias `limit` if the same store also defines offset `limit` — prefer `pageSize` + `limit` + `cursorLimit` as separate names.
@@ -2246,52 +2147,52 @@ Try (happy path):
 
 ```bash
 # AND equality + range
-curl -s 'http://localhost:3000/api/products?status=active&minPrice=10&maxPrice=30'
+curl -s 'http://localhost:3001/api/products?status=active&minPrice=10&maxPrice=30'
 
 # Exclusive bounds
-curl -s 'http://localhost:3000/api/products?gtPrice=20&ltPrice=40'
+curl -s 'http://localhost:3001/api/products?gtPrice=20&ltPrice=40'
 
 # Not equal
-curl -s 'http://localhost:3000/api/products?excludeStatus=draft'
+curl -s 'http://localhost:3001/api/products?excludeStatus=draft'
 
 # Membership (CSV or repeated)
-curl -s 'http://localhost:3000/api/products?name=Alpha,Charlie'
-curl -s 'http://localhost:3000/api/products?name=Alpha&name=Echo'
+curl -s 'http://localhost:3001/api/products?name=Alpha,Charlie'
+curl -s 'http://localhost:3001/api/products?name=Alpha&name=Echo'
 
 # Nested path (match)
-curl -s 'http://localhost:3000/api/products?region=eu'
+curl -s 'http://localhost:3001/api/products?region=eu'
 
 # Nested sort
-curl -s 'http://localhost:3000/api/products?sort=meta.region&order=asc&pageSize=10'
+curl -s 'http://localhost:3001/api/products?sort=meta.region&order=asc&pageSize=10'
 
 # Nested path (no match) → empty page, total 0 (not an error)
-curl -s 'http://localhost:3000/api/products?region=antarctica'
+curl -s 'http://localhost:3001/api/products?region=antarctica'
 
 # OR omitted → no OR filtering (full list subject to other rules)
-curl -s 'http://localhost:3000/api/products?pageSize=10'
+curl -s 'http://localhost:3001/api/products?pageSize=10'
 
 # OR single / multi
-curl -s 'http://localhost:3000/api/products?anyRegion=eu'
-curl -s 'http://localhost:3000/api/products?anyStatus=draft&anyRegion=latam'
+curl -s 'http://localhost:3001/api/products?anyRegion=eu'
+curl -s 'http://localhost:3001/api/products?anyStatus=draft&anyRegion=latam'
 
 # Text search
-curl -s 'http://localhost:3000/api/products?q=cha'
+curl -s 'http://localhost:3001/api/products?q=cha'
 ```
 
 Try (sad path → `400`):
 
 ```bash
 # Non-numeric compare ops
-curl -si 'http://localhost:3000/api/products?minPrice=abc'
-curl -si 'http://localhost:3000/api/products?maxPrice=nan'
-curl -si 'http://localhost:3000/api/products?gtPrice=x'
+curl -si 'http://localhost:3001/api/products?minPrice=abc'
+curl -si 'http://localhost:3001/api/products?maxPrice=nan'
+curl -si 'http://localhost:3001/api/products?gtPrice=x'
 
 # Present but empty string
-curl -si 'http://localhost:3000/api/products?ltPrice='
-curl -si 'http://localhost:3000/api/products?status='
+curl -si 'http://localhost:3001/api/products?ltPrice='
+curl -si 'http://localhost:3001/api/products?status='
 
 # in with no values after split/trim
-curl -si 'http://localhost:3000/api/products?name='
+curl -si 'http://localhost:3001/api/products?name='
 
 # Example bodies:
 # { "message": "Query \"minPrice\" must be a number" }
@@ -2511,10 +2412,10 @@ Minimal list/create/get/delete. Empty seed; `id` auto-increments; titles unique;
 Try:
 
 ```bash
-curl -s http://localhost:3000/api/notes
-curl -s -X POST http://localhost:3000/api/notes -H 'Content-Type: application/json' -d '{"title":"Buy milk"}'
-curl -s http://localhost:3000/api/notes/1
-curl -s -X DELETE http://localhost:3000/api/notes/1 -o /dev/null -w '%{http_code}\n'
+curl -s http://localhost:3001/api/notes
+curl -s -X POST http://localhost:3001/api/notes -H 'Content-Type: application/json' -d '{"title":"Buy milk"}'
+curl -s http://localhost:3001/api/notes/1
+curl -s -X DELETE http://localhost:3001/api/notes/1 -o /dev/null -w '%{http_code}\n'
 ```
 
 #### Example B — Complex (multi-tenant users)

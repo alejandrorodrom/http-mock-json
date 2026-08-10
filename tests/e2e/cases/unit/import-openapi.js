@@ -121,6 +121,9 @@ module.exports = {
         if (!joined.includes('HEAD')) {
           failures.push(`Expected HEAD skip warning. Logs:\n${ joined }`);
         }
+        if (!joined.includes('Next:') || !joined.includes('mock-server start')) {
+          failures.push(`Expected Next: footer with mock-server start. Logs:\n${ joined }`);
+        }
 
         // --no-split-tags with server prefix → single folder + mock.config
         logs.length = 0;

@@ -41,8 +41,8 @@ module.exports = {
       if (resolveMockPort(undefined, { port: 3500 }) !== 3500) {
         failures.push('config port should apply when CLI port is omitted');
       }
-      if (resolveMockPort(undefined, null) !== 3000) {
-        failures.push('default port should be 3000');
+      if (resolveMockPort(undefined, null) !== 3001) {
+        failures.push('default port should be 3001');
       }
 
       const mounts = getProxyUnmatchedMounts({

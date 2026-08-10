@@ -308,30 +308,30 @@ Try:
 
 ```bash
 # Paginated catalog (Link + X-Total-Count)
-curl -si 'http://localhost:3000/api/catalog/products?page=1&pageSize=3'
+curl -si 'http://localhost:3001/api/catalog/products?page=1&pageSize=3'
 
 # Filters + search + multi-sort
-curl -s 'http://localhost:3000/api/catalog/products?status=active&category=home&q=mug&sort=price:desc,name:asc'
+curl -s 'http://localhost:3001/api/catalog/products?status=active&category=home&q=mug&sort=price:desc,name:asc'
 
 # Range + ne + in + nested warehouse
-curl -s 'http://localhost:3000/api/catalog/products?minPrice=12&maxPrice=22&excludeStatus=draft&pageSize=10'
-curl -s 'http://localhost:3000/api/catalog/products?minStock=0&categories=home,grocery&pageSize=10'
-curl -s 'http://localhost:3000/api/catalog/products?warehouse=WH-EU&status=active&pageSize=10'
+curl -s 'http://localhost:3001/api/catalog/products?minPrice=12&maxPrice=22&excludeStatus=draft&pageSize=10'
+curl -s 'http://localhost:3001/api/catalog/products?minStock=0&categories=home,grocery&pageSize=10'
+curl -s 'http://localhost:3001/api/catalog/products?warehouse=WH-EU&status=active&pageSize=10'
 
 # OR: warehouse OR category
-curl -s 'http://localhost:3000/api/catalog/products?anyWarehouse=WH-LATAM&anyCategory=grocery&pageSize=10'
+curl -s 'http://localhost:3001/api/catalog/products?anyWarehouse=WH-LATAM&anyCategory=grocery&pageSize=10'
 
 # Static branches via match
-curl -si 'http://localhost:3000/api/catalog/products?view=featured'
-curl -si 'http://localhost:3000/api/catalog/products?mode=maintenance'
+curl -si 'http://localhost:3001/api/catalog/products?view=featured'
+curl -si 'http://localhost:3001/api/catalog/products?mode=maintenance'
 
 # Create (422 invalid / 409 SKU / 201 ok)
-curl -s -X POST http://localhost:3000/api/catalog/products \
+curl -s -X POST http://localhost:3001/api/catalog/products \
   -H 'Content-Type: application/json' \
   -d '{"sku":"SKU-NEW-099","name":"Matcha Kit","category":"beverages","price":15,"status":"active"}'
 
 # Checkout resilience
-curl -si -X POST http://localhost:3000/api/catalog/checkout \
+curl -si -X POST http://localhost:3001/api/catalog/checkout \
   -H 'Content-Type: application/json' \
   -d '{"sku":"SKU-TEA-001","quantity":1,"cardLast4":"0000"}'
 ```
@@ -366,31 +366,31 @@ Try:
 
 ```bash
 # Tenant isolation (path key fields filter the store)
-curl -s 'http://localhost:3000/api/tenants/acme/tickets?status=open&priority=high'
-curl -s 'http://localhost:3000/api/tenants/globex/tickets'
+curl -s 'http://localhost:3001/api/tenants/acme/tickets?status=open&priority=high'
+curl -s 'http://localhost:3001/api/tenants/globex/tickets'
 
 # Date range + ne + nested channel + in + sla
-curl -s 'http://localhost:3000/api/tenants/acme/tickets?since=1700000002&until=1700000004&excludeStatus=closed&pageSize=10'
-curl -s 'http://localhost:3000/api/tenants/acme/tickets?channel=email&priorities=high,low&pageSize=10'
-curl -s 'http://localhost:3000/api/tenants/acme/tickets?maxSla=5&pageSize=10'
+curl -s 'http://localhost:3001/api/tenants/acme/tickets?since=1700000002&until=1700000004&excludeStatus=closed&pageSize=10'
+curl -s 'http://localhost:3001/api/tenants/acme/tickets?channel=email&priorities=high,low&pageSize=10'
+curl -s 'http://localhost:3001/api/tenants/acme/tickets?maxSla=5&pageSize=10'
 
 # OR: assignee OR priority
-curl -s 'http://localhost:3000/api/tenants/acme/tickets?anyAssignee=carol@acme.com&anyPriority=high&pageSize=10'
+curl -s 'http://localhost:3001/api/tenants/acme/tickets?anyAssignee=carol@acme.com&anyPriority=high&pageSize=10'
 
 # Auth / RBAC-style static branches
-curl -si 'http://localhost:3000/api/tenants/blocked/tickets'
-curl -si 'http://localhost:3000/api/tenants/acme/tickets?auth=missing'
+curl -si 'http://localhost:3001/api/tenants/blocked/tickets'
+curl -si 'http://localhost:3001/api/tenants/acme/tickets?auth=missing'
 
 # Create + conflict
-curl -s -X POST http://localhost:3000/api/tenants/acme/tickets \
+curl -s -X POST http://localhost:3001/api/tenants/acme/tickets \
   -H 'Content-Type: application/json' \
   -d '{"subject":"Billing dispute","priority":"medium","assignee":"finance@acme.com"}'
 
 # Cursor activity feed (Stripe-style)
-PAGE1=$(curl -s 'http://localhost:3000/api/tenants/acme/activity')
+PAGE1=$(curl -s 'http://localhost:3001/api/tenants/acme/activity')
 echo "$PAGE1"
 CURSOR=$(echo "$PAGE1" | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>console.log(JSON.parse(s).next_cursor||''))")
-curl -s "http://localhost:3000/api/tenants/acme/activity?starting_after=${CURSOR}"
+curl -s "http://localhost:3001/api/tenants/acme/activity?starting_after=${CURSOR}"
 ```
 
 | Feature | Where it shows up |
@@ -420,29 +420,29 @@ Try (filter permutations):
 
 ```bash
 # eq + ne
-curl -s 'http://localhost:3000/api/orgs/acme/employees?role=engineer&excludeStatus=terminated&pageSize=20'
+curl -s 'http://localhost:3001/api/orgs/acme/employees?role=engineer&excludeStatus=terminated&pageSize=20'
 
 # salary band (gte/lte) + status
-curl -s 'http://localhost:3000/api/orgs/acme/employees?minSalary=60000&maxSalary=85000&status=active&pageSize=20'
+curl -s 'http://localhost:3001/api/orgs/acme/employees?minSalary=60000&maxSalary=85000&status=active&pageSize=20'
 
 # nested level gt/lt + dept
-curl -s 'http://localhost:3000/api/orgs/acme/employees?minLevel=2&maxLevel=5&dept=platform&pageSize=20'
+curl -s 'http://localhost:3001/api/orgs/acme/employees?minLevel=2&maxLevel=5&dept=platform&pageSize=20'
 
 # in roles + nested city
-curl -s 'http://localhost:3000/api/orgs/acme/employees?roles=designer,manager&city=Barcelona&pageSize=20'
+curl -s 'http://localhost:3001/api/orgs/acme/employees?roles=designer,manager&city=Barcelona&pageSize=20'
 
 # hire window
-curl -s 'http://localhost:3000/api/orgs/acme/employees?hiredAfter=1600000000&hiredBefore=1650000000&pageSize=20'
+curl -s 'http://localhost:3001/api/orgs/acme/employees?hiredAfter=1600000000&hiredBefore=1650000000&pageSize=20'
 
 # OR: dept OR city OR role
-curl -s 'http://localhost:3000/api/orgs/acme/employees?anyDept=people&anyCity=Berlin&anyRole=support&pageSize=20'
+curl -s 'http://localhost:3001/api/orgs/acme/employees?anyDept=people&anyCity=Berlin&anyRole=support&pageSize=20'
 
 # search + combined admin query
-curl -s 'http://localhost:3000/api/orgs/acme/employees?q=madrid&pageSize=20'
-curl -s 'http://localhost:3000/api/orgs/acme/employees?status=active&minSalary=50000&roles=engineer,designer&q=a&sort=salary:desc&pageSize=20'
+curl -s 'http://localhost:3001/api/orgs/acme/employees?q=madrid&pageSize=20'
+curl -s 'http://localhost:3001/api/orgs/acme/employees?status=active&minSalary=50000&roles=engineer,designer&q=a&sort=salary:desc&pageSize=20'
 
 # 400 on bad numeric filter
-curl -si 'http://localhost:3000/api/orgs/acme/employees?minSalary=abc'
+curl -si 'http://localhost:3001/api/orgs/acme/employees?minSalary=abc'
 ```
 
 | Op / feature | Query in this example |
@@ -767,26 +767,26 @@ Try:
 
 ```bash
 # Invalid FK
-curl -si -X POST http://localhost:3000/api/articles \
+curl -si -X POST http://localhost:3001/api/articles \
   -H 'Content-Type: application/json' \
   -d '{"title":"Ghost","slug":"ghost","authorId":999}'
 
 # Expand one + list filters
-curl -s 'http://localhost:3000/api/articles/1?expand=author'
-curl -s 'http://localhost:3000/api/articles?status=published&q=engine&pageSize=10'
+curl -s 'http://localhost:3001/api/articles/1?expand=author'
+curl -s 'http://localhost:3001/api/articles?status=published&q=engine&pageSize=10'
 
 # Expand many + nested
-curl -s 'http://localhost:3000/api/authors/1?expand=articles.author'
+curl -s 'http://localhost:3001/api/authors/1?expand=articles.author'
 
 # Restrict delete while articles remain
-curl -si -X DELETE http://localhost:3000/api/authors/1
+curl -si -X DELETE http://localhost:3001/api/authors/1
 
 # Soft-delete article, then delete author, then restore article from trash
-curl -s -X DELETE http://localhost:3000/api/articles/1 -o /dev/null -w '%{http_code}\n'
-curl -s -X DELETE http://localhost:3000/api/articles/2 -o /dev/null -w '%{http_code}\n'
-curl -si -X DELETE http://localhost:3000/api/authors/2
-curl -s -X POST http://localhost:3000/api/articles/2
-curl -s 'http://localhost:3000/api/articles?includeDeleted=true'
+curl -s -X DELETE http://localhost:3001/api/articles/1 -o /dev/null -w '%{http_code}\n'
+curl -s -X DELETE http://localhost:3001/api/articles/2 -o /dev/null -w '%{http_code}\n'
+curl -si -X DELETE http://localhost:3001/api/authors/2
+curl -s -X POST http://localhost:3001/api/articles/2
+curl -s 'http://localhost:3001/api/articles?includeDeleted=true'
 ```
 
 | Feature | How this example uses it |
@@ -1067,21 +1067,21 @@ Try:
 
 ```bash
 # List orders + expand line items
-curl -s 'http://localhost:3000/api/acme/orders?status=paid'
-curl -s 'http://localhost:3000/api/acme/orders/1?expand=items'
+curl -s 'http://localhost:3001/api/acme/orders?status=paid'
+curl -s 'http://localhost:3001/api/acme/orders/1?expand=items'
 
 # Line items for an order + expand parent (composite join)
-curl -s 'http://localhost:3000/api/acme/order-items?orderId=1'
-curl -s 'http://localhost:3000/api/acme/order-items/1?expand=order'
+curl -s 'http://localhost:3001/api/acme/order-items?orderId=1'
+curl -s 'http://localhost:3001/api/acme/order-items/1?expand=order'
 
 # Invalid FK (order 999 does not exist for tenant)
-curl -si -X POST http://localhost:3000/api/acme/order-items \
+curl -si -X POST http://localhost:3001/api/acme/order-items \
   -H 'Content-Type: application/json' \
   -d '{"orderId":999,"sku":"SKU-X","qty":1,"price":5}'
 
 # Cascade: deleting order 1 removes its items
-curl -s -X DELETE http://localhost:3000/api/acme/orders/1 -o /dev/null -w '%{http_code}\n'
-curl -s 'http://localhost:3000/api/acme/order-items?orderId=1'
+curl -s -X DELETE http://localhost:3001/api/acme/orders/1 -o /dev/null -w '%{http_code}\n'
+curl -s 'http://localhost:3001/api/acme/order-items?orderId=1'
 ```
 
 | Feature | How this example uses it |
@@ -1253,41 +1253,41 @@ Try:
 
 ```bash
 # Validation fails before match.call (counter does not advance)
-curl -si -X POST http://localhost:3000/api/v1/auth/login \
+curl -si -X POST http://localhost:3001/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"not-an-email","password":"short"}'
 
 # Per-email lockout (Alice)
-curl -si -X POST http://localhost:3000/api/v1/auth/login \
+curl -si -X POST http://localhost:3001/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"alice@acme.com","password":"wrong-password"}'
 # → 401 attemptsLeft: 2
-curl -si -X POST http://localhost:3000/api/v1/auth/login \
+curl -si -X POST http://localhost:3001/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"alice@acme.com","password":"wrong-password"}'
 # → 401 + X-Auth-Warning, attemptsLeft: 1
-curl -si -X POST http://localhost:3000/api/v1/auth/login \
+curl -si -X POST http://localhost:3001/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"alice@acme.com","password":"wrong-password"}'
 # → 423 + Retry-After
 
 # Bob still has a fresh counter
-curl -si -X POST http://localhost:3000/api/v1/auth/login \
+curl -si -X POST http://localhost:3001/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"bob@acme.com","password":"wrong-password"}'
 # → 401 attemptsLeft: 2
 
 # Success resets Alice’s counter; then register a session
-curl -si -X POST http://localhost:3000/api/v1/auth/login \
+curl -si -X POST http://localhost:3001/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"alice@acme.com","password":"CorrectHorse1"}'
 
-curl -si -X POST http://localhost:3000/api/v1/auth/sessions \
+curl -si -X POST http://localhost:3001/api/v1/auth/sessions \
   -H 'Content-Type: application/json' \
   -d '{"userId":1,"email":"alice@acme.com","device":"Safari / iOS"}'
 
-curl -s 'http://localhost:3000/api/v1/auth/sessions'
-curl -s -o /dev/null -w '%{http_code}\n' -X DELETE http://localhost:3000/api/v1/auth/sessions/1
+curl -s 'http://localhost:3001/api/v1/auth/sessions'
+curl -s -o /dev/null -w '%{http_code}\n' -X DELETE http://localhost:3001/api/v1/auth/sessions/1
 ```
 
 | Feature | How this example uses it |
@@ -1482,35 +1482,35 @@ Try:
 
 ```bash
 # Login → access + refresh
-curl -s -X POST http://localhost:3000/api/v1/auth/login \
+curl -s -X POST http://localhost:3001/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"demo@acme.com","password":"CorrectHorse1"}'
 
 # First refresh rotates tokens (reuse counter scoped by refreshToken)
-curl -s -X POST http://localhost:3000/api/v1/auth/refresh \
+curl -s -X POST http://localhost:3001/api/v1/auth/refresh \
   -H 'Content-Type: application/json' \
   -d '{"refreshToken":"refresh.ok"}'
 # → access.ok.2 / refresh.ok.2
 
 # Reusing the old refresh fails
-curl -si -X POST http://localhost:3000/api/v1/auth/refresh \
+curl -si -X POST http://localhost:3001/api/v1/auth/refresh \
   -H 'Content-Type: application/json' \
   -d '{"refreshToken":"refresh.ok"}'
 # → 401 REFRESH_REUSE
 
 # Expired refresh
-curl -si -X POST http://localhost:3000/api/v1/auth/refresh \
+curl -si -X POST http://localhost:3001/api/v1/auth/refresh \
   -H 'Content-Type: application/json' \
   -d '{"refreshToken":"refresh.expired"}'
 # → 401 REFRESH_EXPIRED
 
 # Protected route (query stand-in until header match exists)
-curl -s 'http://localhost:3000/api/v1/me?auth=ok'
-curl -si 'http://localhost:3000/api/v1/me'
+curl -s 'http://localhost:3001/api/v1/me?auth=ok'
+curl -si 'http://localhost:3001/api/v1/me'
 # → 401 + WWW-Authenticate
 
 # Logout
-curl -si -X POST http://localhost:3000/api/v1/auth/logout \
+curl -si -X POST http://localhost:3001/api/v1/auth/logout \
   -H 'Content-Type: application/json' \
   -d '{"refreshToken":"refresh.ok.2"}'
 ```
@@ -1655,22 +1655,22 @@ Try:
 
 ```bash
 # Always 202 (no email enumeration)
-curl -si -X POST http://localhost:3000/api/v1/auth/forgot-password \
+curl -si -X POST http://localhost:3001/api/v1/auth/forgot-password \
   -H 'Content-Type: application/json' \
   -d '{"email":"anyone@acme.com"}'
 
 # Validate token before showing the form
-curl -s http://localhost:3000/api/v1/auth/reset-password/reset.ok
-curl -si http://localhost:3000/api/v1/auth/reset-password/reset.expired
+curl -s http://localhost:3001/api/v1/auth/reset-password/reset.ok
+curl -si http://localhost:3001/api/v1/auth/reset-password/reset.expired
 # → 410 RESET_TOKEN_EXPIRED
 
 # Password mismatch vs success
-curl -si -X POST http://localhost:3000/api/v1/auth/reset-password/reset.ok \
+curl -si -X POST http://localhost:3001/api/v1/auth/reset-password/reset.ok \
   -H 'Content-Type: application/json' \
   -d '{"password":"NewCorrect1","passwordConfirm":"OtherPass99"}'
 # → 422 PASSWORD_MISMATCH
 
-curl -si -X POST http://localhost:3000/api/v1/auth/reset-password/reset.ok \
+curl -si -X POST http://localhost:3001/api/v1/auth/reset-password/reset.ok \
   -H 'Content-Type: application/json' \
   -d '{"password":"NewCorrect1","passwordConfirm":"NewCorrect1"}'
 # → 204
@@ -1845,21 +1845,21 @@ Try:
 
 ```bash
 # Start export
-curl -si -X POST http://localhost:3000/api/v1/exports \
+curl -si -X POST http://localhost:3001/api/v1/exports \
   -H 'Content-Type: application/json' \
   -d '{"type":"orders-csv","from":"2026-07-01","to":"2026-07-28"}'
 # → 202 + Location
 
 # Poll: queued → running → ready
-curl -si http://localhost:3000/api/v1/exports/job_1
-curl -si http://localhost:3000/api/v1/exports/job_1
-curl -s http://localhost:3000/api/v1/exports/job_1
+curl -si http://localhost:3001/api/v1/exports/job_1
+curl -si http://localhost:3001/api/v1/exports/job_1
+curl -s http://localhost:3001/api/v1/exports/job_1
 
 # Download when ready
-curl -s http://localhost:3000/api/v1/exports/job_1/download
+curl -s http://localhost:3001/api/v1/exports/job_1/download
 
 # Quota example
-curl -si -X POST http://localhost:3000/api/v1/exports \
+curl -si -X POST http://localhost:3001/api/v1/exports \
   -H 'Content-Type: application/json' \
   -d '{"type":"invoices-pdf"}'
 # → 429
@@ -2024,16 +2024,16 @@ Try:
 
 ```bash
 # Inbox + unread only
-curl -s 'http://localhost:3000/api/v1/notifications?sort=createdAt&order=desc'
-curl -s 'http://localhost:3000/api/v1/notifications?unread=true'
+curl -s 'http://localhost:3001/api/v1/notifications?sort=createdAt&order=desc'
+curl -s 'http://localhost:3001/api/v1/notifications?unread=true'
 
 # Mark one as read
-curl -s -X PATCH http://localhost:3000/api/v1/notifications/1 \
+curl -s -X PATCH http://localhost:3001/api/v1/notifications/1 \
   -H 'Content-Type: application/json' \
   -d '{"unread":false}'
 
 # Mark-all endpoint (static ack — wire to your UI; store rows still need per-item patch for live counts)
-curl -s -X POST http://localhost:3000/api/v1/notifications/mark-all-read
+curl -s -X POST http://localhost:3001/api/v1/notifications/mark-all-read
 ```
 
 | Feature | How this example uses it |
@@ -2198,21 +2198,21 @@ Try:
 
 ```bash
 # Initiate upload
-curl -s -X POST http://localhost:3000/api/v1/uploads \
+curl -s -X POST http://localhost:3001/api/v1/uploads \
   -H 'Content-Type: application/json' \
   -d '{"filename":"avatar.png","contentType":"image/png","sizeBytes":245760}'
 
 # PUT content to the signed path (body ignored — contract only)
-curl -si -X PUT http://localhost:3000/api/v1/uploads/upl_ok/content \
+curl -si -X PUT http://localhost:3001/api/v1/uploads/upl_ok/content \
   -H 'Content-Type: image/png' \
   -d 'fake-bytes'
 
 # Complete + fetch asset metadata
-curl -s -X POST http://localhost:3000/api/v1/uploads/upl_ok/complete
-curl -s http://localhost:3000/api/v1/assets/upl_ok
+curl -s -X POST http://localhost:3001/api/v1/uploads/upl_ok/complete
+curl -s http://localhost:3001/api/v1/assets/upl_ok
 
 # Too large
-curl -si -X POST http://localhost:3000/api/v1/uploads \
+curl -si -X POST http://localhost:3001/api/v1/uploads \
   -H 'Content-Type: application/json' \
   -d '{"filename":"huge.bin","contentType":"image/jpeg","sizeBytes":100}'
 # → 413
@@ -2354,14 +2354,14 @@ Combines: `match.params` + `match.query` + static bodies + light `delay`.
 Try:
 
 ```bash
-curl -s 'http://localhost:3000/api/v1/config'
-curl -s 'http://localhost:3000/api/v1/config?env=staging'
-curl -s 'http://localhost:3000/api/v1/config?env=maintenance'
+curl -s 'http://localhost:3001/api/v1/config'
+curl -s 'http://localhost:3001/api/v1/config?env=staging'
+curl -s 'http://localhost:3001/api/v1/config?env=maintenance'
 
-curl -s 'http://localhost:3000/api/v1/feature-flags'
-curl -s 'http://localhost:3000/api/v1/feature-flags?tenantId=beta'
-curl -s 'http://localhost:3000/api/v1/tenants/acme/feature-flags'
-curl -si 'http://localhost:3000/api/v1/tenants/blocked/feature-flags'
+curl -s 'http://localhost:3001/api/v1/feature-flags'
+curl -s 'http://localhost:3001/api/v1/feature-flags?tenantId=beta'
+curl -s 'http://localhost:3001/api/v1/tenants/acme/feature-flags'
+curl -si 'http://localhost:3001/api/v1/tenants/blocked/feature-flags'
 ```
 
 | Feature | How this example uses it |
@@ -2530,30 +2530,30 @@ Combines: `request` + `match.body` + `match.query` + `delay` + `402` / `403` / `
 Try:
 
 ```bash
-curl -s http://localhost:3000/api/v1/billing/plans
-curl -s 'http://localhost:3000/api/v1/billing/subscription?state=trial'
-curl -s 'http://localhost:3000/api/v1/billing/subscription?state=past_due'
+curl -s http://localhost:3001/api/v1/billing/plans
+curl -s 'http://localhost:3001/api/v1/billing/subscription?state=trial'
+curl -s 'http://localhost:3001/api/v1/billing/subscription?state=past_due'
 
 # Upgrade happy path (nameResponse)
-curl -s -X POST http://localhost:3000/api/v1/billing/subscription \
+curl -s -X POST http://localhost:3001/api/v1/billing/subscription \
   -H 'Content-Type: application/json' \
   -d '{"planId":"pro","seats":10,"paymentMethodId":"pm_ok"}'
 
 # Declined card on business
-curl -si -X POST http://localhost:3000/api/v1/billing/subscription \
+curl -si -X POST http://localhost:3001/api/v1/billing/subscription \
   -H 'Content-Type: application/json' \
   -d '{"planId":"business","paymentMethodId":"pm_fail"}'
 # → 402
 
 # Same plan conflict
-curl -si -X POST http://localhost:3000/api/v1/billing/subscription \
+curl -si -X POST http://localhost:3001/api/v1/billing/subscription \
   -H 'Content-Type: application/json' \
   -d '{"planId":"free"}'
 # → 409
 
 # Pay past-due invoice
-curl -s -X POST http://localhost:3000/api/v1/billing/invoices/inv_past_1/pay
-curl -si -X POST 'http://localhost:3000/api/v1/billing/invoices/inv_past_1/pay?card=fail'
+curl -s -X POST http://localhost:3001/api/v1/billing/invoices/inv_past_1/pay
+curl -si -X POST 'http://localhost:3001/api/v1/billing/invoices/inv_past_1/pay?card=fail'
 ```
 
 | Feature | How this example uses it |
@@ -2745,33 +2745,33 @@ Try:
 
 ```bash
 # Resume wizard
-curl -s http://localhost:3000/api/v1/onboarding
-curl -s 'http://localhost:3000/api/v1/onboarding?state=fresh'
-curl -s 'http://localhost:3000/api/v1/onboarding?state=done'
+curl -s http://localhost:3001/api/v1/onboarding
+curl -s 'http://localhost:3001/api/v1/onboarding?state=fresh'
+curl -s 'http://localhost:3001/api/v1/onboarding?state=done'
 
 # Save steps
-curl -s -X PUT http://localhost:3000/api/v1/onboarding/steps/1 \
+curl -s -X PUT http://localhost:3001/api/v1/onboarding/steps/1 \
   -H 'Content-Type: application/json' \
   -d '{"company":"Acme"}'
 
-curl -s -X PUT http://localhost:3000/api/v1/onboarding/steps/2 \
+curl -s -X PUT http://localhost:3001/api/v1/onboarding/steps/2 \
   -H 'Content-Type: application/json' \
   -d '{"role":"admin"}'
 
-curl -s -X PUT http://localhost:3000/api/v1/onboarding/steps/3 \
+curl -s -X PUT http://localhost:3001/api/v1/onboarding/steps/3 \
   -H 'Content-Type: application/json' \
   -d '{"inviteEmails":["alex@acme.com"]}'
 
 # Out of order / incomplete finish
-curl -si -X PUT 'http://localhost:3000/api/v1/onboarding/steps/3?skip=1' \
+curl -si -X PUT 'http://localhost:3001/api/v1/onboarding/steps/3?skip=1' \
   -H 'Content-Type: application/json' \
   -d '{"inviteEmails":["alex@acme.com"]}'
 # → 409
 
-curl -si -X POST http://localhost:3000/api/v1/onboarding/complete
+curl -si -X POST http://localhost:3001/api/v1/onboarding/complete
 # → 409 ONBOARDING_INCOMPLETE
 
-curl -s -X POST 'http://localhost:3000/api/v1/onboarding/complete?ready=true'
+curl -s -X POST 'http://localhost:3001/api/v1/onboarding/complete?ready=true'
 # → completed + redirectTo
 ```
 

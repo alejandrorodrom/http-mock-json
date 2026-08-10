@@ -122,6 +122,12 @@ module.exports = {
           if (!output.includes('Mock ready')) {
             failures.push(`[path+crud] Expected "Mock ready". Output:\n${ output }`);
           }
+          if (!output.includes('Next:')) {
+            failures.push(`[path+crud] Expected "Next:". Output:\n${ output }`);
+          }
+          if (!output.includes('curl -i http://localhost:3001/api/notes')) {
+            failures.push(`[path+crud] Expected curl for api/notes. Output:\n${ output }`);
+          }
           if (!output.includes('store actions')) {
             failures.push(`[path+crud] Expected CRUD hint. Output:\n${ output }`);
           }
@@ -213,6 +219,9 @@ module.exports = {
           if (output.includes('Mock ready')) {
             failures.push('[abort+crud] Should not print Mock ready on abort');
           }
+          if (output.includes('Next:')) {
+            failures.push('[abort+crud] Should not print Next: on abort');
+          }
         }
 
         // --- ENOENT with --crud (missing mocks directory) ---
@@ -229,6 +238,9 @@ module.exports = {
           }
           if (output.includes('Mock ready')) {
             failures.push('[enoent+crud] Should not print Mock ready after write failure');
+          }
+          if (output.includes('Next:')) {
+            failures.push('[enoent+crud] Should not print Next: after write failure');
           }
           if (process.exitCode !== 1) {
             failures.push(`[enoent+crud] Expected exitCode 1, got ${ process.exitCode }`);
@@ -267,6 +279,9 @@ module.exports = {
           if (output.includes('Mock ready')) {
             failures.push('[overwrite-refuse] Should not print Mock ready when overwrite is declined');
           }
+          if (output.includes('Next:')) {
+            failures.push('[overwrite-refuse] Should not print Next: when overwrite is declined');
+          }
         }
 
         // --- crud:false keeps verb prompt behavior (combo regression) ---
@@ -288,6 +303,18 @@ module.exports = {
               `[crud-false+path] Expected numeric statusCode 200, got: ${
                 parsed.health?.GET?.responses?.[0]?.statusCode
               }`
+            );
+          }
+          const successBody = parsed.health?.GET?.responses?.find((r) => r.name === 'success')?.body;
+          const errorBody = parsed.health?.GET?.responses?.find((r) => r.name === 'error')?.body;
+          if (successBody?.message !== 'ok') {
+            failures.push(
+              `[crud-false+path] Expected success message "ok", got: ${ JSON.stringify(successBody) }`
+            );
+          }
+          if (errorBody?.message !== 'Not found') {
+            failures.push(
+              `[crud-false+path] Expected error message "Not found", got: ${ JSON.stringify(errorBody) }`
             );
           }
         }

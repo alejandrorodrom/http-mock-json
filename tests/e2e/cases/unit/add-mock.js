@@ -48,14 +48,32 @@ module.exports = {
               `Expected GET+POST on users endpoint, got: ${ JSON.stringify(parsed) }`
             );
           }
+          const successBody = parsed.users?.GET?.responses?.find((r) => r.name === 'success')?.body;
+          const errorBody = parsed.users?.GET?.responses?.find((r) => r.name === 'error')?.body;
+          if (successBody?.message !== 'ok') {
+            failures.push(`Expected success body message "ok", got: ${ JSON.stringify(successBody) }`);
+          }
+          if (errorBody?.message !== 'Not found') {
+            failures.push(`Expected error body message "Not found", got: ${ JSON.stringify(errorBody) }`);
+          }
         }
 
         const joinedLogs = logs.join('\n');
         if (!joinedLogs.includes('Mock ready')) {
           failures.push(`Expected "Mock ready" after confirm. Logs:\n${ joinedLogs }`);
         }
+        if (!joinedLogs.includes('Next:')) {
+          failures.push(`Expected "Next:" after confirm. Logs:\n${ joinedLogs }`);
+        }
+        if (!joinedLogs.includes('mock-server start')) {
+          failures.push(`Expected "mock-server start" in Next. Logs:\n${ joinedLogs }`);
+        }
+        if (!joinedLogs.includes('curl -i http://localhost:3001/users')) {
+          failures.push(`Expected curl for users endpoint. Logs:\n${ joinedLogs }`);
+        }
 
         // Abort: confirm=false → no new file
+        logs.length = 0;
         prompts.inject(['aborted-api', 'gone', ['get'], false]);
         const beforeAbort = fs.readdirSync(mocksDir);
         await addMock({ path: 'api-mocks' });
@@ -67,8 +85,15 @@ module.exports = {
         if (afterAbort.length !== beforeAbort.length) {
           failures.push('Abort confirm should not add files under mocks/');
         }
-        if (!logs.join('\n').includes('Aborting')) {
-          failures.push(`Expected abort message. Logs:\n${ logs.join('\n') }`);
+        const abortLogs = logs.join('\n');
+        if (!abortLogs.includes('Aborting')) {
+          failures.push(`Expected abort message. Logs:\n${ abortLogs }`);
+        }
+        if (abortLogs.includes('Next:')) {
+          failures.push(`Abort should not print Next:. Logs:\n${ abortLogs }`);
+        }
+        if (abortLogs.includes('Mock ready')) {
+          failures.push(`Abort should not print Mock ready. Logs:\n${ abortLogs }`);
         }
       } finally {
         console.log = originalLog;

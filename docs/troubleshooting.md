@@ -47,7 +47,7 @@ File: …
 |---|---|
 | **Symptom** | Start exits immediately; no mock files processed. |
 | **Cause** | `--port` / `-p` is not numeric (e.g. `abc`). |
-| **Fix** | Pass an integer port: `mock-server start -p 3000`. |
+| **Fix** | Pass an integer port: `mock-server start -p 3001`. |
 | **See** | [CLI](../README.md#cli-reference) |
 
 ### `Port must be between 1 and 65535`
@@ -65,7 +65,7 @@ File: …
 |---|---|
 | **Symptom** | Start fails before loading mocks. |
 | **Cause** | Another process is listening on that port. |
-| **Fix** | Free the port or choose another (`-p 3001`). |
+| **Fix** | Free the port or choose another (`-p 3002`). |
 | **See** | [CLI](../README.md#cli-reference) |
 
 ### `The mocks directory does not exist`

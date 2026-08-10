@@ -4,7 +4,6 @@ import fs from "fs";
 import { join } from "path";
 import { printDuration } from "../../../scripts/duration.script";
 import { bold, dim, green } from "colorette";
-import { terminalPrompt } from "../../../scripts/unix.script";
 import { AddOptions } from "../../../types/options.type";
 import { HttpVerbs } from "../../../constants/http-verbs.constant";
 import { structureMock } from "./structure-mock";
@@ -25,9 +24,9 @@ import {
   presetInitialEndpoint,
   presetLabel,
   presetNeedsHttpVerbs,
-  presetReadyHint,
   resolveAddPreset
 } from "./presets";
+import { printAddNextSteps } from "./next-steps";
 import { PromptAddMock } from "../../../interfaces/mock.interface";
 import { resolveMocksDir } from "../../../scripts/mocks-path.script";
 
@@ -195,14 +194,7 @@ export const addMock = async (options: AddOptions) => {
     const time = printDuration(Date.now() - startTime);
 
     console.log(`${ green(`✔ ${ bold('Mock ready 🎉') }`) } ${ dim(time) }`);
-    console.log(`${ dim(presetReadyHint(preset)) }`);
-
-    console.log(`\n${ dim('You may find the following commands will be helpful:') }\n`);
-    console.log(`\t${ dim(terminalPrompt()) } ${ green('mock-server start') }`);
-    console.log(`\tStart mock server.\n`);
-    console.log(`\t${ dim(terminalPrompt()) } ${ green('mock-server add') }`);
-    console.log(`\tAdd new endpoint to mock server.\n`);
-    console.log('Happy coding! 🎈');
+    printAddNextSteps(endpoint, preset);
   } catch (e) {
     logError(e);
     process.exitCode = 1;

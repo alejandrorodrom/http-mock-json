@@ -5,6 +5,39 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0] - 2026-08-09
+
+Major release on top of **5.3.0**.
+
+### Previous version
+
+**5.3.0** — `add --preset` scaffolds.
+
+### Breaking Changes
+
+- Default listen port is **`3001`** (was `3000`) when CLI `-p` / `--port` and `mock.config.json` `port` are omitted — sits beside frontends that already use `3000`
+- `init`’s `mock:start` script is now `mock-server start` (no hardcoded `-p 3001`; same default applies)
+
+### Migration
+
+- If you relied on bare `mock-server start` on **3000**, pass `-p 3000` or set `"port": 3000` in `mock.config.json`
+- Regenerate or edit `mock:start` if you still want an explicit `-p` in `package.json`
+
+### Added
+
+- CLI **Next:** footer after successful `add` / `init` / `import` (`mock-server start`, plus curl + preset tip on `add`; `init --mock false` suggests `add` then `start`)
+- **`static` preset** (default `init` / `add`): sample bodies `{ "message": "ok" }` / `{ "message": "Not found" }` so day-one `curl` works without editing JSON first
+
+### Changed
+
+- `DEFAULT_MOCK_PORT` constant (`3001`) used by port resolution
+- Docs / FAQ / recipes / troubleshooting examples use `localhost:3001`; proxy-to-local samples use `4000` as the upstream
+- Docs: tighten day-one path — Quick Start / Getting started are a single ~5 minute flow; Record, Demo, Examples, and Advanced sit under “Later” / “Other ways to start” ([README](README.md), [docs/README](docs/README.md))
+- `static` ready hint points at flipping `nameResponse` to try the 404 body (curl lives only in the Next: footer)
+- Package / CLI version bumped to `6.0.0`
+
+---
+
 ## [5.3.0] - 2026-08-09
 
 Minor release on top of **5.2.0**.

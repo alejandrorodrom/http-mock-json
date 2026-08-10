@@ -20,7 +20,7 @@ export const addScriptToPackageJson = () => {
 
     structure.scripts = {
       ...structure.scripts,
-      'mock:start': 'mock-server start -p 3001'
+      'mock:start': 'mock-server start'
     };
 
     try {

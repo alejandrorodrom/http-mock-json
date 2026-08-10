@@ -10,7 +10,7 @@ Short answers to common questions. Full reference: [README](../README.md). Sympt
 
 ### What is http-mock-json? Can I embed it or import an API?
 
-It is a **CLI** (`mock-server`) that starts a local HTTP mock server from JSON files. Your app calls that server over HTTP (e.g. `http://localhost:3000/...`).
+It is a **CLI** (`mock-server`) that starts a local HTTP mock server from JSON files. Your app calls that server over HTTP (e.g. `http://localhost:3001/...`).
 
 The published package does **not** export an embeddable server/SDK — use JSON mocks and `mock-server start`, not an in-process API. To scaffold mocks from an OpenAPI 3.x document, use the CLI [`import`](#can-i-import-an-openapi--swagger-file) command (that is not a library import).
 
@@ -101,7 +101,7 @@ See [CLI](../README.md#cli-reference).
 
 ### How is the listen port chosen?
 
-Priority: CLI `-p` / `--port` → `mock.config.json` `port` → **3000**. The port is checked for availability **before** mocks are loaded.
+Priority: CLI `-p` / `--port` → `mock.config.json` `port` → **3001**. The port is checked for availability **before** mocks are loaded.
 
 See [CLI](../README.md#cli-reference) and [Mock config](../README.md#mock-config-reference). Port conflicts: [Troubleshooting](troubleshooting.md#port-path-and-init).
 

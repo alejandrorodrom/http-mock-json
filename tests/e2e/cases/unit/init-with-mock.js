@@ -51,6 +51,14 @@ module.exports = {
           if (!parsed.hello?.GET) {
             failures.push(`Expected hello.GET in mock, got: ${ JSON.stringify(parsed) }`);
           }
+          const successBody = parsed.hello?.GET?.responses?.find((r) => r.name === 'success')?.body;
+          const errorBody = parsed.hello?.GET?.responses?.find((r) => r.name === 'error')?.body;
+          if (successBody?.message !== 'ok') {
+            failures.push(`Expected success body message "ok", got: ${ JSON.stringify(successBody) }`);
+          }
+          if (errorBody?.message !== 'Not found') {
+            failures.push(`Expected error body message "Not found", got: ${ JSON.stringify(errorBody) }`);
+          }
         }
 
         const joined = logs.join('\n');
@@ -59,6 +67,12 @@ module.exports = {
         }
         if (!joined.includes('Mock ready')) {
           failures.push(`Expected Mock ready after --mock true. Logs:\n${ joined }`);
+        }
+        if (!joined.includes('Next:')) {
+          failures.push(`Expected Next: after --mock true. Logs:\n${ joined }`);
+        }
+        if (!joined.includes('curl -i http://localhost:3001/hello')) {
+          failures.push(`Expected curl for hello endpoint. Logs:\n${ joined }`);
         }
         if (joined.includes('The script was added successfully')) {
           failures.push('Did not expect package script when script:false');
