@@ -125,8 +125,8 @@ module.exports = {
           if (!output.includes('store actions')) {
             failures.push(`[path+crud] Expected CRUD hint. Output:\n${ output }`);
           }
-          if (!output.includes('Preparing CRUD mock')) {
-            failures.push(`[path+crud] Expected "Preparing CRUD mock". Output:\n${ output }`);
+          if (!output.includes('Preparing mock') || !output.includes('crud')) {
+            failures.push(`[path+crud] Expected preparing message for crud. Output:\n${ output }`);
           }
         }
 
@@ -217,6 +217,8 @@ module.exports = {
 
         // --- ENOENT with --crud (missing mocks directory) ---
         {
+          const previousExitCode = process.exitCode;
+          process.exitCode = 0;
           const output = await captureLogs(async () => {
             prompts.inject(['broken-crud', 'ping', true]);
             await addMock({ path: 'missing-mocks-dir', crud: true });
@@ -228,6 +230,10 @@ module.exports = {
           if (output.includes('Mock ready')) {
             failures.push('[enoent+crud] Should not print Mock ready after write failure');
           }
+          if (process.exitCode !== 1) {
+            failures.push(`[enoent+crud] Expected exitCode 1, got ${ process.exitCode }`);
+          }
+          process.exitCode = previousExitCode;
         }
 
         // --- overwrite same file with --path + --crud (confirm overwrite) ---

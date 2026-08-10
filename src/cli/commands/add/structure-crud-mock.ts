@@ -12,7 +12,7 @@ type CrudMethod = {
   responses: CrudActionResponse[];
 };
 
-const actionMethod = (
+export const actionMethod = (
   nameResponse: string,
   statusCode: number,
   action: StoreAction
@@ -21,7 +21,7 @@ const actionMethod = (
   responses: [{ name: nameResponse, statusCode, action }]
 });
 
-const resolveCrudRoutes = (endpoint: string): {
+export const resolveCrudRoutes = (endpoint: string): {
   collection: string;
   item: string;
   storeId: string;
@@ -71,6 +71,35 @@ export const structureCrudMock = (endpoint: string): Record<string, unknown> => 
       PUT: actionMethod('update', 200, 'update'),
       PATCH: actionMethod('patch', 200, 'patch'),
       DELETE: actionMethod('remove', 204, 'delete')
+    }
+  };
+};
+
+/**
+ * CRUD plus persist, unique title, soft delete, and restore on item POST.
+ */
+export const structureCrudFullMock = (endpoint: string): Record<string, unknown> => {
+  const { collection, item } = resolveCrudRoutes(endpoint);
+  const base = structureCrudMock(endpoint);
+  const collectionMock = base[collection] as Record<string, unknown>;
+  const itemMock = base[item] as Record<string, unknown>;
+  const store = collectionMock.store as Record<string, unknown>;
+
+  return {
+    ...base,
+    [collection]: {
+      ...collectionMock,
+      store: {
+        ...store,
+        template: { id: 0, title: '' },
+        unique: ['title'],
+        softDelete: true,
+        persist: true
+      }
+    },
+    [item]: {
+      ...itemMock,
+      POST: actionMethod('restore', 200, 'restore')
     }
   };
 };

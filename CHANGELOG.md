@@ -5,6 +5,39 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.3.0] - 2026-08-09
+
+Minor release on top of **5.2.0**.
+
+### Previous version
+
+**5.2.0** — OpenAPI `import` → `request` mapping.
+
+### Added
+
+- **`add --preset`:** scaffolds `static` \| `crud` \| `crud-full` \| `scenarios` \| `auth-login` \| `proxy-hybrid` \| `paginated-list` \| `upload` \| `relations`
+- **`crud-full`:** persist + unique `title` + soft delete + item `POST` restore
+- **`scenarios`:** GET with `?scenario=ok|missing|error` match branches and delays
+- **`auth-login`:** POST login with `request` validation + success/forbidden match + 401/400
+- **`proxy-hybrid`:** local GET + sibling `…/live` proxy to jsonplaceholder (`offline` response via `nameResponse`)
+- **`paginated-list`:** store collection with `list` page/filter/search seed data
+- **`upload`:** multipart POST + base64 GET download (no external asset file)
+- **`relations`:** parent + child stores with FK / embed / `onDelete: restrict` (default `users` + `posts`)
+- E2E: `unit/add-presets`, `runtime/add-presets`, extended `system/add-cli-flags` for `--preset` / conflict exit codes
+
+### Changed
+
+- `--crud` is an alias for `--preset crud` (behavior unchanged)
+- Default `add` is explicitly the `static` preset
+- `add` sets `process.exitCode = 1` on failure (aligned with `import`)
+- `relations` defaults child to sibling `…/posts`; on collision, prompts for the child collection name instead of failing
+- `relations` derives child FK / embed names from the parent `store.id` (soft-singularized: `users` → `userId`, `posts` → `postId`)
+- `proxy-hybrid` builds `…/live` from the collection path (trailing `/:param` is stripped, same as other store presets)
+- Package / CLI version bumped to `5.3.0`
+- Docs: README / FAQ (preset chooser) describe presets; troubleshooting covers `add` preset CLI errors
+
+---
+
 ## [5.2.0] - 2026-08-09
 
 Minor release on top of **5.1.0**.

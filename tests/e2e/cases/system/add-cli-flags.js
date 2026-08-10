@@ -5,7 +5,7 @@ const { hasExactConsoleMatch, formatMissingMatchFailure } = require('../../lib/s
 
 module.exports = {
   name: 'system/add-cli-flags',
-  description: 'CLI add --help and combined --crud/--path flag surface',
+  description: 'CLI add --help and combined --preset/--crud/--path flag surface',
   async run() {
     const startedAt = Date.now();
     const failures = [];
@@ -36,13 +36,16 @@ module.exports = {
               )
             );
           }
-          for (const flag of ['-p, --path', '--crud']) {
+          for (const flag of ['-p, --path', '--crud', '--preset']) {
             if (!combined.includes(flag)) {
               failures.push(`[add --help] Expected flag text ${ JSON.stringify(flag) }`);
             }
           }
-          if (!combined.includes('store actions')) {
-            failures.push('[add --help] Expected --crud description mentioning store actions');
+          if (!combined.includes('static|crud|crud-full|scenarios|auth-login|proxy-hybrid|paginated-list|upload|relations')) {
+            failures.push('[add --help] Expected full preset list in --preset description');
+          }
+          if (!combined.includes('--preset crud')) {
+            failures.push('[add --help] Expected --crud described as alias for --preset crud');
           }
         }
       } finally {
@@ -54,7 +57,9 @@ module.exports = {
     for (const [label, args] of [
       ['--crud --path --help', ['add', '--crud', '--path', 'api-mocks', '--help']],
       ['--path --crud --help', ['add', '--path', 'api-mocks', '--crud', '--help']],
-      ['--crud --help', ['add', '--crud', '--help']]
+      ['--crud --help', ['add', '--crud', '--help']],
+      ['--preset crud --help', ['add', '--preset', 'crud', '--help']],
+      ['--preset scenarios --path --help', ['add', '--preset', 'scenarios', '--path', 'api-mocks', '--help']]
     ]) {
       const { workspaceDir, cleanup } = createWorkspace(null, { skipMocksDir: true });
 
@@ -85,8 +90,77 @@ module.exports = {
             )
           );
         }
-        if (!combined.includes('--crud')) {
-          failures.push(`[${ label }] Expected --crud in help output`);
+        if (!combined.includes('--preset')) {
+          failures.push(`[${ label }] Expected --preset in help output`);
+        }
+      } finally {
+        cleanup();
+      }
+    }
+
+    // Invalid preset should fail before prompts
+    {
+      const { workspaceDir, cleanup } = createWorkspace(null, { skipMocksDir: true });
+
+      try {
+        const result = await runCli({
+          cwd: workspaceDir,
+          args: ['add', '--preset', 'not-a-preset'],
+          timeoutMs: 12000
+        });
+        const combined = `${ result.stdout }\n${ result.stderr }`;
+
+        if (result.spawnError) {
+          failures.push(`[invalid-preset] ${ result.spawnError }`);
+        } else {
+          if (result.exitCode === 0) {
+            failures.push('[invalid-preset] Expected non-zero exit for unknown preset');
+          }
+          if (!combined.includes('Unknown add preset')) {
+            failures.push(
+              formatMissingMatchFailure(
+                '[invalid-preset] Missing error',
+                'Unknown add preset',
+                combined
+              )
+            );
+          }
+        }
+      } finally {
+        cleanup();
+      }
+    }
+
+    // --crud + conflicting --preset should fail without prompts
+    {
+      const { workspaceDir, cleanup } = createWorkspace(null, { skipMocksDir: true });
+
+      try {
+        const result = await runCli({
+          cwd: workspaceDir,
+          args: ['add', '--crud', '--preset', 'scenarios'],
+          timeoutMs: 12000
+        });
+        const combined = `${ result.stdout }\n${ result.stderr }`;
+
+        if (result.spawnError) {
+          failures.push(`[crud+preset-conflict] ${ result.spawnError }`);
+        } else {
+          if (result.timedOut) {
+            failures.push('[crud+preset-conflict] Timed out (should fail before prompts)');
+          }
+          if (result.exitCode === 0) {
+            failures.push('[crud+preset-conflict] Expected non-zero exit');
+          }
+          if (!combined.includes('Cannot combine --crud')) {
+            failures.push(
+              formatMissingMatchFailure(
+                '[crud+preset-conflict] Missing error',
+                'Cannot combine --crud',
+                combined
+              )
+            );
+          }
         }
       } finally {
         cleanup();
@@ -95,7 +169,7 @@ module.exports = {
 
     return {
       name: 'system/add-cli-flags',
-      description: 'CLI add --help and combined --crud/--path flag surface',
+      description: 'CLI add --help and combined --preset/--crud/--path flag surface',
       passed: failures.length === 0,
       failures,
       durationMs: Date.now() - startedAt,

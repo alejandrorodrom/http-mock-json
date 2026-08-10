@@ -7,13 +7,14 @@ import { addMock } from "./commands/add/add-mock";
 import { importOpenApi } from "./commands/import/import-openapi";
 import { isHttpUrl } from "../scripts/http-url.script";
 import { DEFAULT_MOCKS_DIR } from '../constants/mocks-path.constant';
+import { ADD_PRESET_HELP, assertAddPreset } from './commands/add/presets';
 
 export const interactive = () => {
   const mock = new Command();
 
   mock
     .name('mock-server')
-    .version('5.2.0', '-v, --version', 'Output the version number')
+    .version('5.3.0', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.');
 
@@ -154,13 +155,18 @@ export const interactive = () => {
       DEFAULT_MOCKS_DIR
     )
     .option(
+      '--preset <name>',
+      `Scaffold preset (${ ADD_PRESET_HELP }; default: static)`,
+      (value: string): string => assertAddPreset(value)
+    )
+    .option(
       '--crud',
-      'Generate collection + /:id with store actions (list/create/get/update/patch/delete)',
+      'Alias for --preset crud (collection + /:id store actions)',
       false
     )
-    .description('Create a mock.')
-    .action((options: AddOptions) => {
-      addMock(options)
+    .description('Create a mock from a preset (static by default).')
+    .action(async (options: AddOptions) => {
+      await addMock(options);
     });
 
   mock

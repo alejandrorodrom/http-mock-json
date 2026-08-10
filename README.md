@@ -29,6 +29,7 @@ The frontend keeps calling HTTP on your machine. Backend outages stop blocking y
 - **Safe by default** — startup validation catches broken mocks before they waste your time
 - **Watch mode** — server restarts when mock files change
 - **Opt-in depth** — start static; add `match`, `request`, `store`, or `proxy` only when you need them
+- **Presets** — `mock-server add --preset …` scaffolds common shapes (CRUD, auth, upload, relations…) so you edit JSON instead of inventing structure
 - **Record & Replay** — point `--proxy` at staging, hit the app once with `--record`, then replay those fixtures locally without the upstream
 
 ## Quick Start
@@ -171,16 +172,14 @@ By default this will:
 
 #### 3. Answer the first-mock prompts
 
-If mock creation is enabled (default), you will be asked:
+If mock creation is enabled (default), `init` uses the **`static`** preset and asks:
 
 1. **JSON file name** — e.g. `animals` → `mocks/animals.json`
 2. **Endpoint** — e.g. `data/animals` (route params like `data/animals/:id` are allowed)
 3. **HTTP methods** — select one or more of `GET`, `POST`, `PUT`, `PATCH`, `DELETE`
 4. **Confirm**
 
-The scaffold sets `nameResponse` to `"success"` and includes two empty responses: `success` (`200`) and `error` (`404`).
-
-You can add more mocks later with `mock-server add` (or `mock-server add --crud` for a store-backed collection). See [CLI](#cli-reference).
+That writes `nameResponse: "success"` plus empty `success` (`200`) and `error` (`404`) bodies. For store CRUD, auth, uploads, and other shapes, use `mock-server add --preset <name>` later ([CLI — add](#add)).
 
 #### 4. Fill in response bodies
 
@@ -255,7 +254,7 @@ On start, the server checks port availability, then validates every mock file. E
 
 ### Recommendations
 
-- Copy a ready-made sample from [Examples](docs/examples.md) when you need more than the scaffold.
+- Prefer `mock-server add --preset …` when you need a known shape (CRUD, login, list, upload); use [Examples](docs/examples.md) for fuller product scenarios.
 - Keep one endpoint’s methods together in the same file; split by domain across multiple JSON files as the API grows.
 - Use `request` for input shape checks, and store uniqueness / conflict responses for business `409`s — see [Concepts](#concepts).
 - For microservice-style layouts, use folder organization with `mock.config.json` (details in [Mock config](#mock-config-reference)).
@@ -264,8 +263,9 @@ On start, the server checks port availability, then validates every mock file. E
 ### Next steps
 
 1. [Concepts](#concepts) — how `nameResponse`, `match`, `request`, `store`, and `proxy` fit together at runtime  
-2. [Examples](docs/examples.md) — copyable mocks from this repository  
-3. [Advanced examples](docs/advanced-examples.md) — one-feature walkthroughs (`match`, delay, request validation, …)  
+2. [CLI — add](#add) — presets for common scaffolds  
+3. [Examples](docs/examples.md) — copyable mocks from this repository  
+4. [Advanced examples](docs/advanced-examples.md) — one-feature walkthroughs (`match`, delay, request validation, …)  
 
 Lookup in this manual when needed: [CLI](#cli-reference), [Mock file](#mock-file-reference), [Store](#store-reference).
 
@@ -506,27 +506,47 @@ See also: [Validation](#validation-reference), [Mock config](#mock-config-refere
 
 ### `add`
 
-Create a mock file interactively (prompts for endpoint and, unless `--crud`, HTTP verb).
+Scaffold a mock JSON file with an interactive prompt. Every `add` run uses a **preset** (default `static`). You always set the file name and endpoint; only `static` also asks which HTTP verbs to include.
 
 ```bash
 mock-server add
-mock-server add --crud
+mock-server add --preset crud
+mock-server add --path api-mocks --preset auth-login
 ```
 
 | Flag | Default | Description |
 |------|---------|-------------|
 | `-p, --path <path>` | `mocks` | Path to the mocks directory |
-| `--crud` | `false` | Scaffold collection + item route with store `action`s: `list` / `create` / `get` / `update` / `patch` / `delete`. Skips the HTTP verb prompt. `store.id` is taken from the last non-param path segment (sanitized). If the endpoint ends with `/:param`, that param name is kept on the item route; otherwise the item route uses `/:id`. |
+| `--preset <name>` | `static` | Which scaffold to write (table below) |
+| `--crud` | `false` | Alias for `--preset crud` |
 
-**Examples:**
+#### Presets
+
+| Preset | Use when you need… | Writes |
+|--------|--------------------|--------|
+| `static` | A blank endpoint to fill by hand | One route; chosen verbs; empty `success` / `error` bodies |
+| `scenarios` | Branching without a store | `GET` + `?scenario=ok\|missing\|error` (`match` + delay) |
+| `auth-login` | Login validation + happy/sad paths | `POST` + `request` + `match` (200 / 403) + 401 / 400 |
+| `crud` | Mutable collection + item | `store` actions: list / create / get / update / patch / delete |
+| `crud-full` | CRUD plus real persistence rules | `crud` + `persist`, `unique`, `softDelete`, item `restore` |
+| `paginated-list` | Tables / infinite scroll against seed data | Collection `store.list` (page, filter, search) + `POST` create |
+| `relations` | Parent/child resources with FK | Two stores: parent + sibling child (embed, expand, `onDelete: restrict`) |
+| `upload` | Multipart create + file download | `POST` multipart + item `GET` (`encoding: "base64"`) |
+| `proxy-hybrid` | Some routes local, one live upstream | Local `GET` + sibling `…/live` proxy (jsonplaceholder) |
+
+**Endpoint conventions** (store presets): `api/notes` → collection + `api/notes/:id`. A trailing `/:param` is kept on item routes (`users/:userId`). `store.id` is the last non-param segment. `proxy-hybrid` uses that same collection base for the sibling `…/live` route (so `api/notes/:id` still yields `api/notes` + `api/notes/live`). Existing files prompt before overwrite.
+
+**`relations` prompts:** you name the **parent** collection (default `api/users`). The preset always scaffolds a second **child** collection next to it:
+
+- Default child segment is `posts` → e.g. parent `api/users` writes `api/users` + `api/posts` (stores `users` / `posts`, FK `userId`, reverse embed, delete restrict).
+- If that default would collide with the parent (same path or same `store.id` — e.g. parent `api/posts`), the CLI asks for the child collection name (suggestion `comments`) and writes that sibling instead (`api/posts` + `api/comments`, FK derived from the parent id → `postId`).
+- Child names are a single path segment (`comments`, `articles`); parent FK / embed names follow the parent `store.id` (soft-singularized); child relation keys and conflict names follow the child segment.
 
 ```bash
-mock-server add --path api-mocks
-mock-server add --path apps/folder1/mocks
-mock-server add --crud
+mock-server add --preset scenarios
+mock-server add --preset crud-full
+mock-server add --preset relations --path apps/folder1/mocks
 ```
-
-With `--crud`, an endpoint like `api/notes` writes both `api/notes` and `api/notes/:id` (same shape as [Example A — Simple](#example-a--simple-notes-crud), plus `PUT` / `PATCH`). `users/:userId` keeps `users/:userId` on the item route. If the JSON file already exists, you are asked before overwrite. Edit `seed` / `template` or `POST` items to start.
 
 `add` / `init` write into the **root** of the mocks directory (they do not create `mock.config.json` folder layouts). `import` writes to the root when there is no server/`--prefix`; with a route prefix it writes `mock.config.json` + one-level folders. For folder organization, see [Mock config](#mock-config-reference).
 

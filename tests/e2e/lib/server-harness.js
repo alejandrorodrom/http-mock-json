@@ -155,6 +155,7 @@ function killProcessTree(child) {
  * @param {string} [options.cwd]
  * @param {string[]} options.args
  * @param {number} [options.timeoutMs]
+ * @param {string} [options.input] stdin payload (enables pipe; use for non-prompt CLIs)
  * @param {(stdout: string) => boolean} [options.resolveWhen]
  * @returns {Promise<{ stdout: string, stderr: string, exitCode: number | null, timedOut: boolean, child: import('child_process').ChildProcessWithoutNullStreams | null }>}
  */
@@ -181,8 +182,13 @@ function runCli(options) {
       NO_COLOR: '1',
       FORCE_COLOR: '0'
     },
-    stdio: ['ignore', 'pipe', 'pipe']
+    stdio: [options.input !== undefined ? 'pipe' : 'ignore', 'pipe', 'pipe']
   });
+
+  if (options.input !== undefined && child.stdin) {
+    child.stdin.write(options.input);
+    child.stdin.end();
+  }
 
   return new Promise((resolve) => {
     let settled = false;

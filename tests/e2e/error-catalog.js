@@ -1778,10 +1778,45 @@ const ERROR_CATALOG = [
   },
   {
     id: 'cli.version',
-    message: '5.0.0',
+    message: '5.3.0',
     source: 'src/cli/interactive.ts',
     kind: 'cli',
     caseName: 'system/cli-version-help'
+  },
+  {
+    id: 'cli.add-unknown-preset',
+    message: 'Unknown add preset',
+    source: 'src/cli/commands/add/presets.ts',
+    kind: 'cli',
+    caseName: 'system/add-cli-flags'
+  },
+  {
+    id: 'cli.add-preset-crud-conflict',
+    message: 'Cannot combine --crud with --preset',
+    source: 'src/cli/commands/add/presets.ts',
+    kind: 'cli',
+    caseName: 'unit/add-presets'
+  },
+  {
+    id: 'cli.add-relations-collide',
+    message: 'collides with child "posts"',
+    source: 'src/cli/commands/add/structure-relations-mock.ts',
+    kind: 'cli',
+    caseName: 'unit/add-presets'
+  },
+  {
+    id: 'cli.add-preset-crud-conflict-system',
+    message: 'Cannot combine --crud with --preset',
+    source: 'src/cli/commands/add/presets.ts',
+    kind: 'cli',
+    caseName: 'system/add-cli-flags'
+  },
+  {
+    id: 'runtime.add-presets-auth',
+    message: 'tok_demo',
+    source: 'src/cli/commands/add/structure-auth-login-mock.ts',
+    kind: 'runtime',
+    caseName: 'runtime/add-presets'
   },
   {
     id: 'cli.help',

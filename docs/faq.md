@@ -48,16 +48,40 @@ No. Only HTTP methods `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` on a plain HTT
 
 ## CLI & config
 
-### What’s the difference between `init`, `add`, `add --crud`, and `import`?
+### What’s the difference between `init`, `add`, and `import`?
 
-- **`init`** — creates the mocks directory (and optionally a first mock + npm start script).
-- **`add`** — interactively scaffolds one mock file (endpoint + HTTP method).
-- **`add --crud`** — scaffolds collection + item routes with store `action`s (`list` / `create` / `get` / `update` / `patch` / `delete`).
+- **`init`** — creates the mocks directory (and optionally a first **`static`** mock + npm start script).
+- **`add`** — scaffolds another mock via `--preset` (default `static`). Same command covers CRUD, auth, upload, relations, etc. `--crud` is only an alias for `--preset crud`.
 - **`import`** — generates mock JSON from an OpenAPI 3.x file or URL (responses + optional `request` rules; not loaded at `start` time).
 
 `init` / `add` write into the **root** of the mocks directory (no `mock.config.json` layout). `import` does the same when there is no server/`--prefix`; with a base path it also writes `mock.config.json` + one-level folders.
 
-See [CLI](../README.md#cli-reference).
+See [CLI — add](../README.md#add) and [Which add preset should I use?](#which-add-preset-should-i-use).
+
+### Which add preset should I use?
+
+Pick by what you need next; then edit the generated JSON:
+
+| Need | Preset |
+|------|--------|
+| Blank endpoint to fill by hand | `static` (default) |
+| Branch with query / delay (no store) | `scenarios` |
+| Login + validation + 401/403 | `auth-login` |
+| Mutable collection + item | `crud` |
+| CRUD + persist / unique / soft delete | `crud-full` |
+| Paginated / filtered list from seed | `paginated-list` |
+| Parent/child with FK | `relations` (parent endpoint; child defaults to `posts`; FK/embed from parent id, e.g. `userId` / `postId`) |
+| Multipart upload + download | `upload` |
+| One local route + one proxied route | `proxy-hybrid` (sibling `…/live`; use collection path, not `…/:id/live`) |
+
+```bash
+mock-server add --preset auth-login
+mock-server add --preset crud-full
+```
+
+`--crud` is only shorthand for `--preset crud`. Unknown names or mixing `--crud` with another preset fail before prompts — see [Troubleshooting — add](troubleshooting.md#cli-add-presets).
+
+Full table and endpoint conventions: [CLI — add](../README.md#add).
 
 ### Can I import an OpenAPI / Swagger file?
 

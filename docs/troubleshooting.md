@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Diagnostic catalog of **CLI** failures (including `import`), **startup** failures/warnings, and **runtime** surprises. Each entry goes from an observable symptom (often an exact message) to cause, fix, and a deeper README section.
+Diagnostic catalog of **CLI** failures (including `add` presets and `import`), **startup** failures/warnings, and **runtime** surprises. Each entry goes from an observable symptom (often an exact message) to cause, fix, and a deeper README section.
 
 Short Q&A lives in [FAQ](faq.md). Field and flag reference lives in the [README](../README.md)—not here.
 
@@ -121,6 +121,93 @@ File: …
 | **Cause** | Global CLI proxy is not an `http://` or `https://` URL. |
 | **Fix** | Use a full URL: `--proxy https://api.staging.example`. |
 | **See** | [CLI](../README.md#cli-reference) |
+
+---
+
+## CLI: `add` (presets)
+
+Interactive scaffold: `add` writes one mock JSON file from a **preset** (default `static`). Flags and catalog: [CLI — add](../README.md#add). FAQ: [What’s the difference between `init`, `add`, and `import`?](faq.md#whats-the-difference-between-init-add-and-import).
+
+### `Unknown add preset "…"`
+
+| | |
+|---|---|
+| **Symptom** | `add --preset …` exits before prompts (or prints the error and stops). |
+| **Cause** | Preset name is not in the supported list (typo or outdated docs). |
+| **Fix** | Use one of: `static`, `crud`, `crud-full`, `scenarios`, `auth-login`, `proxy-hybrid`, `paginated-list`, `upload`, `relations`. Run `mock-server add --help` for the current list. |
+| **See** | [CLI — add](../README.md#add) |
+
+### `Cannot combine --crud with --preset …`
+
+| | |
+|---|---|
+| **Symptom** | `add` rejects the flag combination (e.g. `--crud --preset scenarios`) and exits non-zero. |
+| **Cause** | `--crud` means `--preset crud`; pairing it with any other preset is ambiguous. |
+| **Fix** | Use either `--crud` / `--preset crud`, or a single `--preset <name>` without `--crud`. |
+| **See** | [CLI — add](../README.md#add) |
+
+### Parent collides with default child `"posts"` (`relations`)
+
+| | |
+|---|---|
+| **Symptom** | `add --preset relations` asks for a **child collection name** (default suggestion `comments`) instead of writing immediately. |
+| **Cause** | The parent endpoint’s collection / `store.id` is already `posts` (e.g. `api/posts`), so the default sibling `…/posts` would collide. |
+| **Fix** | Enter another child segment (`comments`, `articles`, …). The scaffold derives the FK from the parent id (`api/posts` + `comments` → `postId`). Prefer a parent like `api/users` to keep the default child `posts` / `userId`. Canceling the child prompt aborts without writing a file. |
+| **See** | [CLI — add](../README.md#add), [Which add preset should I use?](faq.md#which-add-preset-should-i-use) |
+
+### `relations preset: child collection must be a non-empty segment…`
+
+| | |
+|---|---|
+| **Symptom** | Child-name prompt rejects the value, or `add` exits with that message (non-zero). |
+| **Cause** | The child collection is empty after trim, or only invalid characters / slashes (allowed: letters, numbers, `_`, `-`; one path segment). |
+| **Fix** | Use a simple segment such as `comments` or `articles` (not `api/comments` and not spaces/symbols). |
+| **See** | [CLI — add](../README.md#add) (`relations` prompts) |
+
+### `relations preset: parent "…" collides with child "…"`
+
+| | |
+|---|---|
+| **Symptom** | `add --preset relations` fails before writing a file (or the child prompt keeps rejecting the name). |
+| **Cause** | The chosen child segment matches the parent collection path or `store.id` (same resource twice). Interactive `add` normally blocks this in the prompt (`Child "…" still collides with parent`); the thrown message appears if the scaffold is built with a colliding pair anyway. |
+| **Fix** | Pick a different child name, or change the parent endpoint so parent and child are distinct (e.g. parent `api/users` + child `posts`). |
+| **See** | [CLI — add](../README.md#add) (`relations` prompts) |
+
+### `File "….json" already exists. Overwrite?` / `Aborting...` (`add`)
+
+| | |
+|---|---|
+| **Symptom** | Prompt asks to overwrite; declining prints `Aborting...` and no file is written (or the previous file is left unchanged). |
+| **Cause** | Target JSON name already exists under the mocks directory. |
+| **Fix** | Confirm overwrite, choose another file name, or delete/rename the existing file. |
+| **See** | [CLI — add](../README.md#add) |
+
+### Generated preset fails at `start` (validation)
+
+| | |
+|---|---|
+| **Symptom** | `add` succeeded, but `mock-server start` reports store / request / response errors on the new file. |
+| **Cause** | Unusual endpoint shape (e.g. param-only path), hand-edits after scaffold, or colliding `store.id` definitions across files. |
+| **Fix** | Read the startup error path/method; for `crud` / `relations` prefer endpoints like `api/notes` or `api/users` (not only `:id`). Ensure one full store definition per `store.id`. Re-run `add --preset …` into a fresh file if the scaffold was heavily edited. |
+| **See** | [CLI — add](../README.md#add), [Store](../README.md#store-reference), [Validation](../README.md#validation-reference) |
+
+### `proxy-hybrid` live route returns `502` / proxy errors
+
+| | |
+|---|---|
+| **Symptom** | Local route works; `…/live` fails with proxy/`502` messages at runtime. |
+| **Cause** | Upstream unreachable, offline network, or `nameResponse` still points at the proxied `live` response while the target is down. |
+| **Fix** | Check network access to the configured target, or set the live method’s `nameResponse` to `offline` (scaffold includes that response). For your own upstream, edit `responses[].proxy` or use `start --proxy` / `--record`. |
+| **See** | [CLI — add](../README.md#add), [Proxy value shapes](../README.md#proxy-value-shapes) |
+
+### `proxy-hybrid` `/live` not hit (request matches local `/:id`)
+
+| | |
+|---|---|
+| **Symptom** | `GET …/live` returns the local mock body (or treats `"live"` as an id) instead of proxying. |
+| **Cause** | Older hand-edited scaffolds nested `/live` under a param route (`…/:id/live`). Current `add --preset proxy-hybrid` strips a trailing `/:param` and writes collection + `collection/live`. |
+| **Fix** | Re-run the preset, or move the live route to sit next to the collection (e.g. `api/notes` + `api/notes/live`). |
+| **See** | [CLI — add](../README.md#add) (endpoint conventions) |
 
 ---
 

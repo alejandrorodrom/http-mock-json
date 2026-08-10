@@ -12,7 +12,13 @@ export type StartOptions = {
   recordingsMode?: RecordingsMode;
 };
 export type InitOptions = { path: string, mock: boolean, script: boolean };
-export type AddOptions = { path: string; crud?: boolean };
+export type AddOptions = {
+  path: string;
+  /** Alias for `--preset crud` (kept for compatibility). */
+  crud?: boolean;
+  /** Scaffold preset name (see ADD_PRESETS / --preset help). */
+  preset?: string;
+};
 export type ImportOptions = {
   path: string;
   openapi: string;

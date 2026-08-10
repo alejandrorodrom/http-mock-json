@@ -140,7 +140,8 @@ const runtimeCases = [
   require('./runtime/record-replay-collision-dedupe'),
   require('./runtime/record-replay-multipart'),
   require('./runtime/import-openapi-public'),
-  require('./runtime/import-openapi-request')
+  require('./runtime/import-openapi-request'),
+  require('./runtime/add-presets')
 ];
 
 const externalCases = [
@@ -163,6 +164,7 @@ const unitCases = [
   require('./unit/mock-config-advanced'),
   require('./unit/add-mock'),
   require('./unit/add-crud-mock'),
+  require('./unit/add-presets'),
   require('./unit/import-openapi'),
   require('./unit/import-openapi-request'),
   require('./unit/import-openapi-errors'),
