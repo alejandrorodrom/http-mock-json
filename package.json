@@ -54,7 +54,7 @@
     "node": ">=22.12.0"
   },
   "dependencies": {
-    "@apidevtools/swagger-parser": "^12.1.0",
+    "@apidevtools/swagger-parser": "^13.0.0",
     "busboy": "^1.6.0",
     "chokidar": "^5.0.0",
     "colorette": "^2.0.20",
