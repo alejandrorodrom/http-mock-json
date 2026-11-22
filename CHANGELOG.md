@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.2] - 2026-11-21
+
+Patch release on top of **6.0.1**. No public API or CLI contract changes.
+
+### Previous version
+
+**6.0.1** — documentation enhancements (`docs/ai.md`, `llms.txt`).
+
+### Changed
+
+- Dependencies: `express` → 5.3.0, `figlet` → 1.13.0; `@types/busboy` → 1.5.5; `@types/node` kept on the 22.x line
+- Transitive lockfile updates (`fast-uri`, `qs`, `proxy-addr`, and related)
+- Bug report template Node.js placeholder aligned to `v22.x`
+- Package / CLI version bumped to `6.0.2`
+
+---
+
 ## [6.0.1] - 2026-08-09
 
 Patch release on top of **6.0.0**. No public API or CLI contract changes.

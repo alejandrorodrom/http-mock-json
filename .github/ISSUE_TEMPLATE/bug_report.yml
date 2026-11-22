@@ -20,7 +20,7 @@ body:
     attributes:
       label: Node.js version
       description: Output of `node -v`
-      placeholder: "v20.x"
+      placeholder: "v22.x"
     validations:
       required: true
   - type: textarea
