@@ -20,25 +20,54 @@ const resolveLocalSource = (source: string): string => {
   return absolute;
 };
 
+const isSupportedOpenApiVersion = (version: string): boolean => {
+  return /^3\.(0|1)(\.|$)/.test(version);
+};
+
+const unsupportedOpenApiVersionError = (version: string): Error => {
+  const trimmed = version.trim();
+  if (/^3\./.test(trimmed)) {
+    return new Error(
+      `OpenAPI ${ trimmed } is not supported. Only OpenAPI 3.0.x and 3.1.x are supported.`
+    );
+  }
+
+  return new Error(
+    'Only OpenAPI 3.0.x and 3.1.x are supported. The document must include openapi: "3.0.x" or "3.1.x".'
+  );
+};
+
+const assertOpenApiVersionString = (version: string | undefined): void => {
+  const trimmed = typeof version === 'string' ? version.trim() : '';
+  if (!isSupportedOpenApiVersion(trimmed)) {
+    throw unsupportedOpenApiVersionError(trimmed);
+  }
+};
+
 const assertOpenApi3 = (document: OpenAPI.Document): void => {
   const raw = document as Record<string, unknown>;
 
   if (typeof raw.swagger === 'string') {
     throw new Error(
-      `Swagger ${ raw.swagger } is not supported. Convert the spec to OpenAPI 3.x first.`
+      `Swagger ${ raw.swagger } is not supported. Convert the spec to OpenAPI 3.0 or 3.1 first.`
     );
   }
 
-  const version = typeof raw.openapi === 'string' ? raw.openapi : '';
-  if (!/^3\.\d+/.test(version)) {
-    throw new Error(
-      'Only OpenAPI 3.x is supported. The document must include openapi: "3.x.x".'
-    );
+  assertOpenApiVersionString(typeof raw.openapi === 'string' ? raw.openapi : undefined);
+};
+
+const rewriteUnsupportedVersionParseError = (message: string): Error | undefined => {
+  const match = message.match(/Unsupported OpenAPI version:\s*([^\s.]+(?:\.[^\s.]+)*)/i);
+  if (!match) {
+    return undefined;
   }
+
+  return unsupportedOpenApiVersionError(match[1]);
 };
 
 /**
- * Fail fast on Swagger 2 for local files before invoking the full parser.
+ * Fail fast on Swagger 2 / unsupported OpenAPI versions for local files
+ * before invoking the full parser (Swagger Parser rejects 3.2+ during parse).
  */
 export const assertSourceIsOpenApi3 = (source: string): void => {
   if (isHttpUrl(source)) {
@@ -53,11 +82,21 @@ export const assertSourceIsOpenApi3 = (source: string): void => {
       const parsed = JSON.parse(text) as Record<string, unknown>;
       if (typeof parsed.swagger === 'string') {
         throw new Error(
-          `Swagger ${ parsed.swagger } is not supported. Convert the spec to OpenAPI 3.x first.`
+          `Swagger ${ parsed.swagger } is not supported. Convert the spec to OpenAPI 3.0 or 3.1 first.`
         );
       }
+      if (typeof parsed.openapi === 'string') {
+        assertOpenApiVersionString(parsed.openapi);
+      }
     } catch (error) {
-      if (error instanceof Error && error.message.startsWith('Swagger ')) {
+      if (
+        error instanceof Error
+        && (
+          error.message.startsWith('Swagger ')
+          || error.message.startsWith('OpenAPI ')
+          || error.message.startsWith('Only OpenAPI ')
+        )
+      ) {
         throw error;
       }
       // Let the OpenAPI parser report JSON syntax errors.
@@ -68,13 +107,18 @@ export const assertSourceIsOpenApi3 = (source: string): void => {
   const swaggerMatch = text.match(/^swagger:\s*['"]?([^'"\n]+)/m);
   if (swaggerMatch) {
     throw new Error(
-      `Swagger ${ swaggerMatch[1].trim() } is not supported. Convert the spec to OpenAPI 3.x first.`
+      `Swagger ${ swaggerMatch[1].trim() } is not supported. Convert the spec to OpenAPI 3.0 or 3.1 first.`
     );
+  }
+
+  const openapiMatch = text.match(/^openapi:\s*['"]?([^'"\n]+)/m);
+  if (openapiMatch) {
+    assertOpenApiVersionString(openapiMatch[1]);
   }
 };
 
 /**
- * Load, validate, and fully dereference an OpenAPI 3.x document from a file or URL.
+ * Load, validate, and fully dereference an OpenAPI 3.0 / 3.1 document from a file or URL.
  */
 export const loadOpenApiDocument = async (source: string): Promise<OpenApiDocument> => {
   if (!source || source.trim().length === 0) {
@@ -90,6 +134,10 @@ export const loadOpenApiDocument = async (source: string): Promise<OpenApiDocume
     parsed = await SwaggerParser.parse(target) as OpenAPI.Document;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    const unsupported = rewriteUnsupportedVersionParseError(message);
+    if (unsupported) {
+      throw unsupported;
+    }
     throw new Error(`Failed to load OpenAPI document: ${ message }`);
   }
 

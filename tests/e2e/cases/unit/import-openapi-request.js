@@ -328,6 +328,28 @@ module.exports = {
             failures.push('xml-only should still map object schema from first media');
           }
 
+          const plain = edgesBundle.mock['plain-text']?.GET;
+          const plainBody = plain?.responses?.find((response) => response.name === 'success_200')?.body;
+          if (plainBody !== 'hello from plain text') {
+            failures.push(
+              `Expected text/plain example body, got: ${ JSON.stringify(plainBody) }`
+            );
+          }
+          if (!edgesMapped.warnings.some((w) =>
+            w.includes('plain-text')
+            && w.includes('no application/json content')
+            && w.includes('using first media type')
+          )) {
+            failures.push(
+              `Expected text/plain first-media warning, got: ${ edgesMapped.warnings.join(' | ') }`
+            );
+          }
+          if (edgesMapped.warnings.some((w) =>
+            w.includes('plain-text') && w.includes('using empty body')
+          )) {
+            failures.push('text/plain with example must not warn about empty body');
+          }
+
         }
 
         // Unresolved $ref paths (post-dereference leftovers / synthetic)
@@ -405,6 +427,11 @@ module.exports = {
               { type: 'string', enum: ['available', 'pending', 'sold'] },
               'POST payload.status?'
             ));
+            if (post.request.error?.response !== 'error_400') {
+              failures.push(
+                `Expected request.error.response error_400, got: ${ JSON.stringify(post.request.error) }`
+              );
+            }
           }
 
           const list = petsBundle.mock.pets?.GET;

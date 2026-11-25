@@ -102,6 +102,17 @@ module.exports = {
           failures.push(
             `Expected JSON error body for invalid POST, got: ${ JSON.stringify(invalid.body) }`
           );
+        } else {
+          failures.push(...expectEqual(
+            invalid.body.message,
+            'invalid',
+            'validation uses OpenAPI 400 example body'
+          ));
+          if (!Array.isArray(invalid.body.errors)) {
+            failures.push(
+              `Expected errors array from request validation, got: ${ JSON.stringify(invalid.body) }`
+            );
+          }
         }
 
         const missing = await request(`${ server.baseUrl }/pets`, {

@@ -233,13 +233,13 @@ Offline generator only: `import` writes mock JSON; `start` still loads those fil
 | **Fix** | Use a real `.json` / `.yaml` / `.yml` file path relative to the cwd (or absolute). |
 | **See** | [CLI — import](../README.md#import) |
 
-### `Swagger … is not supported` / `Only OpenAPI 3.x is supported`
+### `Swagger … is not supported` / `Only OpenAPI 3.0.x and 3.1.x are supported` / `OpenAPI 3.2… is not supported`
 
 | | |
 |---|---|
 | **Symptom** | Import rejects the document before or after parse. |
-| **Cause** | Spec is Swagger 2.0 (`swagger: "2.0"`) or missing/invalid `openapi: "3.x.x"`. |
-| **Fix** | Convert to OpenAPI 3.0/3.1 first; ensure the root has `openapi: "3.0.x"` or `"3.1.x"`. |
+| **Cause** | Spec is Swagger 2.0 (`swagger: "2.0"`), OpenAPI 3.2+, or missing/invalid `openapi: "3.0.x"` / `"3.1.x"`. |
+| **Fix** | Convert to OpenAPI 3.0 or 3.1 first; ensure the root has `openapi: "3.0.x"` or `"3.1.x"`. |
 | **See** | [CLI — import](../README.md#import), [FAQ](faq.md#can-i-import-an-openapi--swagger-file) |
 
 ### `Failed to load OpenAPI document` / `Invalid OpenAPI document` / `Failed to resolve OpenAPI $ref`
@@ -264,9 +264,9 @@ Offline generator only: `import` writes mock JSON; `start` still loads those fil
 
 | | |
 |---|---|
-| **Symptom** | Yellow `⚠` lines during `import`, often with a summary like `(N warnings)`. Common themes: path/method skipped, thin responses (no example/JSON), or `request` mapping skipped/simplified. |
+| **Symptom** | Yellow `⚠` lines during `import`, often with a summary like `(N warnings)`. Common themes: path/method skipped, non-JSON media (uses first media type + example when present), thin responses (no example/schema), or `request` mapping skipped/simplified. |
 | **Cause** | The OpenAPI document has something the importer cannot turn into a mock as-is — invalid path params, unsupported HTTP methods, missing examples, or request schemas outside what `request` supports (cookies, `oneOf`/`anyOf`, unknown `format`, circular/deep schemas, non-object or schema-less bodies). |
-| **Fix** | Usually safe to ignore if the written mocks are enough. Otherwise fix the spec, simplify the schema, or re-run with `--no-request`. Import still writes the rest. A later runtime `400` means client input failed `request` validation — that is expected, not an import bug. |
+| **Fix** | Usually safe to ignore if the written mocks are enough. Otherwise fix the spec, simplify the schema, or re-run with `--no-request`. Import still writes the rest. A later runtime `400` means client input failed `request` validation — that is expected, not an import bug. When the operation documents a `400` response, import wires `request.error.response` to it so the documented body is used. |
 | **See** | [CLI — import](../README.md#import), [Body compatibility](../README.md#body-compatibility) |
 
 ### `File "…" already exists. Overwrite?` / `Aborting...`

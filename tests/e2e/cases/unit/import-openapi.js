@@ -10,10 +10,10 @@ const FIXTURES = path.join(PROJECT_ROOT, 'tests/e2e/fixtures/openapi');
 
 module.exports = {
   name: 'unit/import-openapi',
-  description: 'importOpenApi maps OAS 3.x to mock JSON and rejects Swagger 2',
+  description: 'importOpenApi maps OAS 3.0/3.1 to mock JSON and rejects Swagger 2',
   run: () => runUnitUseCase({
     name: 'unit/import-openapi',
-    description: 'importOpenApi maps OAS 3.x to mock JSON and rejects Swagger 2',
+    description: 'importOpenApi maps OAS 3.0/3.1 to mock JSON and rejects Swagger 2',
     expectedOutcome: 'success',
     async assert() {
       const { importOpenApi } = require(

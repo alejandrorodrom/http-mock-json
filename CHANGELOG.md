@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.3] - 2026-11-25
+
+Patch release on top of **6.0.2**. OpenAPI `import` accuracy and docs; no breaking CLI flags.
+
+### Previous version
+
+**6.0.2** — dependency upgrades and version bump.
+
+### Fixed
+
+- README CLI reference version was still **5.1.0**; now **6.0.3**
+- OpenAPI import warning for non-JSON response media said “using empty body” even when a `text/plain` (or other) example was kept — now “using first media type”
+- CLI/docs said “OpenAPI 3.x” while only **3.0.x / 3.1.x** are accepted; reject 3.2+ with an explicit error
+- OpenAPI `import` now sets `request.error.response` to the operation’s documented `400` response when present, so validation failures use that body instead of the generic server `400`
+
+### Changed
+
+- Package / CLI version bumped to `6.0.3`
+
 ## [6.0.2] - 2026-11-21
 
 Patch release on top of **6.0.1**. No public API or CLI contract changes.

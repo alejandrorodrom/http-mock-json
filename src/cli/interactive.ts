@@ -14,7 +14,7 @@ export const interactive = () => {
 
   mock
     .name('mock-server')
-    .version('6.0.2', '-v, --version', 'Output the version number')
+    .version('6.0.3', '-v, --version', 'Output the version number')
     .description('Mock server for frontend project')
     .helpOption('-h, --help', 'Lists available commands and their short descriptions.');
 
@@ -173,7 +173,7 @@ export const interactive = () => {
     .command('import')
     .requiredOption(
       '--openapi <source>',
-      'OpenAPI 3.x file path or http(s) URL'
+      'OpenAPI 3.0 / 3.1 file path or http(s) URL'
     )
     .option(
       '-p, --path <path>',
@@ -205,7 +205,7 @@ export const interactive = () => {
       '--no-request',
       'Do not generate request.payload / query / headers from OpenAPI schemas'
     )
-    .description('Import an OpenAPI 3.x document into mock JSON files.')
+    .description('Import an OpenAPI 3.0 / 3.1 document into mock JSON files.')
     .action(async (
       options: ImportOptions & { splitTags?: boolean; serverPrefix?: boolean; request?: boolean }
     ) => {

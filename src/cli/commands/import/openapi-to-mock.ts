@@ -166,7 +166,7 @@ const operationToMethod = (
 
     if (warned) {
       warnings.push(
-        `${ method.toUpperCase() } ${ pathKey } ${ code }: no application/json content; using empty body`
+        `${ method.toUpperCase() } ${ pathKey } ${ code }: no application/json content; using first media type`
       );
     }
 
@@ -208,7 +208,16 @@ const operationToMethod = (
     );
     warnings.push(...built.warnings);
     if (built.request) {
-      mockMethod.request = built.request;
+      const error400 = mockResponses.find((response) => response.statusCode === 400);
+      mockMethod.request = error400
+        ? {
+            ...built.request,
+            error: {
+              ...(built.request.error ?? {}),
+              response: error400.name
+            }
+          }
+        : built.request;
     }
   }
 

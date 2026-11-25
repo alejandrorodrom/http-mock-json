@@ -53,7 +53,7 @@ Unmatched routes may still hit folder `proxyUnmatched` / global `--proxy`.
 | Parent/child FK | `--preset relations` |
 | Multipart upload + download | `--preset upload` |
 | Local route + proxied sibling | `--preset proxy-hybrid` |
-| Bootstrap from OpenAPI 3.x | `import --openapi …` |
+| Bootstrap from OpenAPI 3.0 / 3.1 | `import --openapi …` |
 | Capture staging, replay offline | `start --proxy <url> --record` then `start` |
 
 ## CLI cheat sheet
@@ -62,7 +62,7 @@ Unmatched routes may still hit folder `proxyUnmatched` / global `--proxy`.
 |---------|------|
 | `init` | Create mocks dir; optional first `static` mock + `mock:start` script |
 | `add --preset <name>` | Scaffold another mock (default preset `static`) |
-| `import --openapi <file\|url>` | Generate editable mock JSON from OpenAPI 3.x |
+| `import --openapi <file\|url>` | Generate editable mock JSON from OpenAPI 3.0 / 3.1 |
 | `start` | Serve mocks (watch + startup validation) |
 
 **Flag `-p`:** on `init` / `add` / `import` = `--path` (mocks directory). On `start`, `-p` = `--port`; mocks directory is `-f` / `--path`.

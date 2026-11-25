@@ -16,7 +16,7 @@ Read [`docs/ai.md`](ai.md) first (pipeline, presets, CLI cheat sheet, hard limit
 
 It is a **CLI** (`mock-server`) that starts a local HTTP mock server from JSON files. Your app calls that server over HTTP (e.g. `http://localhost:3001/...`).
 
-The published package does **not** export an embeddable server/SDK — use JSON mocks and `mock-server start`, not an in-process API. To scaffold mocks from an OpenAPI 3.x document, use the CLI [`import`](#can-i-import-an-openapi--swagger-file) command (that is not a library import).
+The published package does **not** export an embeddable server/SDK — use JSON mocks and `mock-server start`, not an in-process API. To scaffold mocks from an OpenAPI 3.0 / 3.1 document, use the CLI [`import`](#can-i-import-an-openapi--swagger-file) command (that is not a library import).
 
 See [Getting started](../README.md#getting-started) and [Concepts](../README.md#concepts).
 
@@ -56,7 +56,7 @@ No. Only HTTP methods `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` on a plain HTT
 
 - **`init`** — creates the mocks directory (and optionally a first **`static`** mock + npm start script).
 - **`add`** — scaffolds another mock via `--preset` (default `static`). Same command covers CRUD, auth, upload, relations, etc. `--crud` is only an alias for `--preset crud`.
-- **`import`** — generates mock JSON from an OpenAPI 3.x file or URL (responses + optional `request` rules; not loaded at `start` time).
+- **`import`** — generates mock JSON from an OpenAPI 3.0 / 3.1 file or URL (responses + optional `request` rules; not loaded at `start` time).
 
 `init` / `add` write into the **root** of the mocks directory (no `mock.config.json` layout). `import` does the same when there is no server/`--prefix`; with a base path it also writes `mock.config.json` + one-level folders.
 
@@ -89,7 +89,7 @@ Full table and endpoint conventions: [CLI — add](../README.md#add).
 
 ### Can I import an OpenAPI / Swagger file?
 
-Yes for **OpenAPI 3.x**: `mock-server import --openapi ./openapi.yaml`. It writes editable mock JSON (one file per tag by default), including `request` rules from `requestBody` and query/header parameters when possible (`--no-request` skips that). If `servers[0]` has a base path, it also writes `mock.config.json` with folder `prefix`. Swagger 2.0 is not supported — convert to OpenAPI 3 first. Store CRUD and `match` are not generated yet.
+Yes for **OpenAPI 3.0 / 3.1**: `mock-server import --openapi ./openapi.yaml`. It writes editable mock JSON (one file per tag by default), including `request` rules from `requestBody` and query/header parameters when possible (`--no-request` skips that). When the operation documents a `400` response, import wires `request.error.response` to that entry. If `servers[0]` has a base path, it also writes `mock.config.json` with folder `prefix`. Swagger 2.0 and OpenAPI 3.2+ are not supported — convert to 3.0 or 3.1 first. Store CRUD and `match` are not generated yet.
 
 See [CLI — import](../README.md#import). Warnings and edge cases: [Troubleshooting — import](troubleshooting.md#cli-import-openapi).
 

@@ -177,3 +177,13 @@ paths:
             application/json:
               example:
                 ok: true
+  /plain-text:
+    get:
+      tags: [edges]
+      summary: text/plain response — warn + keep example body
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              example: hello from plain text

@@ -81,7 +81,7 @@ module.exports = {
           {
             label: 'missing-version',
             openapi: path.join(FIXTURES, 'missing-version.json'),
-            needle: 'Failed to load OpenAPI document'
+            needle: 'Only OpenAPI 3.0.x and 3.1.x are supported'
           },
           {
             label: 'broken-ref',
@@ -92,6 +92,11 @@ module.exports = {
             label: 'head-only',
             openapi: path.join(FIXTURES, 'head-only.json'),
             needle: 'No importable operations found'
+          },
+          {
+            label: 'openapi-3.2',
+            openapi: path.join(FIXTURES, 'openapi-3.2.json'),
+            needle: 'OpenAPI 3.2.0 is not supported'
           },
           {
             label: 'bad-url',
